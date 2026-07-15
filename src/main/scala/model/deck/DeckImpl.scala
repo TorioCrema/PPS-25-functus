@@ -1,3 +1,4 @@
+package org.pps.functus
 package model.deck
 
 import model.deck.card.Card
