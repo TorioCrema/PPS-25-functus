@@ -1,0 +1,23 @@
+name: test
+
+on:
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    build-test:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+            - name: SetupJDK
+              uses: actions/setup-java@v4
+              with:
+                  distribution: 'microsoft'
+                  java-version: '21'
+                  cache: 'sbt'
+            - name: Setup sbt
+              uses: sbt/setup-sbt@v1
+            - name: Build and Test
+              run: sbt +test
