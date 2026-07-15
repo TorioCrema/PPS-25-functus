@@ -7,5 +7,6 @@ lazy val root = (project in file("."))
     name := "PPS-25-functus",
     idePackagePrefix := Some("org.pps.functus"),
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.20" % Test,
+    libraryDependencies += "org.scalatestplus" %% "mockito-5-10" % "3.2.18.0" % Test,
     libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
   )
