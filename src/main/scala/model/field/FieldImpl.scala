@@ -15,7 +15,7 @@ case class FieldImpl(private val cards: Vector[Card] = Vector.empty) extends Fie
 
   override def getCard(index: Int): (Card, Field) =
     checkIndex(index)
-    (cards(index), copy(cards.drop(index)))
+    (cards(index), copy(cards.patch(index, Nil, 1)))
 
   private def checkIndex(index: Int): Unit =
     if index < 0 || index >= cards.length then
