@@ -8,12 +8,15 @@ case class FieldImpl(private val cards: Vector[Card] = Vector.empty) extends Fie
   override def length: Int = cards.length
 
   override def replace(index: Int, card: Card): (Card, Field) =
-    if index < 0 || index >= cards.length then throw IndexOutOfBoundsException()
-    val old = cards(index)
-    (old, copy(cards.updated(index, card)))
+    checkIndex(index)
+    (cards(index), copy(cards.updated(index, card)))
 
   override def addCard(card: Card): Field = copy(cards :+ card)
 
   override def getCard(index: Int): (Card, Field) =
-    if index < 0 || index >= cards.length then throw IndexOutOfBoundsException()
+    checkIndex(index)
     (cards(index), copy(cards.drop(index)))
+
+  private def checkIndex(index: Int): Unit =
+    if index < 0 || index >= cards.length then
+      throw IndexOutOfBoundsException(s"Index $index is out of bounds for field of length ${cards.length}")
