@@ -28,7 +28,7 @@ La scadenza della sprint e' il 20/07/26.
         <td rowspan="4">Creazione e configurazione del repository GitHub e progetto Scala</td>
         <td>Setup del git flow e GitHub actions</td>
         <td>Simone</td>
-        <td></td>
+        <td>2</td>
         </tr>
         <tr>
         <td>Analisi dell'architettura</td>
@@ -46,22 +46,27 @@ La scadenza della sprint e' il 20/07/26.
         <td>2</td>
         </tr>
         <tr>
-        <td rowspan="3">2</td>
-        <td rowspan="3">Tavolo</td>
-        <td rowspan="3">Generazione e gestione del tavolo</td>
+        <td rowspan="4">2</td>
+        <td rowspan="4">Tavolo</td>
+        <td rowspan="4">Generazione e gestione del tavolo</td>
         <td>Deck</td>
-        <td></td>
+        <td>Luca</td>
         <td></td>
         </tr>
         <tr>
         <td>Field</td>
-        <td></td>
+        <td>Luca</td>
         <td></td>
         </tr>
+        <tr>
         <td>Board</td>
         <td></td>
         <td></td>
+        </tr>
         <tr>
+        <td>View</td>
+        <td>Simone</td>
+        <td>4</td>
         </tr>
         <tr>
         <td rowspan="3">3</td>
