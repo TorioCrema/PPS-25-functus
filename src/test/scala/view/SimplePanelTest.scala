@@ -1,4 +1,5 @@
 package org.pps.functus
+package view
 
 import view.{Drawable, SimplePanel}
 
