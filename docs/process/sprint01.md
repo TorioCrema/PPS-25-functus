@@ -33,12 +33,12 @@ La scadenza della sprint e' il 20/07/26.
         <tr>
         <td>Analisi dell'architettura</td>
         <td>Alex, Luca, Simone</td>
-        <td>4</td>
+        <td>5</td>
         </tr>
         <tr>
         <td>Setup progetto Scala</td>
         <td>Alex</td>
-        <td></td>
+        <td>2</td>
         </tr>
         <tr>
         <td>Setup documentazione</td>
@@ -46,9 +46,9 @@ La scadenza della sprint e' il 20/07/26.
         <td>2</td>
         </tr>
         <tr>
-        <td rowspan="4">2</td>
-        <td rowspan="4">Tavolo</td>
-        <td rowspan="4">Generazione e gestione del tavolo</td>
+        <td rowspan="6">2</td>
+        <td rowspan="6">Tavolo</td>
+        <td rowspan="6">Generazione e gestione del tavolo</td>
         <td>Deck</td>
         <td>Luca</td>
         <td></td>
@@ -64,9 +64,19 @@ La scadenza della sprint e' il 20/07/26.
         <td></td>
         </tr>
         <tr>
-        <td>View</td>
+        <td>Card View</td>
         <td>Simone</td>
         <td>4</td>
+        </tr>
+        <tr>
+        <td>Field View</td>
+        <td></td>
+        <td></td>
+        </tr>
+        <tr>
+        <td>Board View</td>
+        <td></td>
+        <td></td>
         </tr>
         <tr>
         <td rowspan="3">3</td>
@@ -100,3 +110,4 @@ La scadenza della sprint e' il 20/07/26.
         <td></td>
         </tr>
     </tbody>
+</table>
