@@ -1,71 +1,81 @@
-package org.pps.functus
-package view
+package org.pps.functus.view
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class SimplePanelFactoryTest extends AnyFlatSpec with Matchers:
 
-  // Replace each sequence of 2 or more spaces/tabs with a single space,
-  // and removes trailing spaces this way I test the logic and not the spacing.
-  private def normalizeSpacing(s: String): String =
-    s.replaceAll("[ \t]{2,}", " ").replaceAll("(?m) +$", "")
+  given stringDrawer: Drawable[String] = elem => elem
 
-  private def loadField(cardNumberField1: Int, cardNumberField2: Int): SimplePanel[String] =
-    val field1 = Seq.fill(cardNumberField1)(1)
-    val field2 = Seq.fill(cardNumberField2)(1)
-    val panel = SimplePanels.multiColumnFieldsPanel(field1, field2)
-    panel
+  given panelDrawer[T: Drawable]: Drawable[SimplePanel[T]] with
+    def draw(elem: SimplePanel[T]): String = elem.draw
 
-  given stringDrawer: Drawable[String] = identity
+  // Represents a row of our grid divided into the two fields
+  case class RowLayout(field1Cards: List[String], field2Cards: List[String])
 
-  given cardDrawer: Drawable[Int] = _ => "[H]"
+  // Converts the text drawn from the panel into a RowLayout list,
+  // separating the block of Field 1 (first 15 cars) from Field 2 (remaining).
+  private def parseLayout(rendered: String): List[RowLayout] =
+    if rendered.trim.isEmpty then Nil
+    else
+      rendered.replaceAll("\r\n", "\n")
+        .split("\n")
+        .toList
+        .map { line =>
+          // Cuts the first 15 character (Field 1) and the remaining (Field 2)
+          val f1Zone = if line.length >= 15 then line.substring(0, 15) else line
+          val f2Zone = if line.length > 15 then line.substring(15) else ""
 
-  "SimplePanels.multiColumnFieldsPanel" should "correctly align fields with 4 and 5 cards on two columns" in:
-    val panel = loadField(4,5)
+          // extract only cards "[H]" ingoring spaces and tabulations
+          val f1Cards = "\\[H\\]".r.findAllIn(f1Zone).toList
+          val f2Cards = "\\[H\\]".r.findAllIn(f2Zone).toList
 
-    // Just one space is enough to separate the columns in the test!
-    val expected =
-      """[H] [H] [H] [H]
-        |[H] [H] [H] [H]
-        | [H]
-        |""".stripMargin
+          RowLayout(f1Cards, f2Cards)
+        }
 
-    normalizeSpacing(panel.draw) should be(normalizeSpacing(expected))
+  "multiColumnFieldsPanel" should "correctly align fields with 4 and 5 cards" in:
+    val panel = SimplePanels.multiColumnFieldsPanel(4, 5)
 
-  it should "handle cases where Field 1 has more rows than Field 2" in :
-    val panel = loadField(5, 2)
+    val expected = List(
+      RowLayout(field1Cards = List("[H]", "[H]"), field2Cards = List("[H]", "[H]")),
+      RowLayout(field1Cards = List("[H]", "[H]"), field2Cards = List("[H]", "[H]")),
+      RowLayout(field1Cards = List(),            field2Cards = List("[H]"))
+    )
 
-    // Just one space is enough to separate the columns in the test!
-    val expected =
-      """[H] [H] [H] [H]
-        |[H] [H]
-        |[H]
-        |""".stripMargin
+    parseLayout(panel.draw) should be(expected)
 
-    normalizeSpacing(panel.draw) should be(expected)
+  it should "handle cases where Field 1 has more rows than Field 2" in:
+    val panel = SimplePanels.multiColumnFieldsPanel(5, 2)
 
-  it should "return an empty panel when both fields are empty" in :
-    val panel = loadField(0,0)
-    normalizeSpacing(panel.draw) should be("")
+    val expected = List(
+      RowLayout(field1Cards = List("[H]", "[H]"), field2Cards = List("[H]", "[H]")),
+      RowLayout(field1Cards = List("[H]", "[H]"), field2Cards = List()),
+      RowLayout(field1Cards = List("[H]"),        field2Cards = List())
+    )
 
-  it should "handle a completely empty Field 1 with an active Field 2" in :
-    val panel = loadField(0, 3)
-    // Just one space is enough to separate the columns in the test!
-    val expected =
-      """ [H] [H]
-        | [H]
-        |""".stripMargin
+    parseLayout(panel.draw) should be(expected)
 
-    normalizeSpacing(panel.draw) should be(expected)
+  it should "return an empty layout when both fields are empty" in:
+    val panel = SimplePanels.multiColumnFieldsPanel(0, 0)
 
-  it should "handle an active Field 1 with a completely empty Field 2" in :
-    val panel = loadField(3,0)
+    parseLayout(panel.draw) should be(Nil)
 
-    // Just one space is enough to separate the columns in the test!
-    val expected =
-      """[H] [H]
-        |[H]
-        |""".stripMargin
+  it should "handle a completely empty Field 1 with an active Field 2" in:
+    val panel = SimplePanels.multiColumnFieldsPanel(0, 3)
 
-    normalizeSpacing(panel.draw) should be(expected)
+    val expected = List(
+      RowLayout(field1Cards = List(), field2Cards = List("[H]", "[H]")),
+      RowLayout(field1Cards = List(), field2Cards = List("[H]"))
+    )
+
+    parseLayout(panel.draw) should be(expected)
+
+  it should "handle an active Field 1 with a completely empty Field 2" in:
+    val panel = SimplePanels.multiColumnFieldsPanel(3, 0)
+
+    val expected = List(
+      RowLayout(field1Cards = List("[H]", "[H]"), field2Cards = List()),
+      RowLayout(field1Cards = List("[H]"),        field2Cards = List())
+    )
+
+    parseLayout(panel.draw) should be(expected)
