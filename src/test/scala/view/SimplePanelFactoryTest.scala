@@ -1,4 +1,5 @@
-package org.pps.functus.view
+package org.pps.functus
+package view
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -27,8 +28,8 @@ class SimplePanelFactoryTest extends AnyFlatSpec with Matchers:
           val f2Zone = if line.length > 15 then line.substring(15) else ""
 
           // extract only cards "[H]" ingoring spaces and tabulations
-          val f1Cards = "\\[H\\]".r.findAllIn(f1Zone).toList
-          val f2Cards = "\\[H\\]".r.findAllIn(f2Zone).toList
+          val f1Cards = "\\[H]".r.findAllIn(f1Zone).toList
+          val f2Cards = "\\[H]".r.findAllIn(f2Zone).toList
 
           RowLayout(f1Cards, f2Cards)
         }
