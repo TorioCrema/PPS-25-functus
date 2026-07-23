@@ -1,4 +1,5 @@
 package org.pps.functus
+package view
 
 import view.{Drawable, SimplePanel}
 
@@ -27,4 +28,4 @@ class SimplePanelTest extends AnyFlatSpec with Matchers:
 
   it should "join drawables" in:
     given Drawable[Int] = _.toString()
-    panelWithElem.draw should be(s"${firstElem}${panelWithElem.separator}${secondElem}${panelWithElem.separator}")
+    panelWithElem.draw should be(s"$firstElem${panelWithElem.separator}$secondElem${panelWithElem.separator}")

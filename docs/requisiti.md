@@ -17,7 +17,13 @@ una carta sul propio campo. Queste carte sono:
 - 7: permette al giocatore di osservare temporaneamente una delle proprie carte
 - 8: permette al giocatore di scambiare una propria carta per una carta dell'avversario, a scelta del giocatore, senza osservare nessuna delle due
 
-All'inizio del proprio turno, se e' presente una carta in cima alla pila degli scarti, il giocatore puo' scartare una delle proprie carte. Se questa carta non ha lo stesso valore della carta in cima alla pila, il giocatore dovra' mantenere la carta da lui scartata sul proprio campo, e, in aggiunta, pescare una carta e aggiungerla al proprio campo, senza guardarla. Se la carta scartata corrisponde in valore alla carta in cima alla pila, il giocatore non riceve alcun tipo di penalita' e la carta da lui scartata rimane in cima alla pila.
+All'inizio del proprio turno, se e' presente una carta in cima alla pila degli scarti, il giocatore puo' scartare una
+delle proprie carte. Se questa carta non ha lo stesso valore della carta in cima alla pila, il giocatore dovra'
+mantenere la carta da lui scartata sul proprio campo, e, in aggiunta, pescare una carta e aggiungerla al proprio campo,
+senza guardarla. Se la carta scartata corrisponde in valore alla carta in cima alla pila, il giocatore non riceve alcun
+tipo di penalita' e la carta da lui scartata rimane in cima alla pila.
+In aggiunta, all'inizio del proprio turno, se la carta in cima alla pila degli scarti e'
+un re, il giocatore puo' pescare quella carta invece che pescare dalla cima del mazzo.
 Nel caso in cui il mazzo termini, verra' mischiata la pila degli scarti e verra' utilizzata come mazzo.
 La partita termina quando, al termine del proprio turno, uno dei giocatori chiama "Cactus", questo sara' il suo ultimo turno e l'avversario giochera' un ultimo turno.
 Al termine della partita i giocatori svelano le proprie carte e aggiungono il valore delle proprie carte al proprio punteggio. Il valore delle carte corrisponde al loro numero, partendo dall'asso
@@ -56,9 +62,9 @@ Da cui si rilevano i seguenti elementi principali:
   - Gestione dello shuffle: riordinare le carte in maniera randomica, e rimpiazzare le carte dalla pila degli scarti alla pila di pesca
 
 - **RFS03 Gestione del turno**
-  - Gestione dell'azione di scarto a inizio turno 
+  - Gestione dell'azione di scarto a inizio turno
   - Gestione dell'eventuale penalita' derivata dallo scarto
-  - Gestione della pesca delle carte e eventuali effetti
+  - Gestione della pesca delle carte (dal mazzo o dagli scarti nel caso di un re) e eventuali effetti
   - Gestione della sostituzione delle carte sul campo
   - Gestione della chiamata "Cactus"
 
