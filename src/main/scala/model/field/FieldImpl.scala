@@ -3,7 +3,7 @@ package model.field
 
 import model.deck.card.Card
 
-case class FieldImpl(private val cards: Vector[Card] = Vector.empty) extends Field:
+case class FieldImpl(cards: Vector[Card] = Vector.empty) extends Field:
 
   override def length: Int = cards.length
 
