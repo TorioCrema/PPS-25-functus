@@ -44,14 +44,13 @@ sealed trait Board:
     */
   def getTopDiscardStack: Card
 
-  /** Method for the rule for handling a King played on the discard pile
+  /** Replaces the selected card in the player's field with the King on top of the discard pile, removing the King from
+    * the discard pile. This method can only be used when the top card of the discard pile is a King.
     *
     * @param player
     *   the player that is replacing the card
-    *
     * @param cardIndex
     *   index used to identify the card that will be replaced
-    *
     * @return
     *   the updated board
     */
