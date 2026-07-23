@@ -44,17 +44,18 @@ sealed trait Board:
     */
   def getTopDiscardStack: Card
 
-  /** Getter for the card on top of the discard stack if the card it's a king
+  /** Method for the rule for handling a King played on the discard pile
     *
     * @param player
     *   the player that is replacing the card
     *
     * @param cardIndex
     *   index used to identify the card that will be replaced
+    *
     * @return
     *   the updated board
     */
-  def getKingTopDiscardStack(player: Player, cardIndex: Int): Board
+  def kingTopDiscardStack(player: Player, cardIndex: Int): Board
 
   /** Getter for a player's field
     * @param player
@@ -87,7 +88,7 @@ final case class BoardImpl(
 
   override def getTopDiscardStack: Card = discardPile.head
 
-  override def getKingTopDiscardStack(player: Player, cardIndex: Int): BoardImpl =
+  override def kingTopDiscardStack(player: Player, cardIndex: Int): BoardImpl =
     checkKingTopDiscardStack()
     val king = getTopDiscardStack
     copy(discardPile = this.discardPile.tail).replace(player, cardIndex, king)

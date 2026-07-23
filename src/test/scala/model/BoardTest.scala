@@ -84,7 +84,7 @@ class BoardTest extends AnyFlatSpec with Matchers:
       discardPile = List(king),
       players = Map(Player1 -> field)
     )
-    val newBoard = boardWithKing.getKingTopDiscardStack(Player1, 0)
+    val newBoard = boardWithKing.kingTopDiscardStack(Player1, 0)
     newBoard.getField(Player1).getCard(0)._1 shouldBe king
     newBoard.discardPile should contain(card1)
     newBoard.discardPile should not contain king
@@ -97,7 +97,7 @@ class BoardTest extends AnyFlatSpec with Matchers:
       discardPile = List(king, card3),
       players = Map(Player1 -> field)
     )
-    val newBoard = boardWithKing.getKingTopDiscardStack(Player1, 0)
+    val newBoard = boardWithKing.kingTopDiscardStack(Player1, 0)
     newBoard.discardPile should contain(card3)
 
   it should "throw IllegalStateException when top of discard pile is not a king" in:
@@ -107,4 +107,4 @@ class BoardTest extends AnyFlatSpec with Matchers:
       discardPile = List(card1),
       players = Map(Player1 -> field)
     )
-    an[IllegalStateException] should be thrownBy boardNoKing.getKingTopDiscardStack(Player1, 0)
+    an[IllegalStateException] should be thrownBy boardNoKing.kingTopDiscardStack(Player1, 0)
