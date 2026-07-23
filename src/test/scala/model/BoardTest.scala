@@ -7,7 +7,7 @@ import model.deck.DeckImpl
 import model.deck.card.CardImpl
 import model.deck.card.Suit.Swords
 
-import org.pps.functus.model.field.FieldImpl
+import model.field.FieldImpl
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -57,6 +57,16 @@ class BoardTest extends AnyFlatSpec with Matchers:
     val newBoard = boardWithPlayer.replace(Player1, 0, card3)
     newBoard.getField(Player1).getCard(0)._1 shouldBe card3
     newBoard.discardPile should contain(card1)
+
+  it should "let you take a card from a player field" in:
+    val field = FieldImpl(Vector(card1, card2))
+    val boardWithPlayer = BoardImpl(
+      deck = DeckImpl(Vector(card1, card2)),
+      players = Map(Player1 -> field)
+    )
+    val newBoard = boardWithPlayer.drawPlayerCard(Player1, 0)
+    newBoard._1 should be(card1)
+    newBoard._2.getField(Player1).length should be(1)
 
   "A board with empty deck" should "shuffle the discard pile" in:
     val boardEmptyDeck = BoardImpl(
