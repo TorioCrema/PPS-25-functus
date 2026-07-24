@@ -78,6 +78,19 @@ sealed trait Board:
     */
   def drawPlayerCard(player: Player, index: Int): (Card, Board)
 
+  /** Places a new card into a player's field
+    *
+    * @param card
+    *   the card that will be added
+    * @param player
+    *   the player to which the field belongs to
+    * @param index
+    *   the index to identify the card that will be added
+    * @return
+    *   the updated board
+    */
+  def placeCardInField(card: Card, player: Player, index: Int): Board
+
 final case class BoardImpl(
     deck: Deck = DeckFactory(),
     discardPile: List[Card] = List.empty,
@@ -111,6 +124,9 @@ final case class BoardImpl(
   override def drawPlayerCard(player: Player, index: Int): (Card, Board) =
     val drawnCard = getField(player).getCard(index)
     (drawnCard._1, this.copy(players = players.updated(player, drawnCard._2)))
+
+  override def placeCardInField(card: Card, player: Player, index: Int): Board =
+    copy(players = players.updated(player, players(player).addCard(card)))
 
   private def checkDeck(): BoardImpl =
     if this.deck.cards.isEmpty then copy(deck = DeckImpl(discardPile.toVector).shuffle(), discardPile = Nil) else this

@@ -120,6 +120,21 @@ class BoardTest extends AnyFlatSpec with Matchers:
     )
     an[IllegalStateException] should be thrownBy boardNoKing.kingTopDiscardStack(Player1, 0)
 
+  it should "place a card in a player field" in:
+    val boardWithPlayer = CustomBoard(List(FieldImpl(), FieldImpl()))
+    val newBoard = boardWithPlayer.placeCardInField(card1, Player1, 0)
+    newBoard.getField(Player1).cardsList should contain(card1)
+
+  it should "not affect other players field when placing a card" in:
+    val boardWithPlayer = CustomBoard(List(FieldImpl(), FieldImpl()))
+    val newBoard = boardWithPlayer.placeCardInField(card1, Player1, 0)
+    newBoard.getField(Player2).cardsList shouldBe List.empty
+
+  it should "not modify the original board after placing a card" in:
+    val boardWithPlayer = CustomBoard(List(FieldImpl(), FieldImpl()))
+    boardWithPlayer.placeCardInField(card1, Player1, 0)
+    boardWithPlayer.getField(Player1).cardsList shouldBe List.empty
+
   "A CustomBoard" should "create a board with the given fields" in:
     val field1 = FieldImpl(Vector(card1, card2))
     val field2 = FieldImpl(Vector(card3))
