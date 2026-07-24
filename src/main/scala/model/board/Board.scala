@@ -5,17 +5,16 @@ import model.deck.card.Card
 import model.field.Field
 import model.deck.{Deck, DeckFactory, DeckImpl}
 
-import org.pps.functus.model.board.Player.{Player1, Player2}
-
 enum Player:
   case Player1, Player2
+
+  def other: Player = this match
+    case Player1 => Player2
+    case _       => Player1
 
 /** Board interface
   */
 sealed trait Board:
-
-  /** Updates the next player to play. */
-  def nextPlayer: Board
 
   /** Draws the card on top of the draw stack.
     * @return
@@ -82,11 +81,8 @@ sealed trait Board:
 final case class BoardImpl(
     deck: Deck = DeckFactory(),
     discardPile: List[Card] = List.empty,
-    players: Map[Player, Field] = Map.empty,
-    turn: Player = Player1
+    players: Map[Player, Field] = Map.empty
 ) extends Board:
-
-  override def nextPlayer: Board = copy(turn = if turn == Player1 then Player2 else Player1)
 
   override def draw: (Card, BoardImpl) =
     checkDeckAndDiscardPile()
