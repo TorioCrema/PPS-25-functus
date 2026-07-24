@@ -105,7 +105,7 @@ final case class BoardImpl(
   override def getField(player: Player): Field = players(player)
 
   override def drawPlayerCard(player: Player, index: Int): (Card, Board) =
-    val drawnCard = this.getField(player).getCard(index)
+    val drawnCard = getField(player).getCard(index)
     (drawnCard._1, this.copy(players = players.updated(player, drawnCard._2)))
 
   private def checkDeck(): BoardImpl =

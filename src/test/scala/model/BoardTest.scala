@@ -6,8 +6,9 @@ import board.Player.{Player1, Player2}
 import model.deck.DeckImpl
 import model.deck.card.CardImpl
 import model.deck.card.Suit.Swords
-
 import model.field.FieldImpl
+import model.board.BoardFactory.CustomBoard
+
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -118,3 +119,14 @@ class BoardTest extends AnyFlatSpec with Matchers:
       players = Map(Player1 -> field)
     )
     an[IllegalStateException] should be thrownBy boardNoKing.kingTopDiscardStack(Player1, 0)
+
+  "A CustomBoard" should "create a board with the given fields" in:
+    val field1 = FieldImpl(Vector(card1, card2))
+    val field2 = FieldImpl(Vector(card3))
+    val board = CustomBoard(List(field1, field2))
+    board.getField(Player1) shouldBe field1
+    board.getField(Player2) shouldBe field2
+
+  it should "throw IllegalArgumentException when players list has wrong size" in:
+    val field1 = FieldImpl(Vector(card1))
+    an[IllegalArgumentException] should be thrownBy CustomBoard(List(field1))
