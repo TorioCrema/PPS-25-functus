@@ -5,6 +5,8 @@ import model.deck.card.Card
 import model.field.Field
 import model.deck.{Deck, DeckFactory, DeckImpl}
 
+import org.pps.functus.model.board.Player.{Player1, Player2}
+
 enum Player:
   case Player1, Player2
 
@@ -12,11 +14,14 @@ enum Player:
   */
 sealed trait Board:
 
+  /** Updates the next player to play. */
+  def nextPlayer: Board
+
   /** Draws the card on top of the draw stack.
     * @return
     *   the updated board
     */
-  def draw(): (Card, Board)
+  def draw: (Card, Board)
 
   /** Discards a card on top of the discard stack.
     * @param card
@@ -77,10 +82,13 @@ sealed trait Board:
 final case class BoardImpl(
     deck: Deck = DeckFactory(),
     discardPile: List[Card] = List.empty,
-    players: Map[Player, Field] = Map.empty
+    players: Map[Player, Field] = Map.empty,
+    turn: Player = Player1
 ) extends Board:
 
-  override def draw(): (Card, BoardImpl) =
+  override def nextPlayer: Board = copy(turn = if turn == Player1 then Player2 else Player1)
+
+  override def draw: (Card, BoardImpl) =
     checkDeckAndDiscardPile()
     val checked = checkDeck()
     val draw = checked.deck.draw()

@@ -26,7 +26,7 @@ object BoardFactory:
   private def init(players: List[Player], cardsPerPlayer: Int, board: Board): Board =
     players.foldLeft(board) { (board1, player) =>
       (0 until cardsPerPlayer).foldLeft(board1) { (b, index) =>
-        val (card, newBoard) = b.draw()
+        val (card, newBoard) = b.draw
         newBoard.replace(player, index, card)
       }
     }
