@@ -17,6 +17,8 @@ case class FieldImpl(cards: Vector[Card] = Vector.empty) extends Field:
     checkIndex(index)
     (cards(index), copy(cards.patch(index, Nil, 1)))
 
+  override def cardsList: List[Card] = cards.toList
+
   private def checkIndex(index: Int): Unit =
     if index < 0 || index >= cards.length then
       throw IndexOutOfBoundsException(s"Index $index is out of bounds for field of length ${cards.length}")
