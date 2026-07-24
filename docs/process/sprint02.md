@@ -70,14 +70,15 @@ La scadenza della sprint e' il 27/07/26.
         <td>Board</td>
         <td>Luca</td>
         <td></td>
-        <td></td>
+        <td>8</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Card/Field/Board DSL</td>
         <td>Simone, Luca</td>
         <td></td>
-        <td></td>
         <td>5</td>
+        <td>2</td>
         </tr>
         <tr>
         <td>Card View</td>
@@ -102,15 +103,15 @@ La scadenza della sprint e' il 27/07/26.
         <td rowspan="3">Turno</td>
         <td rowspan="3">Come utente, voglio poter eseguire il mio turno, secondo le azioni disponibili</td>
         <td>Turn</td>
+        <td>Simone</td>
         <td></td>
-        <td></td>
-        <td></td>
+        <td>5</td>
         </tr>
         <tr>
         <td>Actions</td>
         <td>Simone</td>
         <td></td>
-        <td></td>
+        <td>5</td>
         </tr>
         <tr>
         <td>Input Utente</td>
