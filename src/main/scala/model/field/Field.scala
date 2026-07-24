@@ -3,14 +3,43 @@ package model.field
 
 import model.deck.card.Card
 
+/** Represents a player's hand of cards on the game board. */
 sealed trait Field():
 
+  /** Returns the number of cards currently in the field. */
   def length: Int
 
+  /** Replaces the card at the given index with a new card.
+    *
+    * @param index
+    *   the position of the card to replace
+    * @param card
+    *   the new card to place at the given index
+    * @return
+    *   a tuple of the replaced card and the updated field
+    * @throws IndexOutOfBoundsException
+    *   if the index is out of bounds
+    */
   def replace(index: Int, card: Card): (Card, Field)
 
+  /** Adds a card to the end of the field.
+    *
+    * @param card
+    *   the card to add
+    * @return
+    *   the updated field
+    */
   def addCard(card: Card): Field
 
+  /** Removes and returns the card at the given index.
+    *
+    * @param index
+    *   the position of the card to draw
+    * @return
+    *   a tuple of the drawn card and the updated field
+    * @throws IndexOutOfBoundsException
+    *   if the index is out of bounds
+    */
   def getCard(index: Int): (Card, Field)
 
 final case class FieldImpl(cards: Vector[Card] = Vector.empty) extends Field:
