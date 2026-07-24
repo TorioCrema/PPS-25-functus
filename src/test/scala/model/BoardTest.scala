@@ -41,6 +41,14 @@ class BoardTest extends AnyFlatSpec with Matchers:
     val (secondCard, _) = boardAfterFirst.draw
     firstCard should not be secondCard
 
+  it should "switch turn from Player1 to Player2" in:
+    val newBoard = board.nextPlayer
+    newBoard.asInstanceOf[BoardImpl].turn shouldBe Player2
+
+  it should "switch turn from Player2 back to Player1" in:
+    val newBoard = board.nextPlayer.nextPlayer
+    newBoard.asInstanceOf[BoardImpl].turn shouldBe Player1
+
   it should "add a card to the discard pile" in:
     val newBoard = board.discard(card1)
     newBoard.discardPile should contain(card1)
