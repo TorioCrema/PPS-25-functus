@@ -12,7 +12,7 @@ lazy val root = (project in file("."))
     libraryDependencies += "org.jline" % "jline" % "4.3.1",
 
     // Specifica il Main da eseguire all'avvio del .jar
-    assembly / mainClass := Some("main"),
+    assembly / mainClass := Some("org.pps.functus.Main"),
     // Nome del file jar generato
     assembly / assemblyJarName := "Functus.jar"
   )
