@@ -5,13 +5,34 @@ import model.deck.card.Card
 
 import scala.annotation.tailrec
 
+/** Represents a deck of cards. */
 sealed trait Deck:
+  /** The cards currently in the deck. */
   val cards: Vector[Card]
 
+  /** Draws the top card from the deck.
+    *
+    * @return
+    *   a tuple of the drawn card and the updated deck
+    * @throws NoSuchElementException
+    *   if the deck is empty
+    */
   def draw(): (Card, Deck)
+
+  /** Returns a new deck with the same cards in a randomly shuffled order.
+    *
+    * @return
+    *   a new shuffled deck
+    */
   def shuffle(): Deck
 
+/** A concrete implementation of [[Deck]] backed by a [[Vector]] of cards.
+  *
+  * @param cards
+  *   the cards in this deck, ordered from top (index 0) to bottom
+  */
 final case class DeckImpl(cards: Vector[Card]) extends Deck:
+
   override def draw(): (Card, Deck) =
     val card = this.cards.head
     (card, DeckImpl(cards.tail))
