@@ -1,22 +1,22 @@
 package org.pps.functus
-package view
+package model
 
+import model.board.BoardFactory.{BoardWithPopulatedFields, CustomBoard}
+import model.board.Player.*
 import model.board.{BoardFactory, BoardImpl, Player}
+import model.deck.DeckImpl
+import model.deck.card.Card
+import model.deck.card.Suit.*
+import model.deck.sugar.CardDSL.*
+import model.deck.sugar.FieldDSL.{*, given}
 import model.turn.Action.*
 import model.turn.Turns.*
-import model.deck.sugar.CardDSL.*
-import model.deck.sugar.FieldDSL.*
-import model.deck.sugar.FieldDSL.given
-import model.board.Player.*
-import model.deck.card.Suit.*
-import model.deck.card.Card
 
-import org.pps.functus.model.board.BoardFactory.{BoardWithPopulatedFields, CustomBoard}
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class TurnTest extends AnyFlatSpec with Matchers:
+class FirstTurnTest extends AnyFlatSpec with Matchers:
   private val threeOfCups = three of Cups
   private val twoOfSwords = two of Swords
   private val fiveOfWands = five of Wands
@@ -49,15 +49,3 @@ class TurnTest extends AnyFlatSpec with Matchers:
     val afterConfirm = afterObserve.act(Confirm)
     afterConfirm.board should be(startingBoard)
     afterConfirm.actions should be(List(EndTurn))
-
-  "SimpleTurn" should "have draw as next action if top of discard stack is empty" in:
-    val startingBoard = CustomBoard(List(player1Field, player2Field))
-    SimpleTurn(startingBoard, Player1).actions should be(List(Draw))
-
-  it should "have draw and draw king as next actions if top of discard stack is a king" in:
-    val startingBoard = BoardImpl(discardPile = List(king of Swords))
-    SimpleTurn(startingBoard, Player1).actions should be(List(Draw, DrawKing))
-
-  it should "have draw and discard as next actions discard stack isn't empty and top isn't a king" in:
-    val startingBoard = BoardImpl(discardPile = List(five of Wands))
-    SimpleTurn(startingBoard, Player1).actions should be(List(Draw, Discard(Option.empty)))
