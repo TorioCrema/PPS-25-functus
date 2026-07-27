@@ -9,6 +9,7 @@ sealed trait Field():
   /** Returns the number of cards currently in the field. */
   def length: Int
 
+  /** Returns all cards in the field as a list. */
   def cardsList: List[Card]
 
   /** Replaces the card at the given index with a new card.
@@ -33,6 +34,17 @@ sealed trait Field():
     */
   def addCard(card: Card): Field
 
+  /** Inserts a card at the given index, shifting subsequent cards to the right.
+    *
+    * @param card
+    *   the card to insert
+    * @param index
+    *   the position at which to insert the card
+    * @return
+    *   the updated field
+    * @throws IndexOutOfBoundsException
+    *   if the index is out of bounds
+    */
   def addCardAtIndex(card: Card, index: Int): Field
 
   /** Removes and returns the card at the given index.
@@ -46,6 +58,11 @@ sealed trait Field():
     */
   def getCard(index: Int): (Card, Field)
 
+/** A concrete implementation of [[Field]] backed by a [[Vector]] of cards.
+  *
+  * @param cards
+  *   the internal vector holding the cards; defaults to an empty vector
+  */
 final case class FieldImpl(cards: Vector[Card] = Vector.empty) extends Field:
 
   override def length: Int = cards.length
