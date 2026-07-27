@@ -22,3 +22,8 @@ case class FieldImpl(cards: Vector[Card] = Vector.empty) extends Field:
   private def checkIndex(index: Int): Unit =
     if index < 0 || index >= cards.length then
       throw IndexOutOfBoundsException(s"Index $index is out of bounds for field of length ${cards.length}")
+
+  override def addCardAtIndex(card: Card, index: Int): Field =
+    checkIndex(index)
+    val (before, after) = cards.splitAt(index)
+    copy(before ++ Vector(card) ++ after)

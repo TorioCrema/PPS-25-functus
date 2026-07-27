@@ -13,4 +13,6 @@ trait Field():
 
   def addCard(card: Card): Field
 
+  def addCardAtIndex(card: Card, index: Int): Field
+
   def getCard(index: Int): (Card, Field)

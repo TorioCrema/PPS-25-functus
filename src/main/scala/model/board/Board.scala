@@ -16,6 +16,11 @@ enum Player:
   */
 sealed trait Board:
 
+  /** The pile of cards that have been discarded during the game. The head of the list represents the top of the pile
+    * (most recently discarded card).
+    */
+  val discardPile: List[Card]
+
   /** Draws the card on top of the draw stack.
     * @return
     *   the updated board
@@ -89,7 +94,7 @@ sealed trait Board:
     * @return
     *   the updated board
     */
-  def placeCardInField(card: Card, player: Player, index: Int): Board
+  def placeCardInField(card: Card, player: Player, index: Option[Int]): Board
 
 final case class BoardImpl(
     deck: Deck = DeckFactory(),
@@ -125,8 +130,10 @@ final case class BoardImpl(
     val drawnCard = getField(player).getCard(index)
     (drawnCard._1, this.copy(players = players.updated(player, drawnCard._2)))
 
-  override def placeCardInField(card: Card, player: Player, index: Int): Board =
-    copy(players = players.updated(player, players(player).addCard(card)))
+  def placeCardInField(card: Card, player: Player, index: Option[Int]): Board =
+    index match
+      case Some(i) => copy(players = players.updated(player, players(player).addCardAtIndex(card, i)))
+      case _       => copy(players = players.updated(player, players(player).addCard(card)))
 
   private def checkDeck(): BoardImpl =
     if this.deck.cards.isEmpty then copy(deck = DeckImpl(discardPile.toVector).shuffle(), discardPile = Nil) else this

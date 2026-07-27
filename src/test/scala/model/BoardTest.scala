@@ -122,25 +122,26 @@ class BoardTest extends AnyFlatSpec with Matchers:
 
   it should "place a card in a player field" in:
     val boardWithPlayer = CustomBoard(List(FieldImpl(), FieldImpl()))
-    val newBoard = boardWithPlayer.placeCardInField(card1, Player1, 0)
+    val newBoard = boardWithPlayer.placeCardInField(card1, Player1, Option.empty)
     newBoard.getField(Player1).cardsList should contain(card1)
 
   it should "not affect other players field when placing a card" in:
     val boardWithPlayer = CustomBoard(List(FieldImpl(), FieldImpl()))
-    val newBoard = boardWithPlayer.placeCardInField(card1, Player1, 0)
-    newBoard.getField(Player2).cardsList shouldBe List.empty
+    val newBoard = boardWithPlayer.placeCardInField(card1, Player1, Option.empty)
+    newBoard.getField(Player2).cardsList should be(List.empty)
 
-  it should "not modify the original board after placing a card" in:
-    val boardWithPlayer = CustomBoard(List(FieldImpl(), FieldImpl()))
-    boardWithPlayer.placeCardInField(card1, Player1, 0)
-    boardWithPlayer.getField(Player1).cardsList shouldBe List.empty
+  it should "place a card at a specific index between existing cards" in:
+    val field = FieldImpl().addCard(card1).addCard(card2).addCard(card3)
+    val boardWithPlayer = CustomBoard(List(field, FieldImpl()))
+    val newBoard = boardWithPlayer.placeCardInField(CardImpl(4, Swords), Player1, Option(1))
+    newBoard.getField(Player1).cardsList should be(List(card1, CardImpl(4, Swords), card2, card3))
 
   "A CustomBoard" should "create a board with the given fields" in:
     val field1 = FieldImpl(Vector(card1, card2))
     val field2 = FieldImpl(Vector(card3))
     val board = CustomBoard(List(field1, field2))
-    board.getField(Player1) shouldBe field1
-    board.getField(Player2) shouldBe field2
+    board.getField(Player1) should be(field1)
+    board.getField(Player2) should be(field2)
 
   it should "throw IllegalArgumentException when players list has wrong size" in:
     val field1 = FieldImpl(Vector(card1))
