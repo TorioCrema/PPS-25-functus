@@ -1,7 +1,7 @@
 package org.pps.functus
 package controller
 
-import model.deck.card.CardImpl
+import model.deck.card.{CardImpl, Suit}
 import view.{Action, CLIView, GameState, InputMode, Key}
 import model.deck.card.Suit.*
 
@@ -13,8 +13,18 @@ class GameController(private val view: CLIView):
   )
 
   private var state: GameState = GameState(
-    adversaryCard = List(None, None, None, None),
-    playerCard = List(None, None, None, None),
+    adversaryCard = List(
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None
+    ),
+    playerCard = List(None, None, None, None, None),
     remainingCardInDeck = 38,
     lastDiscardedCard = Some(CardImpl(1, Swords)),
     cardsInHand = List(None),
@@ -56,7 +66,7 @@ class GameController(private val view: CLIView):
         val delta = if direction == "LEFT" then -1 else if direction == "RIGHT" then 1 else 0
         if delta != 0 then
           val newIndex = (state.selectedCardOnBoard + delta + numCard) % numCard
-          state = state.copy(selectedCardOnBoard = newIndex)
+          state = state.copy(selectedCardOnBoard = newIndex, lastChangedPlayerCard = Some(newIndex))
 
   private def confirmAction(): Unit =
     state.inputMode match
@@ -102,12 +112,11 @@ class GameController(private val view: CLIView):
             case _ => ()
 
       case InputMode.SelectCardOnBoard =>
-        val cardToBeReplaced = state.playerCard(state.selectedCardOnBoard)
+        val cardToBeReplaced = CardImpl(10, Suit.Pentacles)
         val newCard = state.playerCard.updated(state.selectedCardOnBoard, state.cardsInHand.head)
 
         state = state.copy(
-          playerCard = newCard,
-          lastDiscardedCard = cardToBeReplaced.orElse(state.cardsInHand.head),
+          lastDiscardedCard = Some(cardToBeReplaced),
           cardsInHand = Nil,
           possibleAction = INITIAL_ACTION,
           inputMode = InputMode.ActionMenu,

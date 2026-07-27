@@ -8,7 +8,7 @@ import view.InputMode.ActionMenu
   * @param adversaryCard
   *   The list of Cards of the opponent
   * @param playerCard
-  *   The list of Cards of the palyer
+  *   The list of Cards of the player
   * @param remainingCardInDeck
   *   the number of card remaining on the deck
   * @param lastDiscardedCard
@@ -20,9 +20,11 @@ import view.InputMode.ActionMenu
   * @param inputMode
   *   the modality in which the game actualy is,
   * @param selectedAction
-  *   the index of the action the palyer is hovering
+  *   the index of the action the player is hovering
   * @param selectedCardOnBoard
   *   the index of the card the player is overing
+ *  @param lastChangedPlayerCard
+ *    the Index of the last card exchanged on the board by the player 
   */
 case class GameState(
     adversaryCard: List[Option[Card]],
@@ -33,5 +35,6 @@ case class GameState(
     possibleAction: List[Action],
     inputMode: InputMode = ActionMenu,
     selectedAction: Int = 0,
-    selectedCardOnBoard: Int = 0
+    selectedCardOnBoard: Int = 0,
+    lastChangedPlayerCard: Option[Int] = None
 )
