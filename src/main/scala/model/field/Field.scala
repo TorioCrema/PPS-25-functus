@@ -9,6 +9,8 @@ sealed trait Field():
   /** Returns the number of cards currently in the field. */
   def length: Int
 
+  def cardsList: List[Card]
+
   /** Replaces the card at the given index with a new card.
     *
     * @param index
@@ -31,6 +33,8 @@ sealed trait Field():
     */
   def addCard(card: Card): Field
 
+  def addCardAtIndex(card: Card, index: Int): Field
+
   /** Removes and returns the card at the given index.
     *
     * @param index
@@ -46,6 +50,8 @@ final case class FieldImpl(cards: Vector[Card] = Vector.empty) extends Field:
 
   override def length: Int = cards.length
 
+  override def cardsList: List[Card] = cards.toList
+
   override def replace(index: Int, card: Card): (Card, Field) =
     checkIndex(index)
     (cards(index), copy(cards.updated(index, card)))
@@ -55,6 +61,11 @@ final case class FieldImpl(cards: Vector[Card] = Vector.empty) extends Field:
   override def getCard(index: Int): (Card, Field) =
     checkIndex(index)
     (cards(index), copy(cards.patch(index, Nil, 1)))
+
+  override def addCardAtIndex(card: Card, index: Int): Field =
+    checkIndex(index)
+    val (before, after) = cards.splitAt(index)
+    copy(before ++ Vector(card) ++ after)
 
   private def checkIndex(index: Int): Unit =
     if index < 0 || index >= cards.length then

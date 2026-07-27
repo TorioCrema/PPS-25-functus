@@ -32,6 +32,22 @@ class FieldTest extends AnyFlatSpec with Matchers:
     field.length should be(1)
     field.getCard(0)._1 should be(card)
 
+  it should "return an empty list for a new field" in:
+    FieldImpl().cardsList should be(List.empty)
+
+  it should "return a list with one card after adding a card" in:
+    val field = FieldImpl().addCard(card)
+    field.cardsList should be(List(card))
+
+  it should "return cards in the same order they were added" in:
+    val field = FieldImpl().addCard(first).addCard(second)
+    field.cardsList should be(List(first, second))
+
+  it should "reflect changes after replace in cardsList" in:
+    val field = FieldImpl().addCard(first)
+    val (_, updatedField) = field.replace(0, second)
+    updatedField.cardsList should be(List(second))
+
   it should "maintain card order when adding multiple cards" in:
     val field = FieldImpl().addCard(first).addCard(second)
     field.length should be(2)

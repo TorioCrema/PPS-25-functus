@@ -26,19 +26,19 @@ class BoardTest extends AnyFlatSpec with Matchers:
 
   it should "throw IllegalStateException when drawing from empty deck and discard pile" in:
     val emptyBoard = BoardImpl(deck = DeckImpl(Vector.empty), discardPile = Nil)
-    an[IllegalStateException] should be thrownBy emptyBoard.draw()
+    an[IllegalStateException] should be thrownBy emptyBoard.draw
 
   "A board" should "let you draw a card" in:
-    val (card, _) = board.draw()
+    val (card, _) = board.draw
     card shouldBe card1
 
   it should "reduce the deck by one card after draw" in:
-    val (_, newBoard) = board.draw()
+    val (_, newBoard) = board.draw
     newBoard.deck.cards.size shouldBe 1
 
   it should "return different cards on consecutive draws" in:
-    val (firstCard, boardAfterFirst) = board.draw()
-    val (secondCard, _) = boardAfterFirst.draw()
+    val (firstCard, boardAfterFirst) = board.draw
+    val (secondCard, _) = boardAfterFirst.draw
     firstCard should not be secondCard
 
   it should "add a card to the discard pile" in:
@@ -74,7 +74,7 @@ class BoardTest extends AnyFlatSpec with Matchers:
       deck = DeckImpl(Vector.empty),
       discardPile = List(card1, card2, card3)
     )
-    val (_, newBoard) = boardEmptyDeck.draw()
+    val (_, newBoard) = boardEmptyDeck.draw
     val newBoardImpl = newBoard
     newBoardImpl.discardPile shouldBe Nil
     newBoardImpl.deck.cards.size shouldBe 2
@@ -84,7 +84,7 @@ class BoardTest extends AnyFlatSpec with Matchers:
       deck = DeckImpl(Vector.empty),
       discardPile = List(card1, card2, card3)
     )
-    val (card, _) = boardEmptyDeck.draw()
+    val (card, _) = boardEmptyDeck.draw
     List(card1, card2, card3) should contain(card)
 
   "A board with a king on top of discard pile" should "let you take the king and replace a card" in:
@@ -120,12 +120,28 @@ class BoardTest extends AnyFlatSpec with Matchers:
     )
     an[IllegalStateException] should be thrownBy boardNoKing.kingTopDiscardStack(Player1, 0)
 
+  it should "place a card in a player field" in:
+    val boardWithPlayer = CustomBoard(List(FieldImpl(), FieldImpl()))
+    val newBoard = boardWithPlayer.placeCardInField(card1, Player1, Option.empty)
+    newBoard.getField(Player1).cardsList should contain(card1)
+
+  it should "not affect other players field when placing a card" in:
+    val boardWithPlayer = CustomBoard(List(FieldImpl(), FieldImpl()))
+    val newBoard = boardWithPlayer.placeCardInField(card1, Player1, Option.empty)
+    newBoard.getField(Player2).cardsList should be(List.empty)
+
+  it should "place a card at a specific index between existing cards" in:
+    val field = FieldImpl().addCard(card1).addCard(card2).addCard(card3)
+    val boardWithPlayer = CustomBoard(List(field, FieldImpl()))
+    val newBoard = boardWithPlayer.placeCardInField(CardImpl(4, Swords), Player1, Option(1))
+    newBoard.getField(Player1).cardsList should be(List(card1, CardImpl(4, Swords), card2, card3))
+
   "A CustomBoard" should "create a board with the given fields" in:
     val field1 = FieldImpl(Vector(card1, card2))
     val field2 = FieldImpl(Vector(card3))
     val board = CustomBoard(List(field1, field2))
-    board.getField(Player1) shouldBe field1
-    board.getField(Player2) shouldBe field2
+    board.getField(Player1) should be(field1)
+    board.getField(Player2) should be(field2)
 
   it should "throw IllegalArgumentException when players list has wrong size" in:
     val field1 = FieldImpl(Vector(card1))

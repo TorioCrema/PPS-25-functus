@@ -12,17 +12,20 @@ class ActionTest extends AnyFlatSpec with Matchers:
   "Confirm action" should "have EndTurn as next action" in:
     Confirm.next should be(List(EndTurn))
 
-  "Draw action" should "have Replace and Activate as next actions" in:
-    Draw.next should be(List(Replace, Activate))
-
-  "Replace action" should "have Cactus and EndTurn as next actions" in:
-    Replace.next should be(List(Cactus, EndTurn))
+  "Draw action" should "have Activate as next actions" in:
+    Draw.next should be(List(Activate(Option.empty)))
 
   "Activate action" should "have Cactus and EndTurn as next actions" in:
-    Activate.next should be(List(Cactus, EndTurn))
+    Activate(Option.empty).next should be(List(Cactus, EndTurn))
 
   "Cactus action" should "have EndTurn as next action" in:
     Cactus.next should be(List(EndTurn))
 
   "EndTurn action" should "have no next actions" in:
     EndTurn.next should be(Nil)
+
+  "DrawKing" should "have Activate as next action" in:
+    DrawKing.next should be(List(Activate(Option.empty)))
+
+  "Discard" should "have Draw as next action" in:
+    Discard(Option.empty).next should be(List(Draw))

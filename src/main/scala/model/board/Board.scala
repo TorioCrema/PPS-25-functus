@@ -8,15 +8,24 @@ import model.deck.{Deck, DeckFactory, DeckImpl}
 enum Player:
   case Player1, Player2
 
+  def other: Player = this match
+    case Player1 => Player2
+    case _       => Player1
+
 /** Board interface
   */
 sealed trait Board:
+
+  /** The pile of cards that have been discarded during the game. The head of the list represents the top of the pile
+    * (most recently discarded card).
+    */
+  val discardPile: List[Card]
 
   /** Draws the card on top of the draw stack.
     * @return
     *   the updated board
     */
-  def draw(): (Card, Board)
+  def draw: (Card, Board)
 
   /** Discards a card on top of the discard stack.
     * @param card
@@ -74,13 +83,26 @@ sealed trait Board:
     */
   def drawPlayerCard(player: Player, index: Int): (Card, Board)
 
+  /** Places a new card into a player's field
+    *
+    * @param card
+    *   the card that will be added
+    * @param player
+    *   the player to which the field belongs to
+    * @param index
+    *   the index to identify the card that will be added
+    * @return
+    *   the updated board
+    */
+  def placeCardInField(card: Card, player: Player, index: Option[Int]): Board
+
 final case class BoardImpl(
     deck: Deck = DeckFactory(),
     discardPile: List[Card] = List.empty,
     players: Map[Player, Field] = Map.empty
 ) extends Board:
 
-  override def draw(): (Card, BoardImpl) =
+  override def draw: (Card, BoardImpl) =
     checkDeckAndDiscardPile()
     val checked = checkDeck()
     val draw = checked.deck.draw()
@@ -107,6 +129,11 @@ final case class BoardImpl(
   override def drawPlayerCard(player: Player, index: Int): (Card, Board) =
     val drawnCard = getField(player).getCard(index)
     (drawnCard._1, this.copy(players = players.updated(player, drawnCard._2)))
+
+  def placeCardInField(card: Card, player: Player, index: Option[Int]): Board =
+    index match
+      case Some(i) => copy(players = players.updated(player, players(player).addCardAtIndex(card, i)))
+      case _       => copy(players = players.updated(player, players(player).addCard(card)))
 
   private def checkDeck(): BoardImpl =
     if this.deck.cards.isEmpty then copy(deck = DeckImpl(discardPile.toVector).shuffle(), discardPile = Nil) else this
