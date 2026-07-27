@@ -27,6 +27,6 @@ object BoardFactory:
     players.foldLeft(board) { (board1, player) =>
       (0 until cardsPerPlayer).foldLeft(board1) { (b, index) =>
         val (card, newBoard) = b.draw
-        newBoard.replace(player, index, card)
+        newBoard.placeCardInField(card, player, Option.empty)
       }
     }
