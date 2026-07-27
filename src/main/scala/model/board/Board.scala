@@ -53,17 +53,8 @@ sealed trait Board:
     */
   def getTopDiscardStack: Card
 
-  /** Replaces the selected card in the player's field with the King on top of the discard pile, removing the King from
-    * the discard pile. This method can only be used when the top card of the discard pile is a King.
-    *
-    * @param player
-    *   the player that is replacing the card
-    * @param cardIndex
-    *   index used to identify the card that will be replaced
-    * @return
-    *   the updated board
-    */
-  def kingTopDiscardStack(player: Player, cardIndex: Int): Board
+  /** Returns the King on top of the discard pile and the updated Board with the King removed from the discard pile. */
+  def kingTopDiscardStack(): (Card, Board)
 
   /** Getter for a player's field
     * @param player
@@ -119,10 +110,9 @@ final case class BoardImpl(
 
   override def getTopDiscardStack: Card = discardPile.head
 
-  override def kingTopDiscardStack(player: Player, cardIndex: Int): BoardImpl =
+  override def kingTopDiscardStack(): (Card, BoardImpl) =
     checkKingTopDiscardStack()
-    val king = getTopDiscardStack
-    copy(discardPile = this.discardPile.tail).replace(player, cardIndex, king)
+    (getTopDiscardStack, copy(discardPile = this.discardPile.tail))
 
   override def getField(player: Player): Field = players(player)
 
