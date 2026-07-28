@@ -2,7 +2,8 @@ package org.pps.functus
 package model
 
 import model.field.{Field, FieldImpl}
-import model.deck.sugar.CardDSL.*
+import model.deck.sugar.CardDSL.{given, *}
+import model.deck.sugar.FieldDSL.{given, *}
 import model.deck.card.Suit.*
 import model.deck.card.Card
 
@@ -31,41 +32,41 @@ class FieldTest extends AnyFlatSpec with Matchers:
     field.cardsList should be(List(threeOfSwords))
 
   it should "preserve insertion order after multiple addCard calls" in:
-    val field = emptyField.addCard(threeOfSwords).addCard(twoOfCups).addCard(aceOfSwords)
+    val field: Field = threeOfSwords and twoOfCups and aceOfSwords
     field.length should be(3)
     field.cardsList should be(List(threeOfSwords, twoOfCups, aceOfSwords))
 
   "A non-empty Field" should "return the correct card from getCard" in:
-    val field = emptyField.addCard(threeOfSwords).addCard(twoOfCups)
-    field.getCard(0)._1 should be(threeOfSwords)
-    field.getCard(1)._1 should be(twoOfCups)
+    val field: Field = threeOfSwords and twoOfCups
+    (take the 0 from field)._1 should be(threeOfSwords)
+    (take the 1 from field)._1 should be(twoOfCups)
 
   it should "remove only the card at the given index after getCard" in:
-    val field = emptyField.addCard(threeOfSwords).addCard(twoOfCups).addCard(aceOfSwords)
-    val (card, updatedField) = field.getCard(1)
+    val field: Field = threeOfSwords and twoOfCups and aceOfSwords
+    val (card, updatedField) = take the 1 from field
     card should be(twoOfCups)
     updatedField.cardsList should be(List(threeOfSwords, aceOfSwords))
 
   it should "return the replaced card and update the field after replace" in:
-    val field = emptyField.addCard(threeOfSwords)
-    val (replaced, updatedField) = field.replace(0, twoOfCups)
+    val field: Field = threeOfSwords and twoOfCups
+    val (replaced, updatedField) = field.replace(0, aceOfSwords)
     replaced should be(threeOfSwords)
-    updatedField.length should be(1)
-    updatedField.cardsList should be(List(twoOfCups))
+    updatedField.length should be(2)
+    updatedField.cardsList should be(List(aceOfSwords, twoOfCups))
 
   it should "insert a card at index 0 shifting all others right" in:
-    val field = emptyField.addCard(threeOfSwords).addCard(twoOfCups)
+    val field: Field = threeOfSwords and twoOfCups
     val updatedField = field.addCardAtIndex(aceOfSwords, 0)
     updatedField.cardsList should be(List(aceOfSwords, threeOfSwords, twoOfCups))
 
   it should "insert a card at a middle index shifting subsequent cards right" in:
-    val field = emptyField.addCard(threeOfSwords).addCard(twoOfCups)
+    val field: Field = threeOfSwords and twoOfCups
     val updatedField = field.addCardAtIndex(aceOfSwords, 1)
     updatedField.length should be(3)
     updatedField.cardsList should be(List(threeOfSwords, aceOfSwords, twoOfCups))
 
   it should "insert a card at the last valid index" in:
-    val field = emptyField.addCard(threeOfSwords).addCard(twoOfCups)
+    val field: Field = threeOfSwords and twoOfCups
     val updatedField = field.addCardAtIndex(aceOfSwords, 1)
     updatedField.cardsList should be(List(threeOfSwords, aceOfSwords, twoOfCups))
 
@@ -79,25 +80,25 @@ class FieldTest extends AnyFlatSpec with Matchers:
     an[IndexOutOfBoundsException] should be thrownBy emptyField.addCardAtIndex(threeOfSwords, 0)
 
   it should "throw IndexOutOfBoundsException when replacing at an out-of-range index" in:
-    val field = emptyField.addCard(threeOfSwords)
-    an[IndexOutOfBoundsException] should be thrownBy field.replace(outOfRangeIndex, twoOfCups)
+    val field: Field = threeOfSwords and twoOfCups
+    an[IndexOutOfBoundsException] should be thrownBy field.replace(outOfRangeIndex, aceOfSwords)
 
   it should "throw IndexOutOfBoundsException when replacing at a negative index" in:
-    val field = emptyField.addCard(threeOfSwords)
-    an[IndexOutOfBoundsException] should be thrownBy field.replace(negativeIndex, twoOfCups)
+    val field: Field = threeOfSwords and twoOfCups
+    an[IndexOutOfBoundsException] should be thrownBy field.replace(negativeIndex, aceOfSwords)
 
   it should "throw IndexOutOfBoundsException when getting a card at an out-of-range index" in:
-    val field = emptyField.addCard(threeOfSwords)
-    an[IndexOutOfBoundsException] should be thrownBy field.getCard(outOfRangeIndex)
+    val field: Field = threeOfSwords and twoOfCups
+    an[IndexOutOfBoundsException] should be thrownBy (take the outOfRangeIndex from field)
 
   it should "throw IndexOutOfBoundsException when getting a card at a negative index" in:
-    val field = emptyField.addCard(threeOfSwords)
-    an[IndexOutOfBoundsException] should be thrownBy field.getCard(negativeIndex)
+    val field: Field = threeOfSwords and twoOfCups
+    an[IndexOutOfBoundsException] should be thrownBy (take the negativeIndex from field)
 
   it should "throw IndexOutOfBoundsException when addCardAtIndex at an out-of-range index" in:
-    val field = emptyField.addCard(threeOfSwords)
-    an[IndexOutOfBoundsException] should be thrownBy field.addCardAtIndex(twoOfCups, outOfRangeIndex)
+    val field: Field = threeOfSwords and twoOfCups
+    an[IndexOutOfBoundsException] should be thrownBy field.addCardAtIndex(aceOfSwords, outOfRangeIndex)
 
   it should "throw IndexOutOfBoundsException when addCardAtIndex at a negative index" in:
-    val field = emptyField.addCard(threeOfSwords)
-    an[IndexOutOfBoundsException] should be thrownBy field.addCardAtIndex(twoOfCups, negativeIndex)
+    val field: Field = threeOfSwords and twoOfCups
+    an[IndexOutOfBoundsException] should be thrownBy field.addCardAtIndex(aceOfSwords, negativeIndex)
