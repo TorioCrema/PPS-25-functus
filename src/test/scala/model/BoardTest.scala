@@ -1,11 +1,12 @@
 package org.pps.functus
 package model
 
-import model.board.BoardFactory.CustomBoard
+import model.deck.sugar.CardDSL.*
 import model.board.Player.{Player1, Player2}
+import model.board.BoardFactory.CustomBoard
 import model.board.{Board, BoardFactory}
-import model.deck.card.Suit.Swords
-import model.deck.card.CardImpl
+import model.deck.card.{Card, CardImpl}
+import model.deck.card.Suit.*
 import model.field.FieldImpl
 import model.deck.DeckImpl
 
@@ -14,14 +15,14 @@ import org.scalatest.matchers.should.Matchers
 
 class BoardTest extends AnyFlatSpec with Matchers:
 
-  val card1 = CardImpl(1, Swords)
-  val card2 = CardImpl(2, Swords)
-  val card3 = CardImpl(3, Swords)
+  def threeOfSwords: Card = three of Swords
+  def twoOfCups: Card = two of Cups
+  def aceOfSwords: Card = ace of Swords
 
-  val twoCardBoard: Board = CustomBoard(List(FieldImpl(), FieldImpl()), DeckImpl(Vector(card1, card2)))
+  val twoCardBoard: Board = CustomBoard(List(FieldImpl(), FieldImpl()), DeckImpl(Vector(threeOfSwords, twoOfCups)))
   val emptyFieldBoard: Board = CustomBoard(List(FieldImpl(), FieldImpl()))
   val populatedFieldBoard: Board = CustomBoard(
-    List(FieldImpl(Vector(card1, card2)), FieldImpl())
+    List(FieldImpl(Vector(threeOfSwords, twoOfCups)), FieldImpl())
   )
 
   "A new Board" should "have players with empty fields" in:
@@ -35,7 +36,7 @@ class BoardTest extends AnyFlatSpec with Matchers:
 
   "A board" should "let you draw a card" in:
     val (card, _) = twoCardBoard.draw
-    card should be(card1)
+    card should be(threeOfSwords)
 
   it should "reduce the deck by one card after draw" in:
     val (_, newBoard) = twoCardBoard.draw
@@ -47,28 +48,28 @@ class BoardTest extends AnyFlatSpec with Matchers:
     firstCard should not be secondCard
 
   it should "add a card to the discard pile" in:
-    val newBoard = twoCardBoard.discard(card1)
-    newBoard.discardPile should contain(card1)
+    val newBoard = twoCardBoard.discard(threeOfSwords)
+    newBoard.discardPile should contain(threeOfSwords)
 
   it should "have the most recently discarded card on top" in:
-    val boardAfterDiscard = twoCardBoard.discard(card1).discard(card2)
-    boardAfterDiscard.getTopDiscardStack should be(card2)
+    val boardAfterDiscard = twoCardBoard.discard(threeOfSwords).discard(twoOfCups)
+    boardAfterDiscard.getTopDiscardStack should be(twoOfCups)
 
   it should "replace a card in a player field and add the old card to discard pile" in:
-    val newBoard = populatedFieldBoard.replace(Player1, 0, card3)
-    newBoard.getField(Player1).getCard(0)._1 should be(card3)
-    newBoard.discardPile should contain(card1)
+    val newBoard = populatedFieldBoard.replace(Player1, 0, aceOfSwords)
+    newBoard.getField(Player1).getCard(0)._1 should be(aceOfSwords)
+    newBoard.discardPile should contain(threeOfSwords)
 
   it should "let you take a card from a player field" in:
     val (card, newBoard) = populatedFieldBoard.drawPlayerCard(Player1, 0)
-    card should be(card1)
+    card should be(threeOfSwords)
     newBoard.getField(Player1).length should be(1)
 
   "A board with empty deck" should "shuffle the discard pile" in:
     val board = CustomBoard(
       List(FieldImpl(), FieldImpl()),
       DeckImpl(Vector.empty)
-    ).discard(card1).discard(card2).discard(card3)
+    ).discard(threeOfSwords).discard(twoOfCups).discard(aceOfSwords)
     val (_, newBoard) = board.draw
     newBoard.discardPile should be(Nil)
     newBoard.deck.cards.size should be(2)
@@ -77,9 +78,9 @@ class BoardTest extends AnyFlatSpec with Matchers:
     val board = CustomBoard(
       List(FieldImpl(), FieldImpl()),
       DeckImpl(Vector.empty)
-    ).discard(card1).discard(card2).discard(card3)
+    ).discard(threeOfSwords).discard(twoOfCups).discard(aceOfSwords)
     val (card, _) = board.draw
-    List(card1, card2, card3) should contain(card)
+    List(threeOfSwords, twoOfCups, aceOfSwords) should contain(card)
 
   "A board with a king on top of discard pile" should "return the king and remove it from the discard pile" in:
     val king = CardImpl(0, Swords)
@@ -96,34 +97,34 @@ class BoardTest extends AnyFlatSpec with Matchers:
     val board = CustomBoard(
       List(FieldImpl(), FieldImpl()),
       DeckImpl(Vector.empty)
-    ).discard(card3).discard(king)
+    ).discard(aceOfSwords).discard(king)
     val (_, newBoard) = board.kingTopDiscardStack()
-    newBoard.discardPile should contain(card3)
+    newBoard.discardPile should contain(aceOfSwords)
 
   it should "throw IllegalStateException when top of discard pile is not a king" in:
     val board = CustomBoard(
       List(FieldImpl(), FieldImpl()),
       DeckImpl(Vector.empty)
-    ).discard(card1)
+    ).discard(threeOfSwords)
     an[IllegalStateException] should be thrownBy board.kingTopDiscardStack()
 
   it should "place a card in a player field" in:
-    val newBoard = emptyFieldBoard.placeCardInField(card1, Player1, Option.empty)
-    newBoard.getField(Player1).cardsList should contain(card1)
+    val newBoard = emptyFieldBoard.placeCardInField(threeOfSwords, Player1, Option.empty)
+    newBoard.getField(Player1).cardsList should contain(threeOfSwords)
 
   it should "not affect other players field when placing a card" in:
-    val newBoard = emptyFieldBoard.placeCardInField(card1, Player1, Option.empty)
+    val newBoard = emptyFieldBoard.placeCardInField(threeOfSwords, Player1, Option.empty)
     newBoard.getField(Player2).cardsList should be(List.empty)
 
   it should "place a card at a specific index between existing cards" in:
-    val field = FieldImpl().addCard(card1).addCard(card2).addCard(card3)
+    val field = FieldImpl().addCard(threeOfSwords).addCard(twoOfCups).addCard(aceOfSwords)
     val board = CustomBoard(List(field, FieldImpl()))
     val newBoard = board.placeCardInField(CardImpl(4, Swords), Player1, Option(1))
-    newBoard.getField(Player1).cardsList should be(List(card1, CardImpl(4, Swords), card2, card3))
+    newBoard.getField(Player1).cardsList should be(List(threeOfSwords, CardImpl(4, Swords), twoOfCups, aceOfSwords))
 
   "A CustomBoard" should "create a board with the given fields" in:
-    val field1 = FieldImpl(Vector(card1, card2))
-    val field2 = FieldImpl(Vector(card3))
+    val field1 = FieldImpl(Vector(threeOfSwords, twoOfCups))
+    val field2 = FieldImpl(Vector(aceOfSwords))
     val board = CustomBoard(List(field1, field2))
     board.getField(Player1) should be(field1)
     board.getField(Player2) should be(field2)
