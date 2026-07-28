@@ -12,6 +12,17 @@ sealed trait Field():
   /** Returns all cards in the field as a list. */
   def cardsList: List[Card]
 
+  /** Removes and returns the card at the given index.
+    *
+    * @param index
+    *   the position of the card to draw
+    * @return
+    *   a tuple of the drawn card and the updated field
+    * @throws IndexOutOfBoundsException
+    *   if the index is out of bounds
+    */
+  def getCard(index: Int): (Card, Field)
+
   /** Replaces the card at the given index with a new card.
     *
     * @param index
@@ -47,17 +58,6 @@ sealed trait Field():
     */
   def addCardAtIndex(card: Card, index: Int): Field
 
-  /** Removes and returns the card at the given index.
-    *
-    * @param index
-    *   the position of the card to draw
-    * @return
-    *   a tuple of the drawn card and the updated field
-    * @throws IndexOutOfBoundsException
-    *   if the index is out of bounds
-    */
-  def getCard(index: Int): (Card, Field)
-
 /** A concrete implementation of [[Field]] backed by a [[Vector]] of cards.
   *
   * @param cards
@@ -69,15 +69,15 @@ final case class FieldImpl(cards: Vector[Card] = Vector.empty) extends Field:
 
   override def cardsList: List[Card] = cards.toList
 
+  override def getCard(index: Int): (Card, Field) =
+    checkIndex(index)
+    (cards(index), copy(cards.patch(index, Nil, 1)))
+
   override def replace(index: Int, card: Card): (Card, Field) =
     checkIndex(index)
     (cards(index), copy(cards.updated(index, card)))
 
   override def addCard(card: Card): Field = copy(cards :+ card)
-
-  override def getCard(index: Int): (Card, Field) =
-    checkIndex(index)
-    (cards(index), copy(cards.patch(index, Nil, 1)))
 
   override def addCardAtIndex(card: Card, index: Int): Field =
     checkIndex(index)

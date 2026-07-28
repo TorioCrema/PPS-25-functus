@@ -11,6 +11,9 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class FieldTest extends AnyFlatSpec with Matchers:
 
+  val outOfRangeIndex: Int = 5
+  val negativeIndex: Int = -1
+
   def threeOfSwords: Card = three of Swords
   def twoOfCups: Card = two of Cups
   def aceOfSwords: Card = ace of Swords
@@ -77,24 +80,24 @@ class FieldTest extends AnyFlatSpec with Matchers:
 
   it should "throw IndexOutOfBoundsException when replacing at an out-of-range index" in:
     val field = emptyField.addCard(threeOfSwords)
-    an[IndexOutOfBoundsException] should be thrownBy field.replace(5, twoOfCups)
+    an[IndexOutOfBoundsException] should be thrownBy field.replace(outOfRangeIndex, twoOfCups)
 
   it should "throw IndexOutOfBoundsException when replacing at a negative index" in:
     val field = emptyField.addCard(threeOfSwords)
-    an[IndexOutOfBoundsException] should be thrownBy field.replace(-1, twoOfCups)
+    an[IndexOutOfBoundsException] should be thrownBy field.replace(negativeIndex, twoOfCups)
 
   it should "throw IndexOutOfBoundsException when getting a card at an out-of-range index" in:
     val field = emptyField.addCard(threeOfSwords)
-    an[IndexOutOfBoundsException] should be thrownBy field.getCard(5)
+    an[IndexOutOfBoundsException] should be thrownBy field.getCard(outOfRangeIndex)
 
   it should "throw IndexOutOfBoundsException when getting a card at a negative index" in:
     val field = emptyField.addCard(threeOfSwords)
-    an[IndexOutOfBoundsException] should be thrownBy field.getCard(-1)
+    an[IndexOutOfBoundsException] should be thrownBy field.getCard(negativeIndex)
 
   it should "throw IndexOutOfBoundsException when addCardAtIndex at an out-of-range index" in:
     val field = emptyField.addCard(threeOfSwords)
-    an[IndexOutOfBoundsException] should be thrownBy field.addCardAtIndex(twoOfCups, 5)
+    an[IndexOutOfBoundsException] should be thrownBy field.addCardAtIndex(twoOfCups, outOfRangeIndex)
 
   it should "throw IndexOutOfBoundsException when addCardAtIndex at a negative index" in:
     val field = emptyField.addCard(threeOfSwords)
-    an[IndexOutOfBoundsException] should be thrownBy field.addCardAtIndex(twoOfCups, -1)
+    an[IndexOutOfBoundsException] should be thrownBy field.addCardAtIndex(twoOfCups, negativeIndex)
