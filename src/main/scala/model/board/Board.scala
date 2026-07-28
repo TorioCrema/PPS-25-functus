@@ -16,6 +16,9 @@ enum Player:
   */
 sealed trait Board:
 
+  /** The current deck of cards available for drawing. */
+  val deck: Deck
+
   /** The pile of cards that have been discarded during the game. The head of the list represents the top of the pile
     * (most recently discarded card).
     */
