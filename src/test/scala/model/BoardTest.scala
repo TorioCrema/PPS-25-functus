@@ -87,7 +87,7 @@ class BoardTest extends AnyFlatSpec with Matchers:
     val (card, _) = boardEmptyDeck.draw
     List(card1, card2, card3) should contain(card)
 
-  "A board with a king on top of discard pile" should "let you take the king and replace a card" in:
+  "A board with a king on top of discard pile" should "let you take the king" in:
     val king = CardImpl(0, Swords)
     val field = FieldImpl(Vector(card1, card2))
     val boardWithKing = BoardImpl(
@@ -95,30 +95,27 @@ class BoardTest extends AnyFlatSpec with Matchers:
       discardPile = List(king),
       players = Map(Player1 -> field)
     )
-    val newBoard = boardWithKing.kingTopDiscardStack(Player1, 0)
-    newBoard.getField(Player1).getCard(0)._1 shouldBe king
-    newBoard.discardPile should contain(card1)
+    val (returnedKing, newBoard) = boardWithKing.kingTopDiscardStack()
+    returnedKing shouldBe king
     newBoard.discardPile should not contain king
 
   it should "remove only the top king from the discard pile" in:
     val king = CardImpl(0, Swords)
-    val field = FieldImpl(Vector(card1, card2))
     val boardWithKing = BoardImpl(
       deck = DeckImpl(Vector(card1, card2)),
       discardPile = List(king, card3),
-      players = Map(Player1 -> field)
+      players = Map(Player1 -> FieldImpl(Vector(card1, card2)))
     )
-    val newBoard = boardWithKing.kingTopDiscardStack(Player1, 0)
+    val (_, newBoard) = boardWithKing.kingTopDiscardStack()
     newBoard.discardPile should contain(card3)
 
   it should "throw IllegalStateException when top of discard pile is not a king" in:
-    val field = FieldImpl(Vector(card1, card2))
     val boardNoKing = BoardImpl(
       deck = DeckImpl(Vector(card1, card2)),
       discardPile = List(card1),
-      players = Map(Player1 -> field)
+      players = Map(Player1 -> FieldImpl(Vector(card1, card2)))
     )
-    an[IllegalStateException] should be thrownBy boardNoKing.kingTopDiscardStack(Player1, 0)
+    an[IllegalStateException] should be thrownBy boardNoKing.kingTopDiscardStack()
 
   it should "place a card in a player field" in:
     val boardWithPlayer = CustomBoard(List(FieldImpl(), FieldImpl()))
