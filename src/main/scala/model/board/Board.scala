@@ -8,15 +8,27 @@ import model.deck.{Deck, DeckFactory, DeckImpl}
 enum Player:
   case Player1, Player2
 
+  def other: Player = this match
+    case Player1 => Player2
+    case _       => Player1
+
 /** Board interface
   */
 sealed trait Board:
+
+  /** The current deck of cards available for drawing. */
+  val deck: Deck
+
+  /** The pile of cards that have been discarded during the game. The head of the list represents the top of the pile
+    * (most recently discarded card).
+    */
+  val discardPile: List[Card]
 
   /** Draws the card on top of the draw stack.
     * @return
     *   the updated board
     */
-  def draw(): (Card, Board)
+  def draw: (Card, Board)
 
   /** Discards a card on top of the discard stack.
     * @param card
@@ -44,17 +56,8 @@ sealed trait Board:
     */
   def getTopDiscardStack: Card
 
-  /** Replaces the selected card in the player's field with the King on top of the discard pile, removing the King from
-    * the discard pile. This method can only be used when the top card of the discard pile is a King.
-    *
-    * @param player
-    *   the player that is replacing the card
-    * @param cardIndex
-    *   index used to identify the card that will be replaced
-    * @return
-    *   the updated board
-    */
-  def kingTopDiscardStack(player: Player, cardIndex: Int): Board
+  /** Returns the King on top of the discard pile and the updated Board with the King removed from the discard pile. */
+  def kingTopDiscardStack(): (Card, Board)
 
   /** Getter for a player's field
     * @param player
@@ -64,13 +67,36 @@ sealed trait Board:
     */
   def getField(player: Player): Field
 
+  /** Draws a card from a player's field
+    * @param player
+    *   the player to which the field belongs to
+    * @param index
+    *   the index to identify the card that will be drawn
+    * @return
+    *   the card drawn and the updated board
+    */
+  def drawPlayerCard(player: Player, index: Int): (Card, Board)
+
+  /** Places a new card into a player's field
+    *
+    * @param card
+    *   the card that will be added
+    * @param player
+    *   the player to which the field belongs to
+    * @param index
+    *   the index to identify the card that will be added
+    * @return
+    *   the updated board
+    */
+  def placeCardInField(card: Card, player: Player, index: Option[Int]): Board
+
 final case class BoardImpl(
     deck: Deck = DeckFactory(),
     discardPile: List[Card] = List.empty,
     players: Map[Player, Field] = Map.empty
 ) extends Board:
 
-  override def draw(): (Card, BoardImpl) =
+  override def draw: (Card, BoardImpl) =
     checkDeckAndDiscardPile()
     val checked = checkDeck()
     val draw = checked.deck.draw()
@@ -87,12 +113,20 @@ final case class BoardImpl(
 
   override def getTopDiscardStack: Card = discardPile.head
 
-  override def kingTopDiscardStack(player: Player, cardIndex: Int): BoardImpl =
+  override def kingTopDiscardStack(): (Card, BoardImpl) =
     checkKingTopDiscardStack()
-    val king = getTopDiscardStack
-    copy(discardPile = this.discardPile.tail).replace(player, cardIndex, king)
+    (getTopDiscardStack, copy(discardPile = this.discardPile.tail))
 
   override def getField(player: Player): Field = players(player)
+
+  override def drawPlayerCard(player: Player, index: Int): (Card, Board) =
+    val drawnCard = getField(player).getCard(index)
+    (drawnCard._1, this.copy(players = players.updated(player, drawnCard._2)))
+
+  def placeCardInField(card: Card, player: Player, index: Option[Int]): Board =
+    index match
+      case Some(i) => copy(players = players.updated(player, players(player).addCardAtIndex(card, i)))
+      case _       => copy(players = players.updated(player, players(player).addCard(card)))
 
   private def checkDeck(): BoardImpl =
     if this.deck.cards.isEmpty then copy(deck = DeckImpl(discardPile.toVector).shuffle(), discardPile = Nil) else this
