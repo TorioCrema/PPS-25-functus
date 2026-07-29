@@ -1,10 +1,9 @@
 package org.pps.functus
 package model
 
-import model.board.BoardFactory.{BoardWithPopulatedFields, CustomBoard}
+import model.board.BoardFactory.CustomBoard
 import model.board.Player.*
 import model.board.{BoardFactory, BoardImpl, Player}
-import model.deck.DeckImpl
 import model.deck.card.Card
 import model.deck.card.Suit.*
 import model.deck.sugar.CardDSL.*
