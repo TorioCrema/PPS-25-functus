@@ -3,7 +3,7 @@
 ## Obiettivo
 
 L'obiettivo di questa sprint e' di otterne la possibilta' di eseguire un turno intero,
-partendo  da un tavolo completo, con eccezione degli effetti delle carte pescate.
+partendo da un tavolo completo, con eccezione degli effetti delle carte pescate.
 
 ## Scadenza
 
@@ -94,7 +94,7 @@ La scadenza della sprint e' il 27/07/26.
         </tr>
         <tr>
         <td>Board View</td>
-        <td></td>
+        <td>Alex</td>
         <td></td>
         <td></td>
         </tr>
@@ -115,7 +115,7 @@ La scadenza della sprint e' il 27/07/26.
         </tr>
         <tr>
         <td>Input Utente</td>
-        <td></td>
+        <td>Alex</td>
         <td></td>
         <td></td>
         </tr>
@@ -124,7 +124,7 @@ La scadenza della sprint e' il 27/07/26.
         <td rowspan="2">Match</td>
         <td rowspan="2">Come utente, voglio poter iniziare un match</td>
         <td>Game</td>
-        <td></td>
+        <td>Luca</td>
         <td></td>
         <td></td>
         </tr>
