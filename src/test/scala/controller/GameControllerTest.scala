@@ -10,11 +10,11 @@ class GameControllerTest extends AnyFunSpec with Matchers:
 
   describe("GameController Integration Tests") {
 
-    it("dovrebbe inizializzare correttamente la partita con il primo turno del Giocatore 1") {
+    it("Should correctly initialize the game with Player 1's first round") {
       val mockView = new MockCLIView()
       val controller = new GameController(mockView)
 
-      // Inviamo subito ESCAPE per fermare il loop dopo il primo render
+      // Send ESCAPE to stop the loop after the first render
       mockView.enqueueInputs(Key.ESCAPE)
       controller.start()
 
@@ -24,25 +24,25 @@ class GameControllerTest extends AnyFunSpec with Matchers:
       state.possibleAction.map(_.id) should contain("observe")
     }
 
-    it("dovrebbe permettere la navigazione con le frecce nel menu delle azioni") {
+    it("should allow navigation with arrows in the action menu") {
       val mockView = new MockCLIView()
       val controller = new GameController(mockView)
 
-      // Simula: Faccia DOWN per spostare il cursore, poi ESCAPE
+      // Simulate: DOWN arrow for moving the cursor, then ESCAPE
       mockView.enqueueInputs(Key.DOWN, Key.ESCAPE)
       controller.start()
 
       val state = mockView.lastRenderedState.get
-      // Se ci sono più azioni disponibili, l'indice selezionato dev'essere incrementato
+      // if there are more action the index must be incremented
       if state.possibleAction.length > 1 then
         state.selectedAction shouldBe 1
     }
 
-    it("dovrebbe eseguire l'azione Observe e passare alla modalità Confirm") {
+    it("Should perform the Observe action and switch to Confirm mode") {
       val mockView = new MockCLIView()
       val controller = new GameController(mockView)
 
-      // Simula: ENTER su Observe (selezionato a 0), poi ESCAPE
+      // Simulate: ENTER on Observe (selected on 0), then ESCAPE
       mockView.enqueueInputs(Key.ENTER, Key.ESCAPE)
       controller.start()
 
@@ -50,59 +50,59 @@ class GameControllerTest extends AnyFunSpec with Matchers:
       state.possibleAction.map(_.id) should contain("confirm")
     }
 
-    it("dovrebbe passare alla schermata di intermezzo (WaitingRoom) dopo che il Giocatore 1 ha confermato") {
+    it("Should switch to the change player screen (WaitingRoom) after Player 1 confirms") {
       val mockView = new MockCLIView()
       val controller = new GameController(mockView)
 
-      // Simula:
-      // 1. ENTER per Observe
-      // 2. ENTER per Confirm
-      // 3. ENTER termina il primo turno del P1
-      // 4. ESCAPE per uscire dal loop quando si trova in WaitingRoom
+      // Simulate:
+      // 1. ENTER for Observe
+      // 2. ENTER for Confirm
+      // 3. ENTER end first turn of P1
+      // 4. ESCAPE to exit the loop while in WaitingRoom
       mockView.enqueueInputs(Key.ENTER, Key.ENTER, Key.ENTER, Key.ESCAPE)
       controller.start()
 
       val state = mockView.lastRenderedState.get
-      // Dopo la fine del turno del P1, il controller deve impostare la WaitingRoom per il P2
+      //After the end of the P1 turn, the controller must set the WaitingRoom for P2
       state.inputMode shouldBe InputMode.WaitingRoom
     }
 
-    it("dovrebbe passare al Giocatore 2 dopo la schermata di WaitingRoom") {
+    it("should switch to Player 2 after the WaitingRoom screen") {
       val mockView = new MockCLIView()
       val controller = new GameController(mockView)
 
-      // Simula:
+      // Simulate:
       // 1. ENTER (Observe P1)
       // 2. ENTER (Confirm P1)
-      // 3. ENTER Fine Turno -> entra in WaitingRoom
-      // 4. ENTER (Sblocca WaitingRoom -> Inizia turno P2)
+      // 3. ENTER end Turn ->  in WaitingRoom
+      // 4. ENTER (exit WaitingRoom -> start P2 turn)
       // 5. ESCAPE
       mockView.enqueueInputs(Key.ENTER, Key.ENTER,Key.ENTER, Key.ENTER, Key.ESCAPE)
       controller.start()
 
       val state = mockView.lastRenderedState.get
       state.inputMode shouldBe InputMode.ActionMenu
-      // Ora anche il Giocatore 2 deve effettuare l'azione Observe per il suo primo turno
+      // Now Player 2 must also perform the Observe action for his first turn
       state.possibleAction.map(_.id) should contain("observe")
     }
 
-    it("dovrebbe attivare la modalità SelectCardOnBoard se l'utente seleziona lo scarto dal tavolo") {
+    it("Should activate SelectCardOnBoard mode if the user selects the discard from the table") {
       val mockView = new MockCLIView()
       val controller = new GameController(mockView)
 
-      // Per testare lo scarto dal tavolo, completiamo l'osservazione iniziale per entrambi i giocatori
-      // P1 Observe -> Confirm -> Unblock WaitingRoom -> P2 Observe -> Confirm -> Unblock WaitingRoom
+      // To test the discard from the table, we complete the initial observation for both players
+      // P1 Observe -> Confirm -> End Turn -> Unblock WaitingRoom -> P2 Observe -> Confirm -> End Turn -> Unblock WaitingRoom
       val setupInputs = Seq(
-        Key.ENTER, Key.ENTER, Key.ENTER, // P1 fa Observe, Confirm e sblocca la stanza
-        Key.ENTER, Key.ENTER, Key.ENTER  // P2 fa Observe, Confirm e sblocca la stanza
+        Key.ENTER, Key.ENTER, Key.ENTER, Key.ENTER, // P1 fa Observe, Confirm e sblocca la stanza
+        Key.ENTER, Key.ENTER, Key.ENTER, Key.ENTER  // P2 fa Observe, Confirm e sblocca la stanza
       )
 
-      // Ora siamo al turno standard del P1. Selezioniamo "Scarta dal tavolo" (indice 0) con ENTER
+      // We are now on the standard P1 shift. Select "Discard from Table" (index 0) with ENTER
       mockView.enqueueInputs(setupInputs :+ Key.ENTER :+ Key.ESCAPE*)
       controller.start()
 
       val state = mockView.lastRenderedState.get
-      // Se l'azione disponibile era lo scarto equivalente, l'input mode deve passare a SelectCardOnBoard
+      // If the available action was the discard from the table, the mode input must pass to SelectCardOnBoard
       if state.possibleAction.exists(_.id == "select_discard") then
         state.inputMode shouldBe InputMode.SelectCardOnBoard
     }
