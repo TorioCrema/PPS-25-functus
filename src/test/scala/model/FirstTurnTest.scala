@@ -3,7 +3,8 @@ package model
 
 import model.board.BoardFactory.CustomBoard
 import model.board.Player.*
-import model.board.{BoardFactory, BoardImpl, Player}
+import model.board.{BoardFactory, Player}
+import model.field.Field
 import model.deck.card.Card
 import model.deck.card.Suit.*
 import model.deck.sugar.CardDSL.*
@@ -16,35 +17,39 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class FirstTurnTest extends AnyFlatSpec with Matchers:
-  private val threeOfCups = three of Cups
-  private val twoOfSwords = two of Swords
-  private val fiveOfWands = five of Wands
-  private val aceOfPentacles = ace of Pentacles
-  private val player1Field = threeOfCups and twoOfSwords
-  private val player2Field = fiveOfWands and aceOfPentacles
-  private val board = BoardImpl(players = Map((Player1, player1Field), (Player2, player2Field)))
+  private val player1Field = (three of Cups) and (two of Swords) and (jack of Wands) and (seven of Cups)
+  private val player2Field = (five of Wands) and (ace of Pentacles) and (six of Swords) and (four of Wands)
+  private val board = CustomBoard(List(player1Field, player2Field))
 
   "FirstTurn" should "have Confirm as next action" in:
     FirstTurn(BoardFactory(), Player1).actions should be(List(Observe))
 
   it should "draw from the player's field when observing" in:
-    val player1Hand = List(threeOfCups, twoOfSwords)
-    val player2Hand = List(fiveOfWands, aceOfPentacles)
-    def testObserveDraw(player: Player, expectedHand: List[Card]): Assertion =
-      val afterObserve =
-        FirstTurn(board, player).act(Observe)
-      afterObserve.hand should be(expectedHand)
-      afterObserve.board.getField(player).length should be(0)
-    List((Player1, player1Hand), (Player2, player2Hand)).foreach((player, hand) => testObserveDraw(player, hand))
+    val observedCards = 2
+    def getHand(field: Field): List[Card] = field.cardsList.slice(0, observedCards)
+    val playerHands = Map((Player1, getHand(player1Field)), (Player2, getHand(player2Field)))
+    val playerFields = board.getField
+    for player <- Player.values
+    do
+      val afterObserve = FirstTurn(board, player).act(Observe)
+      afterObserve.hand should be(playerHands(player))
+      val expectedField = playerFields(player).cardsList.slice(observedCards, playerFields(player).length)
+      afterObserve.board.getField(player).cardsList should be(expectedField)
 
   it should "have Confirm as the only available action after Observe" in:
     val afterObserve = FirstTurn(board, Player1).act(Observe)
     afterObserve.actions should be(List(Confirm))
 
   it should "restore the board after executing the Confirm action" in:
-    val startingBoard = CustomBoard(List(player1Field, player2Field))
-    val afterObserve = FirstTurn(startingBoard, Player1).act(Observe)
-    afterObserve.board should not be startingBoard
-    val afterConfirm = afterObserve.act(Confirm)
-    afterConfirm.board should be(startingBoard)
-    afterConfirm.actions should be(List(EndTurn))
+    for player <- Player.values
+    do
+      val afterConfirm = FirstTurn(board, player).act(Observe).act(Confirm)
+      afterConfirm.board.getField(player) should be(board.getField(player))
+      afterConfirm.board.getField(player.other) should be(board.getField(player.other))
+
+  it should "end after Confirm action" in:
+    val afterConfirm = FirstTurn(board, Player1).act(Observe).act(Confirm)
+    afterConfirm.actions should be(EndTurn :: Nil)
+
+  it should "be over after EndTurn" in:
+    FirstTurn(board, Player1).act(Observe).act(Confirm).act(EndTurn).isOver should be(true)
