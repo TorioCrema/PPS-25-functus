@@ -33,34 +33,36 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
     * @return
     *   the next phase of the [[Turn]]
     */
-  def act(action: Action): Turn = action match
-    case Observe =>
-      List
-        .fill(observableCards)(0)
-        .foldLeft(this)((turn, index) => turn.drawnFromField(index))
-        .withActions(action.next)
-    case Confirm =>
-      val newBoard = hand.foldRight(board)((card, b) => b.placeCardInField(card, player, Option(0)))
-      Turn(Nil, newBoard, player, action.next)
-    case Draw =>
-      val (drawn, newBoard) = board.draw
-      Turn(drawn :: hand, newBoard, player, action.next)
-    case DrawKing =>
-      val (drawnKing, newBoard) = board.kingTopDiscardStack()
-      Turn(drawnKing :: Nil, newBoard, player, action.next)
-    case Activate => Turn(hand, board, player, (0 until board.getField(player).length).map(ChooseReplace(_)).toList)
-    case ChooseReplace(index) =>
-      Turn(Nil, board.replace(player, index, hand.head), player, action.next)
-    case ChooseDiscard(index) =>
-      val (chosen, _) = board.getField(player).getCard(index)
-      if chosen.value == board.getTopDiscardStack.value then
-        Turn(Nil, board.discard(chosen).drawPlayerCard(player, index)._2, player, action.next)
-      else
-        val (drawn, boardAfterDraw) = board.draw
-        val newBoard = boardAfterDraw.placeCardInField(drawn, player, Option.empty)
+  def act(action: Action): Turn =
+    require(actions.contains(action))
+    action match
+      case Observe =>
+        List
+          .fill(observableCards)(0)
+          .foldLeft(this)((turn, index) => turn.drawnFromField(index))
+          .withActions(action.next)
+      case Confirm =>
+        val newBoard = hand.foldRight(board)((card, b) => b.placeCardInField(card, player, Option(0)))
         Turn(Nil, newBoard, player, action.next)
-    case EndTurn => Turn(hand, board, player, EndTurn.next, cactus)
-    case Cactus  => Turn(hand, board, player, Cactus.next, true)
+      case Draw =>
+        val (drawn, newBoard) = board.draw
+        Turn(drawn :: hand, newBoard, player, action.next)
+      case DrawKing =>
+        val (drawnKing, newBoard) = board.kingTopDiscardStack()
+        Turn(drawnKing :: Nil, newBoard, player, action.next)
+      case Activate => Turn(hand, board, player, (0 until board.getField(player).length).map(ChooseReplace(_)).toList)
+      case ChooseReplace(index) =>
+        Turn(Nil, board.replace(player, index, hand.head), player, action.next)
+      case ChooseDiscard(index) =>
+        val (chosen, _) = board.getField(player).getCard(index)
+        if chosen.value == board.getTopDiscardStack.value then
+          Turn(Nil, board.discard(chosen).drawPlayerCard(player, index)._2, player, action.next)
+        else
+          val (drawn, boardAfterDraw) = board.draw
+          val newBoard = boardAfterDraw.placeCardInField(drawn, player, Option.empty)
+          Turn(Nil, newBoard, player, action.next)
+      case EndTurn => Turn(hand, board, player, EndTurn.next, cactus)
+      case Cactus  => Turn(hand, board, player, Cactus.next, true)
 
   /** @return
     *   [[true]] if the [[Turn]] is over.
