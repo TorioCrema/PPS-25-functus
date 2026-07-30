@@ -40,7 +40,7 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
         .foldLeft(this)((turn, index) => turn.drawnFromField(index))
         .withActions(action.next)
     case Confirm =>
-      val newBoard = hand.foldLeft(board)((b, card) => b.placeCardInField(card, player, Option.empty))
+      val newBoard = hand.foldRight(board)((card, b) => b.placeCardInField(card, player, Option(0)))
       Turn(Nil, newBoard, player, action.next)
     case Draw =>
       val (drawn, newBoard) = board.draw
