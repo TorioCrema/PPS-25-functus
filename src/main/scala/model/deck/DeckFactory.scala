@@ -15,6 +15,6 @@ object DeckFactory:
   def apply(): Deck =
     val cards = for
       suit <- Suit.values
-      value <- 1 to 10
+      value <- 0 to 9
     yield value of suit
     DeckImpl(cards.toVector)
