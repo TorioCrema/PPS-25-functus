@@ -128,9 +128,13 @@ object CardRenderExtensions:
       }
 
   // Helper Methods
-  /** Safely extracts value and suit string from the Card domain model */
+  /** Safely extracts value and suit string from the Card model */
   private def extractCardDetails(card: Card): (String, String) =
-    (card.value.toString, card.suit.toString)
+    val valueString = card.value match
+      case 1 => "A"
+      case 0 => "K"
+      case v => v.toString
+    (valueString, card.suit.toString)
 
   /** Returns suit-specific ANSI color string */
   private def suitColor(suit: String): String =

@@ -7,3 +7,4 @@ package view
 enum InputMode:
   case ActionMenu
   case SelectCardOnBoard
+  case WaitingRoom

@@ -11,7 +11,8 @@ class InputModeTest extends AnyFunSpec with Matchers:
     it("should contain all defined input modes") {
       val expectedModes = Array(
         InputMode.ActionMenu,
-        InputMode.SelectCardOnBoard
+        InputMode.SelectCardOnBoard,
+        InputMode.WaitingRoom
       )
 
       InputMode.values should contain theSameElementsInOrderAs expectedModes
@@ -20,6 +21,7 @@ class InputModeTest extends AnyFunSpec with Matchers:
     it("should correctly resolve InputMode from string name using valueOf") {
       InputMode.valueOf("ActionMenu") shouldBe InputMode.ActionMenu
       InputMode.valueOf("SelectCardOnBoard") shouldBe InputMode.SelectCardOnBoard
+      InputMode.valueOf("WaitingRoom") shouldBe InputMode.WaitingRoom
     }
 
     it("should throw an IllegalArgumentException when valueOf receives an invalid mode name") {

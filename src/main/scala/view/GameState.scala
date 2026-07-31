@@ -27,14 +27,14 @@ import view.InputMode.ActionMenu
  *    the Index of the last card exchanged on the board by the player 
   */
 case class GameState(
-    adversaryCard: List[Option[Card]],
-    playerCard: List[Option[Card]],
-    remainingCardInDeck: Int,
-    lastDiscardedCard: Option[Card],
-    cardsInHand: List[Option[Card]],
-    possibleAction: List[Action],
-    inputMode: InputMode = ActionMenu,
-    selectedAction: Int = 0,
-    selectedCardOnBoard: Int = 0,
-    lastChangedPlayerCard: Option[Int] = None
+                      adversaryCard: List[Option[Card]],
+                      playerCard: List[Option[Card]],
+                      remainingCardInDeck: Int,
+                      lastDiscardedCard: Option[Card],
+                      cardsInHand: List[Option[Card]],
+                      possibleAction: List[ViewAction],
+                      inputMode: InputMode = ActionMenu,
+                      selectedAction: Int = 0,
+                      selectedCardOnBoard: Int = 0,
+                      lastChangedPlayerCard: Option[Int] = None
 )

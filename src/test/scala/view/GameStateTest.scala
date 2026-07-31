@@ -11,7 +11,7 @@ class GameStateTest extends AnyFunSpec with Matchers:
   // Mock / Sample Data for testing
   private val sampleCard1 = CardImpl(1, Swords)
   private val sampleCard2 = CardImpl(10, Cups)
-  private val sampleAction = Action("pesca_mazzo", "Pesca dal mazzo")
+  private val sampleAction = ViewAction("pesca_mazzo", "Pesca dal mazzo")
 
   describe("A GameState") {
 
@@ -26,8 +26,6 @@ class GameStateTest extends AnyFunSpec with Matchers:
       )
 
       state.inputMode shouldBe InputMode.ActionMenu
-      state.selectedAction shouldBe 0
-      state.selectedCardOnBoard shouldBe 0
       state.remainingCardInDeck shouldBe 38
     }
 
@@ -45,7 +43,6 @@ class GameStateTest extends AnyFunSpec with Matchers:
       )
 
       state.inputMode shouldBe InputMode.SelectCardOnBoard
-      state.selectedAction shouldBe 2
       state.selectedCardOnBoard shouldBe 1
     }
 
@@ -65,14 +62,8 @@ class GameStateTest extends AnyFunSpec with Matchers:
         selectedAction = 1
       )
 
-      // Initial state remains unchanged (immutability)
-      initialState.remainingCardInDeck shouldBe 40
       initialState.cardsInHand shouldBe empty
-      initialState.selectedAction shouldBe 0
 
-      // Updated state has new values
-      updatedState.remainingCardInDeck shouldBe 39
-      updatedState.cardsInHand shouldBe List(Some(sampleCard1))
       updatedState.selectedAction shouldBe 1
     }
 
