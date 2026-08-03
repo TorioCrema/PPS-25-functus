@@ -1,7 +1,9 @@
 package org.pps.functus
 package view
 
-import model.deck.card.Card
+import model.deck.card.{Card, Suit}
+
+import model.deck.card.Suit.{Cups, Pentacles, Swords, Wands}
 
 /** Represents the border highlight mode for a card */
 enum BorderStyle:
@@ -14,10 +16,10 @@ object CardRenderExtensions:
   private val ANSI_CYAN_BOLD = "\u001B[1;36m"
   private val ANSI_YELLOW_BOLD = "\u001B[1;33m"
 
-  private val ANSI_SWORD = "\u001B[1;36m" // Bold Cyan for Swords / Spade
-  private val ANSI_CUP = "\u001B[1;31m" // Bold Red for Cups / Coppe
-  private val ANSI_CLUB = "\u001B[1;33m" // Bold Yellow for Clubs / Bastoni
-  private val ANSI_COIN = "\u001B[1;32m" // Bold Green for Coins / Pentacles / Denari
+  private val ANSI_SWORD = "\u001B[1;36m" // Bold Cyan for Swords
+  private val ANSI_CUP = "\u001B[1;31m" // Bold Red for Cups
+  private val ANSI_CLUB = "\u001B[1;32m" // Bold Green for Clubs / Wands
+  private val ANSI_COIN = "\u001B[1;33m" // Bold Yellow for Coins / Pentacles
 
   extension (cardOpt: Option[Card])
 
@@ -49,7 +51,7 @@ object CardRenderExtensions:
       cardOpt match
         case Some(card) =>
           val (value, suit) = extractCardDetails(card)
-          val sColor = suitColor(suit)
+          val sColor = suitColor(card.suit)
 
           val leftRank = padRight(value, 2)
           val rightRank = padLeft(value, 2)
@@ -137,13 +139,14 @@ object CardRenderExtensions:
     (valueString, card.suit.toString)
 
   /** Returns suit-specific ANSI color string */
-  private def suitColor(suit: String): String =
-    suit.toLowerCase match
-      case "sword" | "swords" | "spade"              => ANSI_SWORD
-      case "cup" | "cups" | "coppe"                  => ANSI_CUP
-      case "club" | "clubs" | "bastoni"              => ANSI_CLUB
-      case "coin" | "coins" | "pentacles" | "denari" => ANSI_COIN
-      case _                                         => ANSI_RESET
+  private def suitColor(suit: Suit): String =
+    suit match
+      case Swords     => ANSI_SWORD
+      case Cups       => ANSI_CUP
+      case Wands      => ANSI_CLUB
+      case Pentacles  => ANSI_COIN
+      case null       => ANSI_RESET
+
 
   /** Merges multiple multi-line card ASCII blocks into a single horizontal list of printable lines.
     *
