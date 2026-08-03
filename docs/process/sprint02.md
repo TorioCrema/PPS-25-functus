@@ -2,12 +2,12 @@
 
 ## Obiettivo
 
-L'obiettivo di questa sprint e' di otterne la possibilta' di eseguire un turno intero,
+L'obiettivo di questa sprint è di ottenere la possibility' di eseguire un turno intero,
 partendo da un tavolo completo, con eccezione degli effetti delle carte pescate.
 
 ## Scadenza
 
-La scadenza della sprint e' il 27/07/26.
+La scadenza della sprint è il 03/08/26.
 
 ## Backlog
 
@@ -32,23 +32,27 @@ La scadenza della sprint e' il 27/07/26.
         <td>Simone</td>
         <td>2</td>
         <td>0</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Analisi dell'architettura</td>
         <td>Alex, Luca, Simone</td>
         <td>5</td>
         <td>2</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Setup progetto Scala</td>
         <td>Alex</td>
         <td>2</td>
         <td>0</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Setup documentazione</td>
         <td>Alex, Luca, Simone</td>
         <td>2</td>
+        <td>0</td>
         <td>0</td>
         </tr>
         <tr>
@@ -58,25 +62,27 @@ La scadenza della sprint e' il 27/07/26.
         <td>Deck</td>
         <td>Luca</td>
         <td>4</td>
+        <td>1</td>
         <td>0</td>
         </tr>
         <tr>
         <td>Field</td>
         <td>Luca</td>
         <td>4</td>
+        <td>1</td>
         <td>0</td>
         </tr>
         <tr>
         <td>Board</td>
         <td>Luca</td>
-        <td></td>
+        <td>8</td>
         <td>8</td>
         <td>0</td>
         </tr>
         <tr>
         <td>Card/Field/Board DSL</td>
         <td>Simone, Luca</td>
-        <td></td>
+        <td>5</td>
         <td>5</td>
         <td>2</td>
         </tr>
@@ -104,14 +110,16 @@ La scadenza della sprint e' il 27/07/26.
         <td rowspan="3">Come utente, voglio poter eseguire il mio turno, secondo le azioni disponibili</td>
         <td>Turn</td>
         <td>Simone</td>
-        <td></td>
         <td>5</td>
+        <td>5</td>
+        <td>2</td>
         </tr>
         <tr>
         <td>Actions</td>
         <td>Simone</td>
-        <td></td>
         <td>5</td>
+        <td>5</td>
+        <td>2</td>
         </tr>
         <tr>
         <td>Input Utente</td>
@@ -139,5 +147,11 @@ La scadenza della sprint e' il 27/07/26.
 
 ## Sprint review
 
+Il committente risulta soddisfatto del risultato ottenuto, riportando le seguenti richieste e migliorie:
+- rendere consistente la lingua dell'interfaccia, attualmente è parzialmente in italiano e inglese
+- la carta scartata a inizio turno deve poter essere vista dall'utente anche se errata
 
 ## Sprint retrospective
+
+La divisione del lavoro e la coordinazione tra gli sviluppatori è risultata piu' efficiente rispetto alla sprint
+precedente.
