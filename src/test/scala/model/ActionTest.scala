@@ -2,6 +2,8 @@ package org.pps.functus
 package model
 
 import model.turn.Action.*
+
+import org.pps.functus.model.deck.DeckFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -24,8 +26,11 @@ class ActionTest extends AnyFlatSpec with Matchers:
   "DrawKing" should "have Activate as next action" in:
     DrawKing.next should be(Activate :: Nil)
 
-  "ChooseDiscard" should "have Draw has next action" in:
-    ChooseDiscard(0).next should be(Draw :: Nil)
+  "ChooseDiscard" should "have Discard has next action" in:
+    for i <- 0 to DeckFactory().cards.length do ChooseDiscard(i).next should be(Discard(i) :: Nil)
+
+  "Discard" should "have Draw as next action" in:
+    for i <- 0 to DeckFactory().cards.length do Discard(i).next should be(Draw :: Nil)
 
   "ChooseReplace" should "have Cactus and EndTurn as next actions" in:
-    ChooseReplace(0).next should be(Cactus :: EndTurn :: Nil)
+    for i <- 0 to DeckFactory().cards.length do ChooseReplace(i).next should be(Cactus :: EndTurn :: Nil)
