@@ -14,7 +14,7 @@ La scadenza della sprint è il 03/08/26.
 <table>
     <thead>
         <tr>
-        <th>Priorita'</th>
+        <th>Priorità'</th>
         <th>Nome</th>
         <th>Descrizione</th>
         <th>Sprint Task</th>
@@ -91,18 +91,21 @@ La scadenza della sprint è il 03/08/26.
         <td>Simone</td>
         <td>4</td>
         <td>0</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Field View</td>
         <td>Alex</td>
         <td>2</td>
-        <td>2</td>
+        <td>4</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Board View</td>
         <td>Alex</td>
-        <td></td>
-        <td></td>
+        <td>4</td>
+        <td>4</td>
+        <td>0</td>
         </tr>
         <tr>
         <td rowspan="3">3</td>
@@ -124,8 +127,9 @@ La scadenza della sprint è il 03/08/26.
         <tr>
         <td>Input Utente</td>
         <td>Alex</td>
-        <td></td>
-        <td></td>
+        <td>7</td>
+        <td>7</td>
+        <td>0</td>
         </tr>
         <tr>
         <td rowspan="2">4</td>
@@ -133,7 +137,7 @@ La scadenza della sprint è il 03/08/26.
         <td rowspan="2">Come utente, voglio poter iniziare un match</td>
         <td>Game</td>
         <td>Luca</td>
-        <td></td>
+        <td>6</td>
         <td></td>
         </tr>
         <tr>
