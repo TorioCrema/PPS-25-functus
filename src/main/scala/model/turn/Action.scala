@@ -36,11 +36,28 @@ enum Action:
   /** Picks a card to replace with the card in the player's hand. */
   case ChooseReplace(index: Int)
 
+  /** Picks which card to observe from the opponent's field. */
+  case ObserveOpponent(index: Int)
+
+  /** Returns the card drawn from the opponent's field to its original place. */
+  case GiveBack(index: Int)
+
+  /** Picks which card to observe from the player's field. */
+  case ObservePlayer(index: Int)
+
+  /** Returns the card to the player's field at the index. */
+  case ReturnToField(index: Int)
+
+  /** Swaps cards between the two player fields. */
+  case Swap(playerIndex: Int, opponentIndex: Int)
+
   def next: List[Action] = this match
-    case Observe              => List(Confirm)
-    case Confirm | Cactus     => List(EndTurn)
-    case Draw | DrawKing      => List(Activate)
-    case ChooseReplace(_)     => List(Cactus, EndTurn)
-    case ChooseDiscard(index) => List(Discard(index))
-    case Discard(_)           => List(Draw)
-    case _                    => Nil
+    case Observe                                                        => List(Confirm)
+    case Confirm | Cactus                                               => List(EndTurn)
+    case Draw | DrawKing                                                => List(Activate)
+    case ChooseReplace(_) | GiveBack(_) | ReturnToField(_) | Swap(_, _) => List(Cactus, EndTurn)
+    case ChooseDiscard(index)                                           => List(Discard(index))
+    case Discard(_)                                                     => List(Draw)
+    case ObserveOpponent(index)                                         => List(GiveBack(index))
+    case ObservePlayer(index)                                           => List(ReturnToField(index))
+    case _                                                              => Nil
