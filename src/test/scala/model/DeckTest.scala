@@ -3,25 +3,28 @@ package model
 
 import model.deck.card.Card
 import model.deck.{Deck, DeckFactory}
+import model.deck.sugar.DeckDSL.deck
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 
 class DeckTest extends AnyFlatSpec with Matchers:
-  val deck: Deck = DeckFactory()
-  val result: (Card, Deck) = deck.draw()
+  val deckTest: Deck = deck()
 
-  "A default Deck" should "always have 40 cards" in:
-    deck.cards.size should be(40)
+  "A default Deck" should "have 40 cards" in:
+    deckTest.cards.size should be(40)
 
-  it should "the result of a draw be a card" in:
-    val drawnCard: Card = result._1
+  it should "return a card when drawn" in:
+    val (drawnCard, _) = deckTest.draw().get
     drawnCard should not be null
 
-  it should "the remaining deck have 39 cards" in:
-    val remainingDeck: Deck = result._2
+  it should "have 39 cards after a draw" in:
+    val (_, remainingDeck) = deckTest.draw().get
     remainingDeck.cards.size should be(39)
 
-  it should "usually change the order when shuffled" in:
-    val shuffledDeck = deck.shuffle()
-    val shuffledDeck2 = deck.shuffle()
-    shuffledDeck.cards should not be shuffledDeck2.cards
+  it should "contain the same cards after a draw" in:
+    val (drawnCard, remainingDeck) = deckTest.draw().get
+    (remainingDeck.cards :+ drawnCard) should contain theSameElementsAs deckTest.cards
+
+  it should "change order when shuffled" in:
+    val attempts = (1 to 5).map(_ => deckTest.shuffle().cards)
+    attempts.distinct.size should be > 1
