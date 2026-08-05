@@ -28,8 +28,6 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
 
   private def withActions(newActions: List[Action]): Turn = Turn(hand, board, player, newActions)
 
-  private def activate(card: Card): Turn = card.effect(this)
-
   private def drawFromPlayer(index: Int, from: Player) =
     val (drawn, newBoard) = board.drawPlayerCard(from, index)
     Turn(hand.appended(drawn), newBoard, player, actions)
@@ -60,7 +58,7 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
       case DrawKing =>
         val (drawnKing, newBoard) = board.kingTopDiscardStack()
         Turn(drawnKing :: Nil, newBoard, player, action.next)
-      case Activate               => this.activate(hand.head)
+      case Activate               => hand.head.effect(this)
       case ObserveOpponent(index) => drawFromPlayer(index, player.other).withActions(action.next)
       case ObservePlayer(index)   => drawFromPlayer(index, player).withActions(action.next)
       case GiveBack(index)        => placeHandInField(player.other, index).withActions(action.next)
@@ -81,8 +79,8 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
           .placeHandInField(player, playerIndex)
           .placeHandInField(player.other, opponentIndex)
           .withActions(action.next)
-      case Cactus  => Turn(hand, board, player, Cactus.next, true)
-      case EndTurn => Turn(hand, board, player, EndTurn.next, cactus)
+      case Cactus  => Turn(hand, board, player, action.next, true)
+      case EndTurn => Turn(hand, board, player, action.next, cactus)
 
   /** @return
     *   [[true]] if the [[Turn]] is over.
@@ -115,6 +113,4 @@ object Turns:
         board.getTopDiscardStack.value match
           case `king` => Turn(Nil, board, player, List(Draw, DrawKing))
           case _      =>
-            val nextActions =
-              Draw :: (0 until board.getField(player).length).map(index => ChooseDiscard(index)).toList
-            Turn(Nil, board, player, nextActions)
+            Turn(Nil, board, player, Draw :: (0 until board.getField(player).length).map(ChooseDiscard(_)).toList)
