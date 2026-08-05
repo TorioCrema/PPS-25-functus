@@ -29,7 +29,7 @@ Qualore un giocatore ottiene alla fine di una partita un punteggio totale uguale
 
 ## Requisiti di massima obbligatori:
 
-- Implemntazione delle funzionalita' del gioco descritte precedentemente, prevedendo che i giocatori giochino sulla stessa macchina a turno.
+- Implementazione delle funzionalita' del gioco descritte precedentemente, prevedendo che i giocatori giochino sulla stessa macchina a turno.
 - Possibilita' di giocare una partita singola, oppure di una partita con punteggio cumulativo.
 - Interazione con l'applicazione tramite CLI.
 
@@ -38,3 +38,13 @@ Qualore un giocatore ottiene alla fine di una partita un punteggio totale uguale
 - Implementazione di una modalita' per giocatore singolo contro un avversario virtuale.
 - Interazione con l'applicazione tramite GUI.
 
+## Documentazione
+
+1. [Processo di sviluppo](docs/processo.md)
+2. [Requisiti](docs/requisiti.md)
+
+## Sprints
+
+1. [Sprint 1](docs/process/sprint01.md)
+2. [Sprint 2](docs/process/sprint02.md)
+3. [Sprint 3](docs/process/sprint03.md)
