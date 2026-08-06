@@ -9,6 +9,8 @@ import model.deck.card.{Card, CardImpl}
 import model.deck.card.Suit.*
 import model.field.FieldImpl
 import model.deck.DeckImpl
+import model.deck.sugar.DeckDSL.deck
+import model.deck.sugar.DeckDSL.deck.|
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -19,7 +21,7 @@ class BoardTest extends AnyFlatSpec with Matchers:
   def twoOfCups: Card = two of Cups
   def aceOfSwords: Card = ace of Swords
 
-  val twoCardBoard: Board = CustomBoard(List(FieldImpl(), FieldImpl()), DeckImpl(Vector(threeOfSwords, twoOfCups)))
+  val twoCardBoard: Board = CustomBoard(List(FieldImpl(), FieldImpl()), deck from threeOfSwords | twoOfCups)
   val emptyFieldBoard: Board = CustomBoard(List(FieldImpl(), FieldImpl()))
   val populatedFieldBoard: Board = CustomBoard(
     List(FieldImpl(Vector(threeOfSwords, twoOfCups)), FieldImpl())
@@ -30,21 +32,21 @@ class BoardTest extends AnyFlatSpec with Matchers:
     board.getField(Player1).length should be(0)
     board.getField(Player2).length should be(0)
 
-  it should "throw IllegalStateException when drawing from empty deck and discard pile" in:
+  it should "should return empty when drawing from empty deck and having a empty discard pile" in:
     val board = CustomBoard(List(FieldImpl(), FieldImpl()), DeckImpl(Vector.empty))
-    an[IllegalStateException] should be thrownBy board.draw
+    board.draw() should be(Option.empty)
 
   "A board" should "let you draw a card" in:
-    val (card, _) = twoCardBoard.draw
+    val (card, _) = twoCardBoard.draw().get
     card should be(threeOfSwords)
 
   it should "reduce the deck by one card after draw" in:
-    val (_, newBoard) = twoCardBoard.draw
+    val (_, newBoard) = twoCardBoard.draw().get
     newBoard.deck.cards.size should be(1)
 
   it should "return different cards on consecutive draws" in:
-    val (firstCard, boardAfterFirst) = twoCardBoard.draw
-    val (secondCard, _) = boardAfterFirst.draw
+    val (firstCard, boardAfterFirst) = twoCardBoard.draw().get
+    val (secondCard, _) = boardAfterFirst.draw().get
     firstCard should not be secondCard
 
   it should "add a card to the discard pile" in:
@@ -70,7 +72,7 @@ class BoardTest extends AnyFlatSpec with Matchers:
       List(FieldImpl(), FieldImpl()),
       DeckImpl(Vector.empty)
     ).discard(threeOfSwords).discard(twoOfCups).discard(aceOfSwords)
-    val (_, newBoard) = board.draw
+    val (_, newBoard) = board.draw().get
     newBoard.discardPile should be(Nil)
     newBoard.deck.cards.size should be(2)
 
@@ -79,16 +81,21 @@ class BoardTest extends AnyFlatSpec with Matchers:
       List(FieldImpl(), FieldImpl()),
       DeckImpl(Vector.empty)
     ).discard(threeOfSwords).discard(twoOfCups).discard(aceOfSwords)
-    val (card, _) = board.draw
+    val (card, _) = board.draw().get
     List(threeOfSwords, twoOfCups, aceOfSwords) should contain(card)
 
   "A board with a king on top of discard pile" should "return the king and remove it from the discard pile" in:
     val king = CardImpl(0, Swords)
     val board = CustomBoard(
       List(FieldImpl(), FieldImpl()),
-      DeckImpl(Vector.empty)
+      deck from king | aceOfSwords | twoOfCups
     ).discard(king)
-    val (returnedKing, newBoard) = board.kingTopDiscardStack()
+
+    val (returnedKing, newBoard) = board
+      .kingTopDiscardStack()
+      .getOrElse(
+        throw IllegalStateException("Expected a king on top of discard pile")
+      )
     returnedKing should be(king)
     newBoard.discardPile should not contain king
 
@@ -98,15 +105,19 @@ class BoardTest extends AnyFlatSpec with Matchers:
       List(FieldImpl(), FieldImpl()),
       DeckImpl(Vector.empty)
     ).discard(aceOfSwords).discard(king)
-    val (_, newBoard) = board.kingTopDiscardStack()
+    val (_, newBoard) = board
+      .kingTopDiscardStack()
+      .getOrElse(
+        throw IllegalStateException("Expected a king on top of discard pile")
+      )
     newBoard.discardPile should contain(aceOfSwords)
 
-  it should "throw IllegalStateException when top of discard pile is not a king" in:
+  it should "return Left when top of discard pile is not a king" in:
     val board = CustomBoard(
       List(FieldImpl(), FieldImpl()),
       DeckImpl(Vector.empty)
     ).discard(threeOfSwords)
-    an[IllegalStateException] should be thrownBy board.kingTopDiscardStack()
+    board.kingTopDiscardStack() shouldBe a[Left[_, _]]
 
   it should "place a card in a player field" in:
     val newBoard = emptyFieldBoard.placeCardInField(threeOfSwords, Player1, Option.empty)

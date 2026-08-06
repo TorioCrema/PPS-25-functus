@@ -141,4 +141,4 @@ final case class BoardImpl(
     if this.deck.cards.isEmpty then copy(deck = DeckImpl(discardPile.toVector).shuffle(), discardPile = Nil) else this
 
   private def checkKingTopDiscardStack: Boolean =
-    getTopDiscardStack.value != king
+    getTopDiscardStack.value == king
