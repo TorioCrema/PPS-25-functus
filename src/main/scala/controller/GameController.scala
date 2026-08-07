@@ -15,7 +15,13 @@ class GameController(
   private var observedPlayers: Set[Player] = Set.empty
 
   private var currentModelActions: List[Action] = Nil
-  private var state: GameState = syncState(InputMode.ActionMenu, 0, 0)
+  private var state: GameState = syncState(InputMode.ActionMenu)
+  private var pendingOpponentSwapIdx: Option[Int] = None
+  private var selectedMacroAction: Option[Action] = None
+
+  private val TO_BE_SELECTED = -1
+  private val STEP_NEXT = -1
+  private val STEP_PREVIOUS = 1
 
   /** Starts the main game loop, initializing the view and processing user input.
    *
@@ -28,26 +34,21 @@ class GameController(
       while running do
         view.render(state)
         view.readInput() match
-          case Key.UP     => moveSelection(delta = -1)
-          case Key.DOWN   => moveSelection(delta = 1)
-          case Key.LEFT   => moveSelection(delta = -1)
-          case Key.RIGHT  => moveSelection(delta = 1)
-          case Key.ENTER  => confirmAction()
-          case Key.ESCAPE => running = false
-          case _          => ()
+          case Key.UP | Key.LEFT     => moveSelection(delta = STEP_NEXT)
+          case Key.DOWN | Key.RIGHT  => moveSelection(delta = STEP_PREVIOUS)
+          case Key.ENTER             => confirmAction()
+          case Key.ESCAPE            => running = false
+          case _                     => ()
     finally
       view.restore()
 
-  /** Handles the user's confirm input (e.g., pressing ENTER) based on the current [[InputMode]].
+  /** Handles the user's arrow input (e.g., pressing UP, DOWN) based on the current [[InputMode]].
    *
    * Behavior per mode:
-   *   [[InputMode.ActionMenu]]: Triggers the currently highlighted menu action. If the action
-   *   requires board card targeting (represented by placeholder index -1), it switches the UI to
-   *   [[InputMode.SelectCardOnBoard]].
-   *   [[InputMode.SelectCardOnBoard]]: Finds the corresponding board-targeting action for the
-   *   selected card index and executes it.
-   *   [[InputMode.WaitingRoom]]: Dismisses the privacy screen transition and restores normal
-   *   gameplay input mode for the active player.
+   *   [[InputMode.ActionMenu]]: Switching current selection between the possible action
+   *   [[InputMode.SelectCardOnBoard]] and [[InputMode.SelectAdversaryCardOnBoard]]: navigate between
+   *   card on the player or adversary field
+   *   [[InputMode.WaitingRoom]]: No behaviour expected
    */
   private def moveSelection(delta: Int): Unit = state.inputMode match
     case InputMode.ActionMenu =>
@@ -62,6 +63,12 @@ class GameController(
         val newIndex = (state.selectedCardOnBoard + delta + total) % total
         state = state.copy(selectedCardOnBoard = newIndex, lastChangedPlayerCard = Some(newIndex))
 
+    case InputMode.SelectAdversaryCardOnBoard =>
+      val total = state.adversaryCard.length
+      if total > 0 then
+        val newIndex = (state.selectedCardOnBoard + delta + total) % total
+        state = state.copy(selectedCardOnBoard = newIndex)
+
     case InputMode.WaitingRoom => ()
 
   /** Handles the user's confirm input (e.g., pressing ENTER) based on the current [[InputMode]].
@@ -70,7 +77,8 @@ class GameController(
    *   - [[InputMode.ActionMenu]]: Triggers the currently highlighted menu action. If the action
    *     requires board card targeting (represented by placeholder index -1), it switches the UI to
    *     [[InputMode.SelectCardOnBoard]].
-   *   - [[InputMode.SelectCardOnBoard]]: Finds the corresponding board-targeting action for the
+   *   - [[InputMode.SelectCardOnBoard]] and [[InputMode.SelectAdversaryCardOnBoard]]:
+   *     Finds the corresponding board-targeting action for the
    *     selected card index and executes it.
    *   - [[InputMode.WaitingRoom]]: Dismisses the privacy screen transition and restores normal
    *     gameplay input mode for the active player.
@@ -78,22 +86,74 @@ class GameController(
   private def confirmAction(): Unit = state.inputMode match
     case InputMode.ActionMenu =>
       if currentModelActions.nonEmpty then
-        currentModelActions(state.selectedAction) match
-          case Action.ChooseDiscard(-1) | Action.ChooseReplace(-1) =>
-            state = syncState(InputMode.SelectCardOnBoard, 0, 0)
+        val chosenAction = currentModelActions(state.selectedAction)
+        selectedMacroAction = Some(chosenAction)
+
+        chosenAction match
+          case Action.ObservePlayer(TO_BE_SELECTED) | Action.ChooseReplace(TO_BE_SELECTED) | Action.ChooseDiscard(TO_BE_SELECTED) =>
+            state = syncState(InputMode.SelectCardOnBoard)
+
+          case Action.ObserveOpponent(TO_BE_SELECTED) | Action.GiveBack(TO_BE_SELECTED) =>
+            state = syncState(InputMode.SelectAdversaryCardOnBoard)
+
+          case Action.Swap(TO_BE_SELECTED, TO_BE_SELECTED) =>
+            pendingOpponentSwapIdx = None
+            state = syncState(InputMode.SelectAdversaryCardOnBoard)
+
           case action =>
+            selectedMacroAction = None
             executeAction(action)
 
     case InputMode.SelectCardOnBoard =>
       val cardIndex = state.selectedCardOnBoard
-      val targetAction = turn.actions.collectFirst {
-        case Action.ChooseReplace(_) => Action.ChooseReplace(cardIndex)
-        case Action.ChooseDiscard(_) => Action.ChooseDiscard(cardIndex)
-      }
-      targetAction.foreach(executeAction)
+
+      pendingOpponentSwapIdx match
+        case Some(oppIdx) =>
+          val swapAction = turn.actions.collectFirst {
+            case Action.Swap(pIdx, oIdx) => Action.Swap(pIdx, oIdx)
+          }
+          pendingOpponentSwapIdx = None
+          selectedMacroAction = None
+          swapAction.foreach(executeAction)
+
+        case None =>
+          val targetAction = selectedMacroAction match
+            case Some(Action.ObservePlayer(TO_BE_SELECTED)) =>
+              turn.actions.collectFirst { case Action.ObservePlayer(_) => Action.ObservePlayer(cardIndex) }
+
+            case Some(Action.ChooseReplace(TO_BE_SELECTED)) =>
+              turn.actions.collectFirst { case Action.ChooseReplace(_) => Action.ChooseReplace(cardIndex) }
+
+            case Some(Action.ChooseDiscard(TO_BE_SELECTED)) =>
+              turn.actions.collectFirst { case Action.ChooseDiscard(_) => Action.ChooseDiscard(cardIndex) }
+
+            case _ =>
+              turn.actions.collectFirst {
+                case Action.ObservePlayer(_) => Action.ObservePlayer(cardIndex)
+                case Action.ChooseReplace(_) => Action.ChooseReplace(cardIndex)
+                case Action.ReturnToField(_) => Action.ReturnToField(cardIndex)
+              }
+
+          selectedMacroAction = None
+          targetAction.foreach(executeAction)
+
+    case InputMode.SelectAdversaryCardOnBoard =>
+      val cardIndex = state.selectedCardOnBoard
+      val isSwapPhase = turn.actions.exists { case Action.Swap(_, _) => true; case _ => false }
+
+      if isSwapPhase then
+        pendingOpponentSwapIdx = Some(cardIndex)
+        state = syncState(InputMode.SelectCardOnBoard)
+      else
+        val targetAction = turn.actions.collectFirst {
+          case Action.ObserveOpponent(_) => Action.ObserveOpponent(cardIndex)
+          case Action.GiveBack(_) => Action.GiveBack(cardIndex)
+        }
+        targetAction.foreach(executeAction)
 
     case InputMode.WaitingRoom =>
-      state = syncState(determineNextInputMode(), selectedAction = 0, selectedCardOnBoard = 0)
+      pendingOpponentSwapIdx = None
+      state = syncState(determineNextInputMode())
 
   /** Executes an [[Action]] against the current turn logic and synchronizes state.
    *
@@ -126,26 +186,39 @@ class GameController(
       turn = if !observedPlayers.contains(currentPlayer) then Turns.FirstTurn(turn.board, currentPlayer)
       else Turns.SimpleTurn(turn.board, currentPlayer)
 
-      state = syncState(InputMode.WaitingRoom, selectedAction = 0, selectedCardOnBoard = 0)
+      state = syncState(InputMode.WaitingRoom)
     else
-      state = syncState(determineNextInputMode(), selectedAction = 0, selectedCardOnBoard = state.selectedCardOnBoard)
+      state = syncState(determineNextInputMode(), selectedCardOnBoard = state.selectedCardOnBoard)
 
   /** Determines the appropriate [[InputMode]] for the upcoming turn state based on
    * the available model actions.
    *
    * Evaluates whether all pending actions require selecting a specific card on
-   * the player's board (such as replacing or discarding a card).
+   * the player's or adversary board (such as replacing or discarding a card).
    *
    * @return
-   * [[InputMode.SelectCardOnBoard]] if all available actions require card selection;
+   * [[InputMode.SelectCardOnBoard]] if all available actions or the selected one require card selection;
+   * [[InputMode.SelectAdversaryCardOnBoard]] if the selected action require adversary card selection;
    * [[InputMode.ActionMenu]] otherwise
    */
   private def determineNextInputMode(): InputMode =
-    val requiresBoardSelection = turn.actions.nonEmpty && turn.actions.forall {
+    val hasObservePlayer = turn.actions.exists { case Action.ObservePlayer(_) => true; case _ => false }
+    val hasReplace       = turn.actions.exists { case Action.ChooseReplace(_) => true; case _ => false }
+
+    if hasObservePlayer && hasReplace then
+      InputMode.ActionMenu
+    else if turn.actions.nonEmpty && turn.actions.forall {
+      case Action.ObserveOpponent(_) => true
+      case _ => false
+    } then
+      InputMode.SelectAdversaryCardOnBoard
+    else if turn.actions.nonEmpty && turn.actions.forall {
       case Action.ChooseReplace(_) | Action.ChooseDiscard(_) => true
-      case _                                                           => false
-    }
-    if requiresBoardSelection then InputMode.SelectCardOnBoard else InputMode.ActionMenu
+      case _ => false
+    } then
+      InputMode.SelectCardOnBoard
+    else
+      InputMode.ActionMenu
 
   /** Synchronizes the current internal state ([[Turn]] and [[Board]]) with the UI [[GameState]].
    *
@@ -155,13 +228,13 @@ class GameController(
    * @param inputMode
    *   the current [[InputMode]] controlling user input behavior
    * @param selectedAction
-   *   the zero-based index of the currently highlighted action in the menu
+   *   the zero-based index of the currently highlighted action in the menu (default: 0)
    * @param selectedCardOnBoard
-   *   the zero-based index of the currently highlighted card on the player's board
+   *   the zero-based index of the currently highlighted card on the player's board (default: 0)
    * @return
    *   an updated [[GameState]] ready for rendering by the view
    */
-  private def syncState(inputMode: InputMode, selectedAction: Int, selectedCardOnBoard: Int): GameState =
+  private def syncState(inputMode: InputMode, selectedAction: Int = 0, selectedCardOnBoard: Int = 0): GameState =
     val board = turn.board
     val (modelActions, viewActions) = prepareActions(turn.actions)
     currentModelActions = modelActions
@@ -180,33 +253,59 @@ class GameController(
 
   /**
    * Grouping logic for board-selection actions:
-   *   If replacement actions (`ChooseReplace`) are present, groups them into a single option.
-   *   If matching discard actions (`ChooseDiscard`) are present, prepends a single option
-   *   for board selection alongside the other available actions.
+   *   If actions like [[Action.ChooseReplace]], [[Action.ChooseDiscard]], [[Action.ObserveOpponent]],
+   *   [[Action.ObservePlayer]], [[Action.Swap]] are present, groups them into a single option.
+   *   prepending them alongside the other available actions.
    *
    * @param actions
-   *   the list of raw model actions available in the current turn step
+   *   the list of [[Action]] available in the current turn step
    * @return
-   *   a tuple containing the filtered/mapped model actions and their corresponding view actions
+   *   a tuple containing the filtered/mapped [[Action]] and their corresponding [[ViewAction]]
    */
   private def prepareActions(actions: List[Action]): (List[Action], List[ViewAction]) =
+    val hasObserveOpponent = actions.exists { case Action.ObserveOpponent(_) => true; case _ => false }
+    val hasObservePlayer = actions.exists { case Action.ObservePlayer(_) => true; case _ => false }
+    val hasSwap = actions.exists { case Action.Swap(_, _) => true; case _ => false }
     val hasReplace = actions.exists { case Action.ChooseReplace(_) => true; case _ => false }
-    val hasDiscard = actions.exists { case Action.ChooseDiscard(_) => true; case _ => false }
+    val hasChooseDiscard = actions.exists { case Action.ChooseDiscard(_) => true; case _ => false }
 
-    if hasReplace then
+    if hasObservePlayer then
+      val otherActions = actions.filterNot { case Action.ObservePlayer(_) => true; case _ => false }
+      val (otherModel, otherView) = prepareActions(otherActions)
       (
-        List(Action.ChooseReplace(-1)),
-        List(ViewAction("select_replace", "Select a card from the board to swap"))
+        Action.ObservePlayer(TO_BE_SELECTED) :: otherModel,
+        ViewAction("use_effect_player", "Use card effect (Peek at your card)") :: otherView
       )
-    else if hasDiscard then
+    else if hasObserveOpponent then
+      val otherActions = actions.filterNot { case Action.ObserveOpponent(_) => true; case _ => false }
+      val (otherModel, otherView) = prepareActions(otherActions)
+      (
+        Action.ObserveOpponent(TO_BE_SELECTED) :: otherModel,
+        ViewAction("use_effect_opp", "Use card effect (Peek at opponent card)") :: otherView
+      )
+    else if hasSwap then
+      val otherActions = actions.filterNot { case Action.Swap(_, _) => true; case _ => false }
+      val (otherModel, otherView) = prepareActions(otherActions)
+      (
+        Action.Swap(TO_BE_SELECTED, TO_BE_SELECTED) :: otherModel,
+        ViewAction("use_effect_swap", "Use card effect (Swap cards)") :: otherView
+      )
+    else if hasReplace then
+      val otherActions = actions.filterNot { case Action.ChooseReplace(_) => true; case _ => false }
+      val (otherModel, otherView) = prepareActions(otherActions)
+      (
+        Action.ChooseReplace(TO_BE_SELECTED) :: otherModel,
+        ViewAction("select_replace", "Swap drawn card with a board card") :: otherView
+      )
+    else if hasChooseDiscard then
       val otherActions = actions.filterNot { case Action.ChooseDiscard(_) => true; case _ => false }
-      val modelList = Action.ChooseDiscard(-1) :: otherActions
-      val viewList = ViewAction(
-        "select_discard",
-        "Discard a card matching the rank of the top discard"
-      ) :: otherActions.map(mapSingleAction)
-      (modelList, viewList)
-    else (actions, actions.map(mapSingleAction))
+      val (otherModel, otherView) = prepareActions(otherActions)
+      (
+        Action.ChooseDiscard(TO_BE_SELECTED) :: otherModel,
+        ViewAction("select_discard", "Discard matching card from board") :: otherView
+      )
+    else
+      (actions, actions.map(mapSingleAction))
 
   /** Maps an individual model action ([[Action]]) to its corresponding
    * UI view representation ([[ViewAction]]) with a user-friendly display label.
@@ -217,12 +316,24 @@ class GameController(
    * the resulting [[ViewAction]] containing the action identifier and string label
    */
   private def mapSingleAction(action: Action): ViewAction = action match
-    case Action.Observe          => ViewAction("observe", "Peek at the first two cards")
-    case Action.Confirm          => ViewAction("confirm", "Confirm and cover")
-    case Action.Draw             => ViewAction("draw", "Draw from deck")
-    case Action.DrawKing         => ViewAction("draw_king", "Take King from discard pile")
-    case Action.Activate         => ViewAction("activate", "Swap drawn card with a board card")
-    case Action.Cactus           => ViewAction("cactus", "Call Cactus!")
-    case Action.EndTurn          => ViewAction("end_turn", "End turn")
-    case Action.ChooseDiscard(i) => ViewAction(s"discard_$i", s"Discard card $i")
-    case Action.ChooseReplace(i) => ViewAction(s"replace_$i", s"Replace card $i")
+    case Action.Observe             => ViewAction("observe", "Peek at the first two cards")
+    case Action.Confirm             => ViewAction("confirm", "Confirm and cover")
+    case Action.Draw                => ViewAction("draw", "Draw from deck")
+    case Action.DrawKing            => ViewAction("draw_king", "Take King from discard pile")
+    case Action.Activate            =>
+      val hasSpecialEffect = turn.hand.headOption.exists(c => c.value == 6 || c.value == 7 || c.value == 8)
+      if hasSpecialEffect then
+        ViewAction("activate", "Use card effect or replace")
+      else
+        ViewAction("activate", "Swap drawn card with a board card")
+    case Action.EndTurn             => ViewAction("end_turn", "End turn")
+    case Action.Cactus              => ViewAction("cactus", "Call Cactus!")
+    case Action.ChooseDiscard(i)    => ViewAction(s"discard_$i", s"Discard card")
+    case Action.ChooseReplace(i)    => ViewAction(s"replace_$i", s"Replace card ")
+    case Action.Discard(i)          => ViewAction(s"discard_$i", s"Discard card ")
+    case Action.ObserveOpponent(i)  => ViewAction(s"obs_opp_$i", s"Peek at opponent card")
+    case Action.GiveBack(i)         => ViewAction(s"give_back_$i", s"Return card to opponent")
+    case Action.ObservePlayer(i)    => ViewAction(s"obs_player_$i", s"Peek at your card")
+    case Action.ReturnToField(i)    => ViewAction(s"return_$i", s"Return card to your field")
+    case Action.Swap(pIdx, oIdx)    => ViewAction(s"swap_${pIdx}_$oIdx", s"Swap your card with opponent's")
+
