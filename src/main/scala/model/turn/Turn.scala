@@ -28,7 +28,9 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
 
   private def withActions(newActions: List[Action]): Turn = Turn(hand, board, player, newActions)
 
-  private def drawFromPlayer(index: Int, from: Player) =
+  private def discardHand(): Turn = Turn(Nil, board.discard(hand.head), player, actions)
+
+  private def drawFromPlayer(index: Int, from: Player): Turn =
     val (drawn, newBoard) = board.drawPlayerCard(from, index)
     Turn(hand.appended(drawn), newBoard, player, actions)
 
@@ -59,8 +61,8 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
         val (drawnKing, newBoard) = board.kingTopDiscardStack()
         Turn(drawnKing :: Nil, newBoard, player, action.next)
       case Activate               => hand.head.effect(this)
-      case ObserveOpponent(index) => drawFromPlayer(index, player.other).withActions(action.next)
-      case ObservePlayer(index)   => drawFromPlayer(index, player).withActions(action.next)
+      case ObserveOpponent(index) => discardHand().drawFromPlayer(index, player.other).withActions(action.next)
+      case ObservePlayer(index)   => discardHand().drawFromPlayer(index, player).withActions(action.next)
       case GiveBack(index)        => placeHandInField(player.other, index).withActions(action.next)
       case ReturnToField(index)   => placeHandInField(player, index).withActions(action.next)
       case ChooseReplace(index)   => Turn(Nil, board.replace(player, index, hand.head), player, action.next)
@@ -74,7 +76,8 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
             val (drawn, boardAfterDraw) = restoredBoard.draw
             Turn(Nil, boardAfterDraw.placeCardInField(drawn, player), player, action.next)
       case Swap(playerIndex, opponentIndex) =>
-        drawFromPlayer(opponentIndex, player.other)
+        discardHand()
+          .drawFromPlayer(opponentIndex, player.other)
           .drawFromPlayer(playerIndex, player)
           .placeHandInField(player, playerIndex)
           .placeHandInField(player.other, opponentIndex)
