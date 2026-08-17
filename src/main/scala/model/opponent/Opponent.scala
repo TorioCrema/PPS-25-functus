@@ -7,13 +7,18 @@ import model.turn.Action.*
 
 class Opponent(private var knownCards: Map[Int, Card] = Map()):
   private def getChosenAction(availableActions: List[Action], turn: Turn): Action =
-    if checkKnownDiscard(turn) then
-      val chosenDiscard = knownCards.map((index, card) => (card, index))(turn.board.getTopDiscardStack.value)
+    if canDiscard(availableActions) && checkKnownDiscard(turn) then
+      val chosenDiscard = knownCards.map((index, card) => (card.value, index))(turn.board.getTopDiscardStack.value)
       ChooseDiscard(chosenDiscard)
     else
       availableActions match
         case `Draw` :: `DrawKing` :: Nil => DrawKing
         case action :: Nil               => action
+
+  private def canDiscard(actions: List[Action]): Boolean = actions.exists(_ match
+    case ChooseDiscard(_) => true
+    case _ => false
+  )
 
   private def checkKnownDiscard(turn: Turn): Boolean =
     if turn.board.discardPile.nonEmpty then
