@@ -8,11 +8,18 @@ import model.turn.Action.*
 class Opponent:
   private var knownCards: Map[Int, Card] = Map()
   private val cactusThreshold = 5
-  private def getChosenAction(availableActions: List[Action], turn: Turn): Action =
-    if canDiscard(availableActions) && checkKnownDiscard(turn) then
+
+  def play(turn: Turn): (Turn, Action) = getChosenAction(turn) match
+    case Observe =>
+      knownCards = mapFromHand(turn.act(Observe).hand)
+      (turn.act(Observe), Observe)
+    case chosenAction => (turn.act(chosenAction), chosenAction)
+
+  private def getChosenAction(turn: Turn): Action =
+    if canDiscard(turn.actions) && checkKnownDiscard(turn) then
       val chosenDiscard = knownCards.map((index, card) => (card.value, index))(turn.board.getTopDiscardStack.value)
       ChooseDiscard(chosenDiscard)
-    else if canReplace(availableActions) then
+    else if canReplace(turn.actions) then
       val unknownCards = for
         x <- 0 until turn.board.getField(turn.player).length
         if !knownCards.contains(x)
@@ -20,9 +27,10 @@ class Opponent:
       val chosenReplace =
         if unknownCards.nonEmpty then unknownCards.head
         else knownCards.maxBy((i, card) => card.value)._1
+      knownCards = knownCards.updated(chosenReplace, turn.hand.head)
       ChooseReplace(chosenReplace)
     else
-      availableActions match
+      turn.actions match
         case `Draw` :: `DrawKing` :: Nil  => DrawKing
         case `Cactus` :: `EndTurn` :: Nil => checkCactus(turn)
         case action :: Nil                => action
@@ -55,8 +63,3 @@ class Opponent:
   private def knows(index: Int): Boolean = knownCards.contains(index)
   def getKnownCard(index: Int): Option[Card] = if knows(index) then Some(knownCards(index)) else None
 
-  def play(turn: Turn): (Turn, Action) = getChosenAction(turn.actions, turn) match
-    case Observe =>
-      knownCards = mapFromHand(turn.act(Observe).hand)
-      (turn.act(Observe), Observe)
-    case chosenAction => (turn.act(chosenAction), chosenAction)
