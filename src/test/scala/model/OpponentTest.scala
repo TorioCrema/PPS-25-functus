@@ -8,8 +8,8 @@ import model.opponent.Opponent
 import model.turn.Action.*
 import model.deck.sugar.CardDSL.*
 import model.deck.card.Suit.*
-
 import model.deck.sugar.FieldDSL.given
+import model.deck.DeckImpl
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -58,3 +58,24 @@ class OpponentTest extends AnyFlatSpec with Matchers:
     val (_, chosenAction) = opponent.play(discardTurn)
     chosenAction should be(ChooseDiscard(0))
 
+  it should "Replace drawn card with an unknown card whenever possible" in:
+    val opponentField = (six of Swords) and (five of Wands) and (jack of Wands) and (four of Pentacles)
+    val otherField = (three of Cups) and (seven of Pentacles)
+    val replaceBoard = BoardFactory.CustomBoard(opponentField :: otherField :: Nil, DeckImpl(Vector(four of Cups)))
+    val opponent = Opponent()
+    opponent.play(FirstTurn(replaceBoard, Player1))
+    val (afterDraw, _) = opponent.play(SimpleTurn(replaceBoard, Player1))
+    val (afterActivate, _) = opponent.play(afterDraw)
+    val (_, chosenAction) = opponent.play(afterActivate)
+    chosenAction should be(ChooseReplace(2))
+
+  it should "Replace drawn card with known card of max value when all cards are known" in:
+    val opponentField = (six of Swords) and (five of Wands)
+    val otherField = (three of Cups) and (seven of Pentacles)
+    val replaceBoard = BoardFactory.CustomBoard(opponentField :: otherField :: Nil, DeckImpl(Vector(three of Wands)))
+    val opponent = Opponent()
+    opponent.play(FirstTurn(replaceBoard, Player1))
+    val (afterDraw, _) = opponent.play(SimpleTurn(replaceBoard, Player1))
+    val (afterActivate, _) = opponent.play(afterDraw)
+    val (_, chosenAction) = opponent.play(afterActivate)
+    chosenAction should be(ChooseReplace(0))
