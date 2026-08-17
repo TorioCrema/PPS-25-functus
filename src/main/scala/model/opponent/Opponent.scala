@@ -5,7 +5,9 @@ import model.turn.{Action, Turn}
 import model.deck.card.Card
 import model.turn.Action.*
 
-class Opponent(private var knownCards: Map[Int, Card] = Map()):
+class Opponent:
+  private var knownCards: Map[Int, Card] = Map()
+  private val cactusThreshold = 5
   private def getChosenAction(availableActions: List[Action], turn: Turn): Action =
     if canDiscard(availableActions) && checkKnownDiscard(turn) then
       val chosenDiscard = knownCards.map((index, card) => (card.value, index))(turn.board.getTopDiscardStack.value)
@@ -21,8 +23,9 @@ class Opponent(private var knownCards: Map[Int, Card] = Map()):
       ChooseReplace(chosenReplace)
     else
       availableActions match
-        case `Draw` :: `DrawKing` :: Nil => DrawKing
-        case action :: Nil               => action
+        case `Draw` :: `DrawKing` :: Nil  => DrawKing
+        case `Cactus` :: `EndTurn` :: Nil => checkCactus(turn)
+        case action :: Nil                => action
 
   private def canDiscard(actions: List[Action]): Boolean = checkActions(actions)(_ match
     case ChooseDiscard(_) => true
@@ -33,6 +36,13 @@ class Opponent(private var knownCards: Map[Int, Card] = Map()):
     case _                => false)
 
   private def checkActions(action: List[Action])(p: Action => Boolean): Boolean = action.exists(p)
+
+  private def checkCactus(turn: Turn): Action =
+    def checkKnownCards: Boolean =
+      knownCards.toList.length >= turn.board.getField(turn.player).length / 2
+    def checkKnownFieldValue: Boolean =
+      knownCards.values.foldLeft(0)((acc, card) => acc + card.value) <= cactusThreshold
+    if checkKnownCards && checkKnownFieldValue then Cactus else EndTurn
 
   private def checkKnownDiscard(turn: Turn): Boolean =
     if turn.board.discardPile.nonEmpty then

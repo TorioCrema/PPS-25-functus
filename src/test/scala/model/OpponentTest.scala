@@ -17,6 +17,8 @@ class OpponentTest extends AnyFlatSpec with Matchers:
   private val board = BoardFactory.BoardWithPopulatedFields()
   private val firstTurn = FirstTurn(board, Player1)
   private val observedCards = board.getField(Player1).cardsList.slice(0, 2)
+  private val opponentField = (six of Swords) and (five of Wands)
+  private val otherField = (three of Cups) and (seven of Pentacles)
 
   "Opponent" should "observe and remember observed cards" in:
     val opponent = Opponent()
@@ -48,8 +50,6 @@ class OpponentTest extends AnyFlatSpec with Matchers:
     chosenAction should be(Activate)
 
   it should "Discard when top of discard stack value matches a known card value" in:
-    val opponentField = (six of Swords) and (five of Wands)
-    val otherField = (three of Cups) and (seven of Pentacles)
     val boardWithDiscard = BoardFactory.CustomBoard(opponentField :: otherField :: Nil).discard(six of Wands)
     val opponent = Opponent()
     val afterObserve = opponent.play(FirstTurn(boardWithDiscard, Player1))._1
@@ -60,7 +60,6 @@ class OpponentTest extends AnyFlatSpec with Matchers:
 
   it should "Replace drawn card with an unknown card whenever possible" in:
     val opponentField = (six of Swords) and (five of Wands) and (jack of Wands) and (four of Pentacles)
-    val otherField = (three of Cups) and (seven of Pentacles)
     val replaceBoard = BoardFactory.CustomBoard(opponentField :: otherField :: Nil, DeckImpl(Vector(four of Cups)))
     val opponent = Opponent()
     opponent.play(FirstTurn(replaceBoard, Player1))
@@ -70,8 +69,6 @@ class OpponentTest extends AnyFlatSpec with Matchers:
     chosenAction should be(ChooseReplace(2))
 
   it should "Replace drawn card with known card of max value when all cards are known" in:
-    val opponentField = (six of Swords) and (five of Wands)
-    val otherField = (three of Cups) and (seven of Pentacles)
     val replaceBoard = BoardFactory.CustomBoard(opponentField :: otherField :: Nil, DeckImpl(Vector(three of Wands)))
     val opponent = Opponent()
     opponent.play(FirstTurn(replaceBoard, Player1))
@@ -79,3 +76,14 @@ class OpponentTest extends AnyFlatSpec with Matchers:
     val (afterActivate, _) = opponent.play(afterDraw)
     val (_, chosenAction) = opponent.play(afterActivate)
     chosenAction should be(ChooseReplace(0))
+
+  it should "call cactus when half or more of its field is known and known values amount to five or less" in:
+    val opponentField = (ace of Swords) and (three of Wands) and (jack of Wands) and (four of Pentacles)
+    val replaceBoard = BoardFactory.CustomBoard(opponentField :: otherField :: Nil, DeckImpl(Vector(two of Cups)))
+    val opponent = Opponent()
+    opponent.play(FirstTurn(replaceBoard, Player1))
+    val (afterDraw, _) = opponent.play(SimpleTurn(replaceBoard, Player1))
+    val (afterActivate, _) = opponent.play(afterDraw)
+    val (afterReplace, _) = opponent.play(afterActivate)
+    val (_, chosenAction) = opponent.play(afterReplace)
+    chosenAction should be(Cactus)
