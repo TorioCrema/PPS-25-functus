@@ -101,3 +101,10 @@ class OpponentTest extends AnyFlatSpec with Matchers:
     val (afterReplace, replaced) = opponent.play(afterActivate)
     val (_, chosenAction) = opponent.play(afterReplace)
     chosenAction should be(EndTurn)
+
+  it should "forget known cards" in:
+    val opponent = Opponent()
+    opponent.play(FirstTurn(BoardFactory.CustomBoard(opponentField :: otherField :: Nil), Player1))
+    opponent.getKnownCard(0) should be(Some(six of Swords))
+    opponent.forget(0)
+    opponent.getKnownCard(0) should be(None)

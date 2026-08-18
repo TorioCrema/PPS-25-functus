@@ -5,10 +5,17 @@ import model.turn.{Action, Turn}
 import model.deck.card.Card
 import model.turn.Action.*
 
+/** Class that represents a virtual opponent, capable of remembering the cards it observes and playing accordingly. */
 class Opponent:
   private var knownCards: Map[Int, Card] = Map()
   private val cactusThreshold = 5
 
+  /** Selects the appropriate action from the available ones and applies it to the current turn.
+    * @param turn
+    *   the turn to play.
+    * @return
+    *   a [[Tuple]] of the next phase of the [[Turn]] and the chosen [[Action]].
+    */
   def play(turn: Turn): (Turn, Action) = getChosenAction(turn) match
     case Observe =>
       knownCards = mapFromHand(turn.act(Observe).hand)
@@ -18,6 +25,18 @@ class Opponent:
       knownCards = knownCards.removed(knownCards.size - 1)
       (turn.act(ChooseDiscard(index)), ChooseDiscard(index))
     case chosenAction => (turn.act(chosenAction), chosenAction)
+
+  /** Returns [[Option]] of the card if known [[None]] otherwise.
+    * @param index
+    *   the index of the card in the field.
+    */
+  def getKnownCard(index: Int): Option[Card] = if knows(index) then Some(knownCards(index)) else None
+
+  /** Removes the card at the given index from known cards.
+    * @param index
+    *   the index of the card to forget.
+    */
+  def forget(index: Int): Unit = if knows(index) then knownCards = knownCards.removed(index)
 
   private def getChosenAction(turn: Turn): Action =
     if canDiscard(turn.actions) && checkKnownDiscard(turn) then
@@ -65,4 +84,3 @@ class Opponent:
     hand.zipWithIndex.foldLeft(Map())((map, pair) => map.updated(pair._2, pair._1))
 
   private def knows(index: Int): Boolean = knownCards.contains(index)
-  def getKnownCard(index: Int): Option[Card] = if knows(index) then Some(knownCards(index)) else None
