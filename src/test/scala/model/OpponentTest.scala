@@ -58,6 +58,8 @@ class OpponentTest extends AnyFlatSpec with Matchers:
     val discardTurn = SimpleTurn(boardWithDiscard, Player1)
     val (_, chosenAction) = opponent.play(discardTurn)
     chosenAction should be(ChooseDiscard(0))
+    opponent.getKnownCard(0) should be(Some(five of Wands))
+    opponent.getKnownCard(1) should be(None)
 
   it should "Replace drawn card with an unknown card whenever possible and remember the new card" in:
     val replaceBoard = BoardFactory.CustomBoard(longOpponentField :: otherField :: Nil, DeckImpl(Vector(four of Cups)))

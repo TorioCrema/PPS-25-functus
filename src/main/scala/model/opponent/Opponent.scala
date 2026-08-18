@@ -13,6 +13,10 @@ class Opponent:
     case Observe =>
       knownCards = mapFromHand(turn.act(Observe).hand)
       (turn.act(Observe), Observe)
+    case ChooseDiscard(index) =>
+      for x <- index until knownCards.size - 1 do knownCards = knownCards.updated(x, knownCards(x + 1))
+      knownCards = knownCards.removed(knownCards.size - 1)
+      (turn.act(ChooseDiscard(index)), ChooseDiscard(index))
     case chosenAction => (turn.act(chosenAction), chosenAction)
 
   private def getChosenAction(turn: Turn): Action =
@@ -62,4 +66,3 @@ class Opponent:
 
   private def knows(index: Int): Boolean = knownCards.contains(index)
   def getKnownCard(index: Int): Option[Card] = if knows(index) then Some(knownCards(index)) else None
-
