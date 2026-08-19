@@ -30,10 +30,9 @@ class EffectsTest extends AnyFlatSpec with Matchers:
     BoardImpl(deck = DeckImpl(Vector(jack of Swords)), players = Map((Player1, player1Field), (Player2, player2Field)))
   private val turnWithJackInHand = SimpleTurn(boardWithDrawableJack, Player1).act(Draw)
 
-  "Activating a six" should "discard it and allow to observe one of the opponent's cards" in:
+  "Activating a six" should "allow to observe one of the opponent's cards or replace" in:
     val afterActivatingSix = turnWithSixInHand.act(Activate)
-    afterActivatingSix.hand should be(Nil)
-    afterActivatingSix.board.getTopDiscardStack should be(six of Swords)
+    afterActivatingSix.hand should be((six of Swords) :: Nil)
     afterActivatingSix.actions should be(
       ChooseReplace(0) :: ChooseReplace(1) :: ObserveOpponent(0) :: ObserveOpponent(1) :: Nil
     )
@@ -48,10 +47,9 @@ class EffectsTest extends AnyFlatSpec with Matchers:
     afterReturningObservedCard.board.getField(Player2) should be(player2Field)
     afterReturningObservedCard.actions should be(Cactus :: EndTurn :: Nil)
 
-  "Activating a seven" should "discard it and allow to observe one of the player's cards" in:
+  "Activating a seven" should "allow to observe one of the player's cards or replace" in:
     val afterActivatingSeven = turnWithSevenInHand.act(Activate)
-    afterActivatingSeven.hand should be(Nil)
-    afterActivatingSeven.board.getTopDiscardStack should be(seven of Swords)
+    afterActivatingSeven.hand should be((seven of Swords):: Nil)
     afterActivatingSeven.actions should be(
       ChooseReplace(0) :: ChooseReplace(1) :: ObservePlayer(0) :: ObservePlayer(1) :: Nil
     )
@@ -69,8 +67,7 @@ class EffectsTest extends AnyFlatSpec with Matchers:
 
   "Activating a jack" should "discard it and allow the player to swap a card with the opponent" in:
     val afterActivatingJack = turnWithJackInHand.act(Activate)
-    afterActivatingJack.hand should be(Nil)
-    afterActivatingJack.board.getTopDiscardStack should be(jack of Swords)
+    afterActivatingJack.hand should be((jack of Swords) :: Nil)
     afterActivatingJack.actions should be(
       ChooseReplace(0) :: ChooseReplace(1) :: Swap(0, 0) :: Swap(0, 1) :: Swap(1, 0) :: Swap(1, 1) :: Nil
     )
