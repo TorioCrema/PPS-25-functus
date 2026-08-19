@@ -7,6 +7,7 @@ import model.deck.sugar.BoardDSL.*
 import model.deck.sugar.CardDSL.*
 import model.deck.sugar.FieldDSL.given_Conversion_Card_FieldBuilderLike
 
+import org.pps.functus.model.deck.sugar.DeckDSL.deck.|
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -17,51 +18,56 @@ class BoardDSLTest extends AnyFlatSpec with Matchers:
   private val threeOfCups = 3 of Cups
   private val sixOfPentacles = 6 of Pentacles
   private val knightOfWands = 9 of Wands
+  private val twoOfCups = 2 of Cups
+  private val sixOfCups = 6 of Cups
 
   "default board" should "return a fully populated board" in:
-    val b = default board
+    val boardTest = default board
 
-    b.players(Player.Player1).length should be(4)
-    b.players(Player.Player2).length should be(4)
+    boardTest.players(Player.Player1).length should be(4)
+    boardTest.players(Player.Player2).length should be(4)
+    boardTest.deck.cards.length should be(32)
 
   "board from default" should "return a fully populated board" in:
-    val b = board from default
+    val boardTest = board from default
 
-    b.build.players(Player.Player1).length should be(4)
-    b.build.players(Player.Player2).length should be(4)
+    boardTest.deck.cards.length should be(40)
+    boardTest.players(Player.Player1).length should be(4)
+    boardTest.players(Player.Player2).length should be(4)
 
   it should "allow overriding player one's field" in:
-    val b = (board from default) withCustom playerOne(threeOfCups and sixOfPentacles)
+    val boardTest = (board from default) withCustom playerOne(threeOfCups and sixOfPentacles)
 
-    b.build.players(Player.Player1).cardsList should contain(threeOfCups)
-    b.build.players(Player.Player1).cardsList should contain(sixOfPentacles)
-    b.build.players(Player.Player2).length should be(4)
+    boardTest.players(Player.Player1).cardsList should contain(threeOfCups)
+    boardTest.players(Player.Player1).cardsList should contain(sixOfPentacles)
+    boardTest.players(Player.Player2).length should be(4)
 
   it should "allow overriding player two's field" in:
-    val b = (board from default) withCustom playerTwo(threeOfCups and sixOfPentacles)
-    b.build.players(Player.Player2).cardsList should contain(threeOfCups)
-    b.build.players(Player.Player2).cardsList should contain(sixOfPentacles)
-    b.build.players(Player.Player1).length should be(4)
+    val boardTest = board from default withCustom playerTwo(threeOfCups and sixOfPentacles)
+    boardTest.players(Player.Player2).cardsList should contain(threeOfCups)
+    boardTest.players(Player.Player2).cardsList should contain(sixOfPentacles)
+    boardTest.players(Player.Player1).length should be(4)
 
   it should "allow overriding both players' fields" in:
-    val b = (board from default)
-      .withCustom(playerOne(threeOfCups and sixOfPentacles))
-      .withCustom(playerTwo(knightOfWands and sixOfPentacles))
+    val boardTest =
+      board from default withCustom playerOne(threeOfCups and sixOfPentacles) withCustom playerTwo(
+        knightOfWands
+      ) withCustom discardPile(twoOfCups | sixOfCups)
 
-    b.build.players(Player.Player1).cardsList should contain(threeOfCups)
-    b.build.players(Player.Player2).cardsList should contain(knightOfWands)
+    boardTest.players(Player.Player1).cardsList should contain(threeOfCups)
+    boardTest.players(Player.Player2).cardsList should contain(knightOfWands)
 
   "lockedBoard from default" should "remove assigned cards from the deck" in:
-    val b = (lockedBoard from default) withCustom playerOne(threeOfCups and sixOfPentacles)
+    val boardTest = lockedBoard from default withCustom playerOne(threeOfCups and sixOfPentacles)
 
-    b.build.deck.cards should not contain threeOfCups
-    b.build.deck.cards should not contain sixOfPentacles
+    boardTest.deck.cards should not contain threeOfCups
+    boardTest.deck.cards should not contain sixOfPentacles
 
   it should "not remove cards when none are assigned" in:
-    val b = lockedBoard from default
-    b.build.deck.cards.length should be(40 - 8)
+    val boardTest = lockedBoard from default
+    boardTest.deck.cards.length should be(40 - 8)
 
   "board from default (unlocked)" should "not remove assigned cards from the deck" in:
-    val b = (board from default) withCustom playerOne(threeOfCups and sixOfPentacles)
-    b.build.deck.cards should contain(threeOfCups)
-    b.build.deck.cards should contain(sixOfPentacles)
+    val boardTest = (board from default) withCustom playerOne(threeOfCups and sixOfPentacles)
+    boardTest.deck.cards should contain(threeOfCups)
+    boardTest.deck.cards should contain(sixOfPentacles)
