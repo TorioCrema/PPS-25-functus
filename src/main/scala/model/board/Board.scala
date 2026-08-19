@@ -5,7 +5,7 @@ import model.deck.card.Card
 import model.field.Field
 import model.deck.{Deck, DeckFactory, DeckImpl}
 
-import org.pps.functus.model.deck.sugar.CardDSL.king
+import model.deck.sugar.CardDSL.king
 
 enum Player:
   case Player1, Player2
@@ -20,6 +20,9 @@ sealed trait Board:
 
   /** The current deck of cards available for drawing. */
   val deck: Deck
+
+  /** The current fields of the players. */
+  val players: Map[Player, Field]
 
   /** The pile of cards that have been discarded during the game. The head of the list represents the top of the pile
     * (most recently discarded card).
