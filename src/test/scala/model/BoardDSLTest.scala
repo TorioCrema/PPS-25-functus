@@ -6,8 +6,8 @@ import model.deck.card.Suit.{Cups, Pentacles, Wands}
 import model.deck.sugar.BoardDSL.*
 import model.deck.sugar.CardDSL.*
 import model.deck.sugar.FieldDSL.given_Conversion_Card_FieldBuilderLike
+import model.deck.sugar.DeckDSL.deck.|
 
-import org.pps.functus.model.deck.sugar.DeckDSL.deck.|
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

@@ -114,13 +114,8 @@ object BoardDSL:
           case Unlocked => freshDeck
       }
 
-      val (deckAfterField1, field1) = field1Ovr match
-        case Some(f) => (finalDeck, f)
-        case None    => dealFieldWithDeck(finalDeck, 4)
-
-      val (deckAfterField2, field2) = field2Ovr match
-        case Some(f) => (deckAfterField1, f)
-        case None    => dealFieldWithDeck(deckAfterField1, 4)
+      val (deckAfterField1, field1) = resolveField(field1Ovr, finalDeck, 4)
+      val (deckAfterField2, field2) = resolveField(field2Ovr, deckAfterField1, 4)
 
       val actualDeck: Deck = lockMode match
         case Locked   => deckAfterField2
@@ -161,3 +156,8 @@ object BoardDSL:
           case Some((card, remaining)) => (remaining, f.addCard(card))
           case None                    => (d, f)
       }
+
+  private def resolveField(ovr: Option[Field], deck: Deck, n: Int): (Deck, Field) =
+    ovr match
+      case Some(f) => (deck, f)
+      case None    => dealFieldWithDeck(deck, n)

@@ -117,7 +117,7 @@ class BoardTest extends AnyFlatSpec with Matchers:
       List(FieldImpl(), FieldImpl()),
       DeckImpl(Vector.empty)
     ).discard(threeOfSwords)
-    board.kingTopDiscardStack() shouldBe a[Left[_, _]]
+    board.kingTopDiscardStack() shouldBe a[Left[?,?]]
 
   it should "place a card in a player field" in:
     val newBoard = emptyFieldBoard.placeCardInField(threeOfSwords, Player1, Option.empty)
