@@ -1,4 +1,4 @@
-# Sprint 2
+# Sprint 3
 
 ## Obiettivo
 
@@ -33,6 +33,7 @@ La scadenza della sprint è il 17/08/26.
         <td>Simone</td>
         <td>2</td>
         <td>0</td>
+        <td>1</td>
         <td>0</td>
         </tr>
         <tr>
@@ -41,6 +42,7 @@ La scadenza della sprint è il 17/08/26.
         <td>5</td>
         <td>2</td>
         <td>0</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Setup progetto Scala</td>
@@ -48,11 +50,13 @@ La scadenza della sprint è il 17/08/26.
         <td>2</td>
         <td>0</td>
         <td>0</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Setup documentazione</td>
         <td>Alex, Luca, Simone</td>
         <td>2</td>
+        <td>0</td>
         <td>0</td>
         <td>0</td>
         </tr>
@@ -65,12 +69,14 @@ La scadenza della sprint è il 17/08/26.
         <td>4</td>
         <td>1</td>
         <td>0</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Field</td>
         <td>Luca</td>
         <td>4</td>
         <td>1</td>
+        <td>0</td>
         <td>0</td>
         </tr>
         <tr>
@@ -79,19 +85,21 @@ La scadenza della sprint è il 17/08/26.
         <td>8</td>
         <td>8</td>
         <td>0</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Card/Field/Board DSL</td>
         <td>Simone, Luca</td>
         <td>5</td>
         <td>5</td>
-        <td>3</td>
-        <td></td>
+        <td>5</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Card View</td>
         <td>Simone</td>
         <td>4</td>
+        <td>0</td>
         <td>0</td>
         <td>0</td>
         </tr>
@@ -100,6 +108,7 @@ La scadenza della sprint è il 17/08/26.
         <td>Alex</td>
         <td>2</td>
         <td>4</td>
+        <td>2</td>
         <td>0</td>
         </tr>
         <tr>
@@ -107,6 +116,7 @@ La scadenza della sprint è il 17/08/26.
         <td>Alex</td>
         <td>4</td>
         <td>4</td>
+        <td>2</td>
         <td>0</td>
         </tr>
         <tr>
@@ -115,22 +125,25 @@ La scadenza della sprint è il 17/08/26.
         <td rowspan="3">Come utente, voglio poter eseguire il mio turno, secondo le azioni disponibili</td>
         <td>Turn</td>
         <td>Simone</td>
-        <td>5</td>
+        <td>0</td>
         <td>5</td>
         <td>2</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Actions</td>
         <td>Simone</td>
-        <td>5</td>
+        <td>0</td>
         <td>5</td>
         <td>2</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Input Utente</td>
         <td>Alex</td>
         <td>7</td>
         <td>7</td>
+        <td>3</td>
         <td>0</td>
         </tr>
         <tr>
@@ -139,22 +152,38 @@ La scadenza della sprint è il 17/08/26.
         <td rowspan="2">Come utente, voglio poter iniziare un match</td>
         <td>Game</td>
         <td>Luca</td>
+        <td>0</td>
+        <td>0</td>
         <td>6</td>
-        <td>6</td>
-        <td>6</td>
+        <td>5</td>
         </tr>
         <tr>
         <td>Match</td>
         <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td>0</td>
+        <td>0</td>
+        <td>0</td>
+        <td>5</td>
+        </tr>
+        <tr>
+        <td>5</td>
+        <td>Avversario</td>
+        <td>Come utente voglio poter giocare un match contro un avversario virtuale</td>
+        <td>Opponent</td>
+        <td>Simone</td>
+        <td>0</td>
+        <td>0</td>
+        <td>5</td>
+        <td>5</td>
         </tr>
     </tbody>
 </table>
 
 ## Sprint review
 
+Il committente si ritiene soddisfatto del risultato ottenuto dal team di sviluppo.
 
 ## Sprint retrospective
 
+Lo stato di avanzamento del progetto ha permesso la parziale realizzazione di uno dei requisiti opzionali (avversario
+virtuale).
