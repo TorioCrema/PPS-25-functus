@@ -103,7 +103,14 @@ class CLIView:
         // Adversary Card Zone
         viewBuilder.append(s"$separator\n")
         viewBuilder.append(centerText("ADVERSARY", length)).append("\n\n")
-        val adversaryLines = gameState.adversaryCard.toAsciiRows(terminalWidth = length)
+        val selectedAdversaryIndex =
+          if gameState.inputMode == InputMode.SelectAdversaryCardOnBoard then Some(gameState.selectedCardOnBoard)
+          else None
+
+        val adversaryLines = gameState.adversaryCard.toAsciiRows(
+          terminalWidth = length,
+          selectedIdx = selectedAdversaryIndex
+        )
         adversaryLines.foreach(line => viewBuilder.append(centerText(line, length)).append("\n"))
         viewBuilder.append("\n")
 
@@ -144,17 +151,22 @@ class CLIView:
         viewBuilder.append(s"$separator\n")
 
         // Menu / Action Zone
-        if gameState.inputMode == InputMode.ActionMenu then
-          viewBuilder.append(" AVAILABLE ACTIONS (Use ↑/↓ and Press ENTER):\n")
-          if gameState.possibleAction.isEmpty then viewBuilder.append(" (No possible action)\n")
-          else
-            gameState.possibleAction.zipWithIndex.foreach { case (action, i) =>
-              val current = if i == gameState.selectedAction then " -> " else "    "
-              viewBuilder.append(s"$current${i + 1}. ${action.label}\n")
-            }
-        else
-          viewBuilder.append(" SELECT A CARD ON THE BOARD (Use ←/→ and press ENTER to exchange):\n")
-          viewBuilder.append(s" Selected Card: Position ${gameState.selectedCardOnBoard + 1}\n")
+        gameState.inputMode match
+          case InputMode.ActionMenu =>
+            viewBuilder.append(" AVAILABLE ACTIONS (Use ↑/↓ and Press ENTER):\n")
+            if gameState.possibleAction.isEmpty then viewBuilder.append(" (No possible action)\n")
+            else
+              gameState.possibleAction.zipWithIndex.foreach { case (action, i) =>
+                val current = if i == gameState.selectedAction then " -> " else "    "
+                viewBuilder.append(s"$current${i + 1}. ${action.label}\n")
+              }
+          case InputMode.SelectCardOnBoard =>
+            viewBuilder.append(" SELECT A CARD ON THE BOARD (Use ←/→ and press ENTER to exchange):\n")
+            viewBuilder.append(s" Selected Card: Position ${gameState.selectedCardOnBoard + 1}\n")
+          case InputMode.SelectAdversaryCardOnBoard =>
+            viewBuilder.append(" SELECT A CARD ON ADVERSARY BOARD (Use ←/→ and press ENTER to exchange):\n")
+            viewBuilder.append(s" Selected Card: Position ${gameState.selectedCardOnBoard + 1}\n")
+          case InputMode.WaitingRoom => ()
 
         viewBuilder.append(s"\n (Press 'Q' to exit)\n")
 
