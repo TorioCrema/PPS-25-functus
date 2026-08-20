@@ -67,7 +67,23 @@ class BoardDSLTest extends AnyFlatSpec with Matchers:
     val boardTest = lockedBoard from default
     boardTest.deck.cards.length should be(40 - 8)
 
+  it should "remove discard pile cards from the deck" in:
+    val boardTest =
+      lockedBoard from default withCustom discardPile(twoOfCups | sixOfCups)
+
+    boardTest.discardPile should be(List(twoOfCups, sixOfCups))
+    boardTest.deck.cards should not contain twoOfCups
+    boardTest.deck.cards should not contain sixOfCups
+
   "board from default (unlocked)" should "not remove assigned cards from the deck" in:
     val boardTest = (board from default) withCustom playerOne(threeOfCups and sixOfPentacles)
     boardTest.deck.cards should contain(threeOfCups)
     boardTest.deck.cards should contain(sixOfPentacles)
+
+  it should "not remove discard pile cards from the deck" in:
+    val boardTest =
+      board from default withCustom discardPile(twoOfCups | sixOfCups)
+
+    boardTest.discardPile should be(List(twoOfCups, sixOfCups))
+    boardTest.deck.cards should contain(twoOfCups)
+    boardTest.deck.cards should contain(sixOfCups)

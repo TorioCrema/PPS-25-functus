@@ -47,7 +47,12 @@ import model.field.{Field, FieldImpl}
   */
 object BoardDSL:
 
-  object default
+  /** Entry point for a default [[Board]]: `default board`.
+    *
+    * Immediately returns a fully dealt [[Board]] (4 cards per player).
+    */
+  object default:
+    infix def board: Board = BoardFactory.BoardWithPopulatedFields()
 
   /** Entry point for an unlocked [[BoardBuilder]]: `board from default`. */
   object board:
@@ -59,11 +64,6 @@ object BoardDSL:
     */
   object lockedBoard:
     infix def from(d: default.type): BoardBuilder = new BoardBuilder(Locked)
-
-  extension (d: default.type)
-    /** `default board` — immediately returns a fully dealt [[Board]] (4 cards per player).
-      */
-    infix def board: Board = BoardFactory.BoardWithPopulatedFields()
 
   sealed trait Customisation
   case class PlayerOneCards(field: Field) extends Customisation
@@ -105,7 +105,8 @@ object BoardDSL:
 
       val assignedCards: List[Card] =
         field1Ovr.map(_.cardsList).getOrElse(Nil) ++
-          field2Ovr.map(_.cardsList).getOrElse(Nil)
+          field2Ovr.map(_.cardsList).getOrElse(Nil) ++
+          discOvr.getOrElse(Nil)
 
       val freshDeck: Deck = DeckFactory().shuffle()
       val finalDeck: Deck = deckOvr.getOrElse {
@@ -132,15 +133,6 @@ object BoardDSL:
 
   /** Allows a [[BoardBuilder]] to be used wherever a [[Board]] is expected. */
   given Conversion[BoardBuilder, Board] = _.build
-
-  private def dealField(deck: Deck, n: Int): Field =
-    (0 until n)
-      .foldLeft((deck, FieldImpl(): Field)) { case ((d, f), _) =>
-        d.draw() match
-          case Some((card, remaining)) => (remaining, f.addCard(card))
-          case None                    => (d, f)
-      }
-      ._2
 
   private def removeCards(deck: Deck, toRemove: List[Card]): Deck =
     val remaining = toRemove.foldLeft(deck.cards.toList) { (cards, target) =>

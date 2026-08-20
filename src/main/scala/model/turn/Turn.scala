@@ -93,7 +93,7 @@ object Turns:
       */
     def apply(board: Board, player: Player): Turn =
       board.draw() match
-        case None => throw IllegalStateException("Cio madonna puTtana sono finite le carte amooo")
+        case None => throw IllegalStateException("There are no cards in either the deck or the discard pile")
         case _    =>
           board.discardPile.length match
             case 0 => Turn(Nil, board, player, List(Draw))
