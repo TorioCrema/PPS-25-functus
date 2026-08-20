@@ -63,6 +63,6 @@ object BoardFactory:
     players.foldLeft(board) { (board1, player) =>
       (0 until cardsPerPlayer).foldLeft(board1) { (b, index) =>
         val (card, newBoard) = b.draw
-        newBoard.placeCardInField(card, player, Option.empty)
+        newBoard.placeCardInField(card, player)
       }
     }

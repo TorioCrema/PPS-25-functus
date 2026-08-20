@@ -20,9 +20,10 @@ class FirstTurnTest extends AnyFlatSpec with Matchers:
   private val player1Field = (three of Cups) and (two of Swords) and (jack of Wands) and (seven of Cups)
   private val player2Field = (five of Wands) and (ace of Pentacles) and (six of Swords) and (four of Wands)
   private val board = CustomBoard(List(player1Field, player2Field))
+  private val firstTurn = FirstTurn(board, Player1)
 
   "FirstTurn" should "have Confirm as next action" in:
-    FirstTurn(BoardFactory(), Player1).actions should be(List(Observe))
+    firstTurn.actions should be(Observe :: Nil)
 
   it should "draw from the player's field when observing" in:
     val observedCards = 2
@@ -37,8 +38,7 @@ class FirstTurnTest extends AnyFlatSpec with Matchers:
       afterObserve.board.getField(player).cardsList should be(expectedField)
 
   it should "have Confirm as the only available action after Observe" in:
-    val afterObserve = FirstTurn(board, Player1).act(Observe)
-    afterObserve.actions should be(List(Confirm))
+    firstTurn.act(Observe).actions should be(Confirm :: Nil)
 
   it should "restore the board after executing the Confirm action" in:
     for player <- Player.values
@@ -48,8 +48,12 @@ class FirstTurnTest extends AnyFlatSpec with Matchers:
       afterConfirm.board.getField(player.other) should be(board.getField(player.other))
 
   it should "end after Confirm action" in:
-    val afterConfirm = FirstTurn(board, Player1).act(Observe).act(Confirm)
-    afterConfirm.actions should be(EndTurn :: Nil)
+    firstTurn.act(Observe).act(Confirm).actions should be(EndTurn :: Nil)
 
   it should "be over after EndTurn" in:
-    FirstTurn(board, Player1).act(Observe).act(Confirm).act(EndTurn).isOver should be(true)
+    firstTurn.act(Observe).act(Confirm).act(EndTurn).isOver should be(true)
+
+  it should "throw an IllegalArgumentException when the action is not in the actions list" in:
+    an[IllegalArgumentException] should be thrownBy firstTurn.act(Confirm)
+    an[IllegalArgumentException] should be thrownBy firstTurn.act(EndTurn)
+    an[IllegalArgumentException] should be thrownBy firstTurn.act(Observe).act(Observe)

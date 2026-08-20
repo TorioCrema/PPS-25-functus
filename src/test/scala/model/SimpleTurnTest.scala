@@ -50,8 +50,8 @@ class SimpleTurnTest extends AnyFlatSpec with Matchers:
     afterDrawKing.board.discardPile.isEmpty should be(true)
     afterDrawKing.hand should be((king of Swords) :: Nil)
 
-  it should "throw IllegalStateException when drawing without a king on the discard pile" in:
-    an[IllegalStateException] should be thrownBy SimpleTurn(startingBoard.discard(threeOfCups), player).act(DrawKing)
+  it should "throw an IllegalArgumentException when drawing without a king on the discard pile" in:
+    an[IllegalArgumentException] should be thrownBy SimpleTurn(startingBoard.discard(threeOfCups), player).act(DrawKing)
 
   it should "have choose replace as next actions" in:
     val afterDraw = simpleTurn.act(Draw)
@@ -62,7 +62,7 @@ class SimpleTurnTest extends AnyFlatSpec with Matchers:
     for index <- 0 until player1Field.length
     do
       val replacedCard = afterDraw.board.getField(player).getCard(index)._1
-      val afterReplace = afterDraw.act(ChooseReplace(index))
+      val afterReplace = afterDraw.act(Activate).act(ChooseReplace(index))
       afterReplace.hand.isEmpty should be(true)
       afterReplace.board.discardPile.head should be(replacedCard)
       val replacedField = afterReplace.board.getField(player)
@@ -70,33 +70,43 @@ class SimpleTurnTest extends AnyFlatSpec with Matchers:
       replacedField.length should be(player1Field.length)
 
   it should "have cactus and end turn as next actions after replacing" in:
-    val afterReplace = simpleTurn.act(Draw).act(ChooseReplace(0))
+    val afterReplace = simpleTurn.act(Draw).act(Activate).act(ChooseReplace(0))
     afterReplace.actions should be(Cactus :: EndTurn :: Nil)
 
   it should "end with cactus" in:
-    val afterCactus = simpleTurn.act(Draw).act(ChooseReplace(0)).act(Cactus)
+    val afterCactus = simpleTurn.act(Draw).act(Activate).act(ChooseReplace(0)).act(Cactus)
     afterCactus.cactus should be(true)
     afterCactus.actions should be(EndTurn :: Nil)
 
   it should "be over after end turn action" in:
-    val afterEndTurn = simpleTurn.act(Draw).act(ChooseReplace(0)).act(EndTurn)
+    val afterEndTurn = simpleTurn.act(Draw).act(Activate).act(ChooseReplace(0)).act(EndTurn)
     afterEndTurn.isOver should be(true)
 
+  it should "draw the chosen card to the player's hand" in:
+    for i <- 0 until player1Field.length
+    do
+      val afterChooseDiscard = discardableTurn.act(ChooseDiscard(i))
+      afterChooseDiscard.hand should be(discardableTurn.board.getField(player).getCard(i)._1 :: Nil)
+
   it should "discard without penalty when discarding the correct value" in:
-    val afterCorrectDiscard = discardableTurn.act(ChooseDiscard(0))
+    val afterCorrectDiscard = discardableTurn.act(ChooseDiscard(0)).act(Discard(0))
     afterCorrectDiscard.board.getField(player).length should be(player1Field.length - 1)
-    afterCorrectDiscard.board.discardPile.length should be(2)
+    afterCorrectDiscard.board.discardPile.length should be(discardableTurn.board.discardPile.length + 1)
     afterCorrectDiscard.board.discardPile.head should be(threeOfCups)
 
   it should "apply penalty when discarding the wrong value" in:
-    val afterWrongDiscard = discardableTurn.act(ChooseDiscard(1))
+    val afterWrongDiscard = discardableTurn.act(ChooseDiscard(1)).act(Discard(1))
     afterWrongDiscard.board.getField(player).length should be(player1Field.length + 1)
     afterWrongDiscard.board.getTopDiscardStack should be(three of Pentacles)
 
   it should "have draw as next actions after choosing discard" in:
     for discardIndex <- 0 until player1Field.length
-    do SimpleTurn(boardWithThreeInDiscard, player).act(ChooseDiscard(discardIndex)).actions should be(Draw :: Nil)
+    do
+      SimpleTurn(boardWithThreeInDiscard, player)
+        .act(ChooseDiscard(discardIndex))
+        .act(Discard(discardIndex))
+        .actions should be(Draw :: Nil)
 
-  it should "throw an IndexOutOfBounds exception when discarding beyond the player's field length" in:
-    an[IndexOutOfBoundsException] should be thrownBy discardableTurn.act(ChooseDiscard(player1Field.length))
-    an[IndexOutOfBoundsException] should be thrownBy discardableTurn.act(ChooseDiscard(-1))
+  it should "throw an IllegalArgumentException when discarding beyond the player's field length" in:
+    an[IllegalArgumentException] should be thrownBy discardableTurn.act(ChooseDiscard(player1Field.length))
+    an[IllegalArgumentException] should be thrownBy discardableTurn.act(ChooseDiscard(-1))

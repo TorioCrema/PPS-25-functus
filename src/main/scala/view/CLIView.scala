@@ -17,14 +17,14 @@ class CLIView:
   private val ANSI_GREEN_BOLD = "\u001B[1;32m"
 
   private val HEADER_ART = List(
-    "    /$$$$$$                         /$$                         ",
-    "   / $$__  $$                       | $$                        ",
-    "  | $$  \\__/  /$$$$$$   /$$$$$$$ /$$$$$$   /$$   /$$  /$$$$$$$ ",
-    "  | $$       |____  $$ /$$_____/|_  $$_/  | $$  | $$ /$$_____/ ",
-    "  | $$        /$$$$$$$| $$        | $$    | $$  | $$|  $$$$$$  ",
-    "  | $$    $$ /$$__  $$| $$        | $$ /$$| $$  | $$ \\____  $$ ",
-    "  |  $$$$$$/|  $$$$$$$|  $$$$$$$  |  $$$$/|  $$$$$$/ /$$$$$$$/ ",
-    "   \\______/  \\_______/ \\_______/   \\___/   \\______/ |_______/  "
+    "    /$$$$$$$$                              /$$                            ",
+    "   | $$_____/                             | $$                           ",
+    "   | $$    /$$   /$$ /$$$$$$$   /$$$$$$$ /$$$$$$   /$$   /$$  /$$$$$$$   ",
+    "   | $$$$$| $$  | $$| $$__  $$ /$$_____/|_  $$_/  | $$  | $$ /$$_____/   ",
+    "  | $$__/| $$  | $$| $$  \\ $$| $$        | $$    | $$  | $$|  $$$$$$   ",
+    "  | $$   | $$  | $$| $$  | $$| $$        | $$ /$$| $$  | $$ \\____  $$  ",
+    "   | $$   |  $$$$$$/| $$  | $$|  $$$$$$$  |  $$$$/|  $$$$$$/ /$$$$$$$/   ",
+    " |__/    \\______/ |__/  |__/ \\_______/   \\___/   \\______/ |_______/   "
   )
 
   /** * init the terminal to be ready to print the game board and bind the keyboard keys to the to Key enum
@@ -86,9 +86,9 @@ class CLIView:
         terminal.flush()
         val transitionBlock = StringBuilder()
         transitionBlock.append(s"$separator\n")
-        transitionBlock.append(centerText("CAMBIO GIOCATORE", length)).append("\n\n")
-        transitionBlock.append(centerText("Assicurati che l'altro giocatore non stia guardando!", length)).append("\n\n")
-        transitionBlock.append(centerText("[ Premi INVIO per iniziare il tuo turno ]", length)).append("\n")
+        transitionBlock.append(centerText("PLAYER SWAP", length)).append("\n\n")
+        transitionBlock.append(centerText("Make sure the other player isn't watching!", length)).append("\n\n")
+        transitionBlock.append(centerText("[ Press ENTER to begin the turn ]", length)).append("\n")
         transitionBlock.append(s"$separator\n")
 
         // center vertically the changing player block
@@ -103,7 +103,14 @@ class CLIView:
         // Adversary Card Zone
         viewBuilder.append(s"$separator\n")
         viewBuilder.append(centerText("ADVERSARY", length)).append("\n\n")
-        val adversaryLines = gameState.adversaryCard.toAsciiRows(terminalWidth = length)
+        val selectedAdversaryIndex =
+          if gameState.inputMode == InputMode.SelectAdversaryCardOnBoard then Some(gameState.selectedCardOnBoard)
+          else None
+
+        val adversaryLines = gameState.adversaryCard.toAsciiRows(
+          terminalWidth = length,
+          selectedIdx = selectedAdversaryIndex
+        )
         adversaryLines.foreach(line => viewBuilder.append(centerText(line, length)).append("\n"))
         viewBuilder.append("\n")
 
@@ -144,17 +151,22 @@ class CLIView:
         viewBuilder.append(s"$separator\n")
 
         // Menu / Action Zone
-        if gameState.inputMode == InputMode.ActionMenu then
-          viewBuilder.append(" AVAILABLE ACTIONS (Use ↑/↓ and Press ENTER):\n")
-          if gameState.possibleAction.isEmpty then viewBuilder.append(" (No possible action)\n")
-          else
-            gameState.possibleAction.zipWithIndex.foreach { case (action, i) =>
-              val current = if i == gameState.selectedAction then " -> " else "    "
-              viewBuilder.append(s"$current${i + 1}. ${action.label}\n")
-            }
-        else
-          viewBuilder.append(" SELECT A CARD ON THE BOARD (Use ←/→ and press ENTER to exchange):\n")
-          viewBuilder.append(s" Selected Card: Position ${gameState.selectedCardOnBoard + 1}\n")
+        gameState.inputMode match
+          case InputMode.ActionMenu =>
+            viewBuilder.append(" AVAILABLE ACTIONS (Use ↑/↓ and Press ENTER):\n")
+            if gameState.possibleAction.isEmpty then viewBuilder.append(" (No possible action)\n")
+            else
+              gameState.possibleAction.zipWithIndex.foreach { case (action, i) =>
+                val current = if i == gameState.selectedAction then " -> " else "    "
+                viewBuilder.append(s"$current${i + 1}. ${action.label}\n")
+              }
+          case InputMode.SelectCardOnBoard =>
+            viewBuilder.append(" SELECT A CARD ON THE BOARD (Use ←/→ and press ENTER to exchange):\n")
+            viewBuilder.append(s" Selected Card: Position ${gameState.selectedCardOnBoard + 1}\n")
+          case InputMode.SelectAdversaryCardOnBoard =>
+            viewBuilder.append(" SELECT A CARD ON ADVERSARY BOARD (Use ←/→ and press ENTER to exchange):\n")
+            viewBuilder.append(s" Selected Card: Position ${gameState.selectedCardOnBoard + 1}\n")
+          case InputMode.WaitingRoom => ()
 
         viewBuilder.append(s"\n (Press 'Q' to exit)\n")
 
