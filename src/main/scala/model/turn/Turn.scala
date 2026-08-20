@@ -55,11 +55,12 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
         val newBoard = hand.foldRight(board)((card, b) => b.placeCardInField(card, player, Some(0)))
         Turn(Nil, newBoard, player, action.next)
       case Draw =>
-        val (drawn, newBoard) = board.draw
+        val (drawn, newBoard) = board.draw().getOrElse(throw IllegalStateException("Deck is empty during draw action"))
         Turn(drawn :: hand, newBoard, player, action.next)
       case DrawKing =>
-        val (drawnKing, newBoard) = board.kingTopDiscardStack()
-        Turn(drawnKing :: Nil, newBoard, player, action.next)
+        board.kingTopDiscardStack() match
+          case Right(drawnKing, newBoard) => Turn(drawnKing :: Nil, newBoard, player, action.next)
+          case Left(kingNotOnTop)         => throw IllegalStateException(kingNotOnTop)
       case Activate               => hand.head.effect(this)
       case ObserveOpponent(index) => discardHand().drawFromPlayer(index, player.other).withActions(action.next)
       case ObservePlayer(index)   => discardHand().drawFromPlayer(index, player).withActions(action.next)
@@ -73,7 +74,8 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
           case `topOfDiscardStackValue` => Turn(Nil, board.discard(hand.head), player, action.next)
           case _                        =>
             val restoredBoard = board.placeCardInField(hand.head, player, Some(index))
-            val (drawn, boardAfterDraw) = restoredBoard.draw
+            val (drawn, boardAfterDraw) =
+              restoredBoard.draw().getOrElse(throw IllegalStateException("Deck is empty during draw action"))
             Turn(Nil, boardAfterDraw.placeCardInField(drawn, player), player, action.next)
       case Swap(playerIndex, opponentIndex) =>
         discardHand()
@@ -110,10 +112,16 @@ object Turns:
       * @return
       *   the [[Turn]]
       */
-    def apply(board: Board, player: Player): Turn = board.discardPile.length match
-      case 0 => Turn(Nil, board, player, List(Draw))
-      case _ =>
-        board.getTopDiscardStack.value match
-          case `king` => Turn(Nil, board, player, List(Draw, DrawKing))
-          case _      =>
-            Turn(Nil, board, player, Draw :: (0 until board.getField(player).length).map(ChooseDiscard(_)).toList)
+    def apply(board: Board, player: Player): Turn =
+      board.draw() match
+        case None => throw IllegalStateException("There are no cards in either the deck or the discard pile")
+        case _    =>
+          board.discardPile.length match
+            case 0 => Turn(Nil, board, player, List(Draw))
+            case _ =>
+              board.getTopDiscardStack.value match
+                case `king` => Turn(Nil, board, player, List(Draw, DrawKing))
+                case _      =>
+                  val nextActions =
+                    Draw :: (0 until board.getField(player).length).map(index => ChooseDiscard(index)).toList
+                  Turn(Nil, board, player, nextActions)

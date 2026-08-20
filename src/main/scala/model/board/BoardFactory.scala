@@ -57,12 +57,18 @@ object BoardFactory:
     * @param board
     *   the initial board state
     * @return
-    *   the updated board after dealing
+    *   the updated [[Board]] after dealing
+    * @throws IllegalStateException
+    *   if the deck runs out of cards before all players have been dealt `cardsPerPlayer` cards
     */
   private def init(players: List[Player], cardsPerPlayer: Int, board: Board): Board =
     players.foldLeft(board) { (board1, player) =>
       (0 until cardsPerPlayer).foldLeft(board1) { (b, index) =>
-        val (card, newBoard) = b.draw
-        newBoard.placeCardInField(card, player)
+        val (card, newBoard) = b
+          .draw()
+          .getOrElse(
+            throw IllegalStateException("Deck is empty during initialization — not enough cards for all players")
+          )
+        newBoard.placeCardInField(card, player, Option.empty)
       }
     }

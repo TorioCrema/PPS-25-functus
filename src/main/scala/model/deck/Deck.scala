@@ -13,11 +13,9 @@ sealed trait Deck:
   /** Draws the top card from the deck.
     *
     * @return
-    *   a tuple of the drawn card and the updated deck
-    * @throws NoSuchElementException
-    *   if the deck is empty
+    *   [[Some]] containing the drawn [[Card]] and the remaining [[Deck]], or [[None]] if the deck is empty
     */
-  def draw(): (Card, Deck)
+  def draw(): Option[(Card, Deck)]
 
   /** Returns a new deck with the same cards in a randomly shuffled order.
     *
@@ -33,9 +31,7 @@ sealed trait Deck:
   */
 final case class DeckImpl(cards: Vector[Card]) extends Deck:
 
-  override def draw(): (Card, Deck) =
-    val card = this.cards.head
-    (card, DeckImpl(cards.tail))
+  override def draw(): Option[(Card, Deck)] = cards.headOption.map(card => (card, DeckImpl(cards.tail)))
 
   override def shuffle(): Deck =
     @tailrec
