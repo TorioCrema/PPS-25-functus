@@ -99,7 +99,7 @@ sealed trait Board:
     * @return
     *   the updated board
     */
-  def placeCardInField(card: Card, player: Player, index: Option[Int]): Board
+  def placeCardInField(card: Card, player: Player, index: Option[Int] = None): Board
 
 final case class BoardImpl(
     deck: Deck = DeckFactory(),
@@ -137,8 +137,9 @@ final case class BoardImpl(
 
   def placeCardInField(card: Card, player: Player, index: Option[Int]): Board =
     index match
-      case Some(i) => copy(players = players.updated(player, players(player).addCardAtIndex(card, i)))
-      case _       => copy(players = players.updated(player, players(player).addCard(card)))
+      case Some(i) if i < players(player).length && i >= 0 =>
+        copy(players = players.updated(player, players(player).addCardAtIndex(card, i)))
+      case _ => copy(players = players.updated(player, players(player).addCard(card)))
 
   private def checkDeck(): BoardImpl =
     if this.deck.cards.isEmpty then copy(deck = DeckImpl(discardPile.toVector).shuffle(), discardPile = Nil) else this

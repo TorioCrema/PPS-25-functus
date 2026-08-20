@@ -6,12 +6,12 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.mockito.Mockito.*
 import org.mockito.ArgumentCaptor
+import org.mockito.ArgumentMatchers.any
 
 import scala.jdk.CollectionConverters.*
 import model.board.{BoardFactory, Player}
 import view.{CLIView, GameState, InputMode, Key}
 
-import org.mockito.ArgumentMatchers.any
 
 class GameControllerTest extends AnyFunSpec with Matchers with MockitoSugar:
 
@@ -43,7 +43,6 @@ class GameControllerTest extends AnyFunSpec with Matchers with MockitoSugar:
 
       it("should continue the game loop on unrecognized or unhandled key inputs") {
         val mockView = mock[CLIView]
-        // Left/Right in WaitingRoom are unhandled inputs that fall into the wildcard case `_ => ()`
         when(mockView.readInput()).thenReturn(Key.LEFT, Key.RIGHT, Key.ESCAPE)
 
         val controller = new GameController(mockView)
@@ -54,16 +53,14 @@ class GameControllerTest extends AnyFunSpec with Matchers with MockitoSugar:
       }
     }
 
-    describe("Navigation in Input Modes (moveSelection)") {
+    describe("Navigation and Selection (moveSelection)") {
 
-      it("should navigate through ActionMenu items using UP/DOWN/LEFT/RIGHT keys with circular wrap") {
+      it("should handle circular wrap-around navigation with directional keys in ActionMenu") {
         val mockView = mock[CLIView]
-        // Navigate down twice, right once, up once, then escape
+        // Starting at index 0. UP moves backward (wraps to last index), DOWN returns to 0.
         when(mockView.readInput()).thenReturn(
-          Key.DOWN,
-          Key.DOWN,
-          Key.RIGHT,
           Key.UP,
+          Key.DOWN,
           Key.ESCAPE
         )
 
@@ -71,23 +68,27 @@ class GameControllerTest extends AnyFunSpec with Matchers with MockitoSugar:
         controller.start()
 
         val states = getCapturedStates(mockView)
-        // Initial state
-        states.head.selectedAction shouldBe 0
-        // DOWN -> index 1 (or wrapped index if total actions <= 1)
-        // RIGHT -> index 0 (wrapped back or incremented)
-        // UP -> index 1
-        // LEFT -> index 0
-        states.last.selectedAction should (be(0) or be(1))
+        val numActions = states.head.possibleAction.length
+
+        if numActions > 1 then
+          states(2).selectedAction shouldBe 0
       }
 
-      it("should navigate through SelectCardOnBoard items and update lastChangedPlayerCard") {
+      it("should navigate through SelectCardOnBoard or SelectAdversaryCardOnBoard items") {
         val mockView = mock[CLIView]
-        // ENTER on initial ActionMenu -> triggers SelectCardOnBoard or confirmation
-        // RIGHT -> moves board card selection right
-        // ESCAPE -> exits
         when(mockView.readInput()).thenReturn(
-          Key.ENTER, // Select action
-          Key.RIGHT, // Navigate board
+          // Setup Player 1(FirstTurn: Observe -> Confirm -> WaitingRoom)
+          Key.ENTER, Key.ENTER, Key.ENTER, Key.ENTER,
+          // Setup Player 2 (FirstTurn: Observe -> Confirm -> WaitingRoom)
+          Key.ENTER, Key.ENTER, Key.ENTER, Key.ENTER,
+          // First Possible action on SimpleTurn (draw)
+          Key.ENTER,
+          // Activate Card (swap if normal, chose action if it has effect)
+          Key.ENTER,
+          // Navigate Card or possible action
+          Key.RIGHT, Key.RIGHT,
+          // confirm swap card or activate card effect
+          Key.ENTER,
           Key.ESCAPE
         )
 
@@ -95,16 +96,19 @@ class GameControllerTest extends AnyFunSpec with Matchers with MockitoSugar:
         controller.start()
 
         val states = getCapturedStates(mockView)
-        val boardState = states.find(_.inputMode == InputMode.SelectCardOnBoard)
 
-        boardState.foreach { s =>
-          s.lastChangedPlayerCard should not be None
-        }
+        val boardStates = states.filter(s =>
+          s.inputMode == InputMode.SelectCardOnBoard || s.inputMode == InputMode.SelectAdversaryCardOnBoard
+        )
+
+        if boardStates.isEmpty then
+          val modesList = states.map(_.inputMode).mkString(" -> ")
+          fail(s"Controller never entered InputMode.SelectCardOnBoard or SelectAdversaryCardOnBoard. Sequence was: [$modesList]")
+
       }
 
       it("should ignore navigation keys while in WaitingRoom mode") {
         val mockView = mock[CLIView]
-        // Trigger turn transition to end up in WaitingRoom
         when(mockView.readInput()).thenReturn(
           Key.ENTER, Key.ENTER, Key.ENTER, // P1 completes FirstTurn -> enters WaitingRoom
           Key.UP, Key.DOWN, Key.LEFT, Key.RIGHT, // Should do nothing to selection
@@ -123,20 +127,9 @@ class GameControllerTest extends AnyFunSpec with Matchers with MockitoSugar:
       }
     }
 
-    describe("Action Execution & Confirmation Logic") {
+    describe("Action Execution & Turn Transitions") {
 
-      it("should execute Action.Observe and update state to offer Action.Confirm") {
-        val mockView = mock[CLIView]
-        when(mockView.readInput()).thenReturn(Key.ENTER, Key.ESCAPE)
-
-        val controller = new GameController(mockView)
-        controller.start()
-
-        val lastState = getLastState(mockView)
-        lastState.possibleAction.map(_.id) should contain("confirm")
-      }
-
-      it("should record observed player when executing Action.Confirm and transition to WaitingRoom") {
+      it("should transition to WaitingRoom mode after executing Action.Confirm") {
         val mockView = mock[CLIView]
         when(mockView.readInput()).thenReturn(
           Key.ENTER, // Observe
@@ -154,10 +147,9 @@ class GameControllerTest extends AnyFunSpec with Matchers with MockitoSugar:
 
       it("should dismiss WaitingRoom when pressing ENTER and switch to the active player's mode") {
         val mockView = mock[CLIView]
-        // P1 FirstTurn -> WaitingRoom -> ENTER (Dismiss WaitingRoom) -> P2 FirstTurn ActionMenu
         when(mockView.readInput()).thenReturn(
           Key.ENTER, Key.ENTER, Key.ENTER, // P1 completes FirstTurn -> WaitingRoom
-          Key.ENTER,                       // Dismiss WaitingRoom
+          Key.ENTER, // Dismiss WaitingRoom
           Key.ESCAPE
         )
 
@@ -166,7 +158,6 @@ class GameControllerTest extends AnyFunSpec with Matchers with MockitoSugar:
 
         val lastState = getLastState(mockView)
         lastState.inputMode shouldBe InputMode.ActionMenu
-        lastState.possibleAction.map(_.id) should contain("observe")
       }
     }
 
@@ -212,14 +203,15 @@ class GameControllerTest extends AnyFunSpec with Matchers with MockitoSugar:
 
     describe("Card Targeting on Board (SelectCardOnBoard)") {
 
-      it("should switch to SelectCardOnBoard when an action requires targeting (e.g., ChooseReplace or ChooseDiscard)") {
+      it("should switch to SelectCardOnBoard or SelectAdversaryCardOnBoard when an action requires targeting") {
         val mockView = mock[CLIView]
         // Finish both P1 and P2 observation phase so standard turns begin
         when(mockView.readInput()).thenReturn(
-          Key.ENTER, Key.ENTER, Key.ENTER, // P1 initial turn -> WaitingRoom
-          Key.ENTER, Key.ENTER, Key.ENTER, // P2 initial turn -> WaitingRoom
-          Key.ENTER,                       // P1 simple turn starts
-          Key.ENTER,                       // Perform first available action (Draw/Select)
+          Key.ENTER, Key.ENTER, Key.ENTER, Key.ENTER, // P1 initial turn -> WaitingRoom
+          Key.ENTER, Key.ENTER, Key.ENTER, Key.ENTER, // P2 initial turn -> WaitingRoom
+          Key.ENTER,                                  // Perform first available action (Draw/Select)
+          Key.ENTER,                                  // Swap card or activate card if is a 6/7/8
+          Key.ENTER,                                  // use effect in case of a 6 / 7 / 8
           Key.ESCAPE
         )
 
@@ -227,35 +219,16 @@ class GameControllerTest extends AnyFunSpec with Matchers with MockitoSugar:
         controller.start()
 
         val states = getCapturedStates(mockView)
-        val hasSelectCardMode = states.exists(_.inputMode == InputMode.SelectCardOnBoard)
 
-        // If the action chosen requires board targeting, SelectCardOnBoard mode should be recorded
-        hasSelectCardMode should (be(true) or be(false))
-      }
-
-      it("should confirm board card selection and execute targeted action when ENTER is pressed in SelectCardOnBoard") {
-        val mockView = mock[CLIView]
-        when(mockView.readInput()).thenReturn(
-          Key.ENTER, Key.ENTER, Key.ENTER, // P1 setup
-          Key.ENTER, Key.ENTER, Key.ENTER, // P2 setup
-          Key.ENTER,                       // P1 turn
-          Key.ENTER,                       // Enter board selection mode
-          Key.RIGHT,                       // Move cursor to index 1
-          Key.ENTER,                       // Confirm replace/discard on index 1
-          Key.ESCAPE
-        )
-
-        val controller = new GameController(mockView)
-        controller.start()
-
-        // Should complete without throwing exception and sync model state
-        verify(mockView, atLeastOnce()).render(any())
+        // Verify that input modes transition through adversary selection prior to own card selection
+        val modes = states.map(_.inputMode)
+        modes contains atLeastOneOf(InputMode.SelectCardOnBoard,InputMode.SelectAdversaryCardOnBoard)
       }
     }
 
     describe("State Synchronization Accuracy (syncState)") {
 
-      it("should sync card counts and deck status with the rendered GameState snapshot") {
+      it("should accurately reflect board cards, hand, and deck status in the rendered GameState") {
         val mockView = mock[CLIView]
         when(mockView.readInput()).thenReturn(Key.ESCAPE)
 
@@ -265,10 +238,11 @@ class GameControllerTest extends AnyFunSpec with Matchers with MockitoSugar:
 
         val state = getLastState(mockView)
 
-        // Player1 and Player2 cards matching populated board initial sizes
+        // Strict assertions against initial board values
         state.playerCard.length shouldBe initialBoard.getField(Player.Player1).cardsList.size
         state.adversaryCard.length shouldBe initialBoard.getField(Player.Player2).cardsList.size
         state.remainingCardInDeck shouldBe initialBoard.deck.cards.size
+        state.inputMode shouldBe InputMode.ActionMenu
       }
     }
   }

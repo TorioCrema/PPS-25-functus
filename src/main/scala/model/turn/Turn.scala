@@ -5,6 +5,7 @@ import model.deck.card.Card
 import model.board.{Board, Player}
 import model.turn.Action.*
 import model.deck.sugar.CardDSL.*
+import model.turn.Effects.effect
 
 /** Turn class that allows to play a turn from start to finish via the [[act]] method.
   * @param hand
@@ -27,6 +28,15 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
 
   private def withActions(newActions: List[Action]): Turn = Turn(hand, board, player, newActions)
 
+  private def discardHand(): Turn = Turn(Nil, board.discard(hand.head), player, actions)
+
+  private def drawFromPlayer(index: Int, from: Player): Turn =
+    val (drawn, newBoard) = board.drawPlayerCard(from, index)
+    Turn(hand.appended(drawn), newBoard, player, actions)
+
+  private def placeHandInField(fieldOwner: Player, index: Int) =
+    Turn(hand.tail, board.placeCardInField(hand.head, fieldOwner, Some(index)), player, actions)
+
   /** Executes the given [[Action]] and returns the next phase of the turn
     * @param action
     *   the [[Action]] to execute
@@ -42,7 +52,7 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
           .foldLeft(this)((turn, index) => turn.drawnFromField(index))
           .withActions(action.next)
       case Confirm =>
-        val newBoard = hand.foldRight(board)((card, b) => b.placeCardInField(card, player, Option(0)))
+        val newBoard = hand.foldRight(board)((card, b) => b.placeCardInField(card, player, Some(0)))
         Turn(Nil, newBoard, player, action.next)
       case Draw =>
         val (drawn, newBoard) = board.draw().getOrElse(throw IllegalStateException("Deck is empty during draw action"))
@@ -51,20 +61,31 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
         board.kingTopDiscardStack() match
           case Right(drawnKing, newBoard) => Turn(drawnKing :: Nil, newBoard, player, action.next)
           case Left(kingNotOnTop)         => throw IllegalStateException(kingNotOnTop)
-      case Activate => Turn(hand, board, player, (0 until board.getField(player).length).map(ChooseReplace(_)).toList)
-      case ChooseReplace(index) =>
-        Turn(Nil, board.replace(player, index, hand.head), player, action.next)
-      case ChooseDiscard(index) =>
-        val (chosen, _) = board.getField(player).getCard(index)
-        if chosen.value == board.getTopDiscardStack.value then
-          Turn(Nil, board.discard(chosen).drawPlayerCard(player, index)._2, player, action.next)
-        else
-          val (drawn, boardAfterDraw) =
-            board.draw().getOrElse(throw IllegalStateException("Deck is empty during draw action"))
-          val newBoard = boardAfterDraw.placeCardInField(drawn, player, Option.empty)
-          Turn(Nil, newBoard, player, action.next)
-      case EndTurn => Turn(hand, board, player, EndTurn.next, cactus)
-      case Cactus  => Turn(hand, board, player, Cactus.next, true)
+      case Activate               => hand.head.effect(this)
+      case ObserveOpponent(index) => discardHand().drawFromPlayer(index, player.other).withActions(action.next)
+      case ObservePlayer(index)   => discardHand().drawFromPlayer(index, player).withActions(action.next)
+      case GiveBack(index)        => placeHandInField(player.other, index).withActions(action.next)
+      case ReturnToField(index)   => placeHandInField(player, index).withActions(action.next)
+      case ChooseReplace(index)   => Turn(Nil, board.replace(player, index, hand.head), player, action.next)
+      case ChooseDiscard(index)   => drawFromPlayer(index, player).withActions(action.next)
+      case Discard(index)         =>
+        val topOfDiscardStackValue = board.getTopDiscardStack.value
+        hand.head.value match
+          case `topOfDiscardStackValue` => Turn(Nil, board.discard(hand.head), player, action.next)
+          case _                        =>
+            val restoredBoard = board.placeCardInField(hand.head, player, Some(index))
+            val (drawn, boardAfterDraw) =
+              restoredBoard.draw().getOrElse(throw IllegalStateException("Deck is empty during draw action"))
+            Turn(Nil, boardAfterDraw.placeCardInField(drawn, player), player, action.next)
+      case Swap(playerIndex, opponentIndex) =>
+        discardHand()
+          .drawFromPlayer(opponentIndex, player.other)
+          .drawFromPlayer(playerIndex, player)
+          .placeHandInField(player, playerIndex)
+          .placeHandInField(player.other, opponentIndex)
+          .withActions(action.next)
+      case Cactus  => Turn(hand, board, player, action.next, true)
+      case EndTurn => Turn(hand, board, player, action.next, cactus)
 
   /** @return
     *   [[true]] if the [[Turn]] is over.
@@ -78,7 +99,7 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
 object Turns:
 
   object FirstTurn:
-    /** Creates a [[Turn]] that allows the [[Player]] to observe cards on his field.
+    /** Creates a [[Turn]] that allows the [[Player]] to observe the first 2 cards on their field.
       */
     def apply(board: Board, player: Player): Turn = Turn(Nil, board, player, List(Observe))
 

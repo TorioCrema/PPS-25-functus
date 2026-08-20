@@ -120,17 +120,17 @@ class BoardTest extends AnyFlatSpec with Matchers:
     board.kingTopDiscardStack() shouldBe a[Left[?,?]]
 
   it should "place a card in a player field" in:
-    val newBoard = emptyFieldBoard.placeCardInField(threeOfSwords, Player1, Option.empty)
+    val newBoard = emptyFieldBoard.placeCardInField(threeOfSwords, Player1)
     newBoard.getField(Player1).cardsList should contain(threeOfSwords)
 
   it should "not affect other players field when placing a card" in:
-    val newBoard = emptyFieldBoard.placeCardInField(threeOfSwords, Player1, Option.empty)
+    val newBoard = emptyFieldBoard.placeCardInField(threeOfSwords, Player1)
     newBoard.getField(Player2).cardsList should be(List.empty)
 
   it should "place a card at a specific index between existing cards" in:
     val field = FieldImpl().addCard(threeOfSwords).addCard(twoOfCups).addCard(aceOfSwords)
     val board = CustomBoard(List(field, FieldImpl()))
-    val newBoard = board.placeCardInField(CardImpl(4, Swords), Player1, Option(1))
+    val newBoard = board.placeCardInField(CardImpl(4, Swords), Player1, Some(1))
     newBoard.getField(Player1).cardsList should be(List(threeOfSwords, CardImpl(4, Swords), twoOfCups, aceOfSwords))
 
   "A CustomBoard" should "create a board with the given fields" in:

@@ -82,20 +82,30 @@ class SimpleTurnTest extends AnyFlatSpec with Matchers:
     val afterEndTurn = simpleTurn.act(Draw).act(Activate).act(ChooseReplace(0)).act(EndTurn)
     afterEndTurn.isOver should be(true)
 
+  it should "draw the chosen card to the player's hand" in:
+    for i <- 0 until player1Field.length
+    do
+      val afterChooseDiscard = discardableTurn.act(ChooseDiscard(i))
+      afterChooseDiscard.hand should be(discardableTurn.board.getField(player).getCard(i)._1 :: Nil)
+
   it should "discard without penalty when discarding the correct value" in:
-    val afterCorrectDiscard = discardableTurn.act(ChooseDiscard(0))
+    val afterCorrectDiscard = discardableTurn.act(ChooseDiscard(0)).act(Discard(0))
     afterCorrectDiscard.board.getField(player).length should be(player1Field.length - 1)
-    afterCorrectDiscard.board.discardPile.length should be(2)
+    afterCorrectDiscard.board.discardPile.length should be(discardableTurn.board.discardPile.length + 1)
     afterCorrectDiscard.board.discardPile.head should be(threeOfCups)
 
   it should "apply penalty when discarding the wrong value" in:
-    val afterWrongDiscard = discardableTurn.act(ChooseDiscard(1))
+    val afterWrongDiscard = discardableTurn.act(ChooseDiscard(1)).act(Discard(1))
     afterWrongDiscard.board.getField(player).length should be(player1Field.length + 1)
     afterWrongDiscard.board.getTopDiscardStack should be(three of Pentacles)
 
   it should "have draw as next actions after choosing discard" in:
     for discardIndex <- 0 until player1Field.length
-    do SimpleTurn(boardWithThreeInDiscard, player).act(ChooseDiscard(discardIndex)).actions should be(Draw :: Nil)
+    do
+      SimpleTurn(boardWithThreeInDiscard, player)
+        .act(ChooseDiscard(discardIndex))
+        .act(Discard(discardIndex))
+        .actions should be(Draw :: Nil)
 
   it should "throw an IllegalArgumentException when discarding beyond the player's field length" in:
     an[IllegalArgumentException] should be thrownBy discardableTurn.act(ChooseDiscard(player1Field.length))
