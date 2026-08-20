@@ -34,7 +34,7 @@ object DeckDSL:
       */
     case class CardBuilder(cards: Vector[Card]):
       /** Appends a card to this builder. */
-      infix def |(other: Card): CardBuilder = copy(cards = cards :+ other)
+      infix def |(other: Card): CardBuilder = CardBuilder(cards :+ other)
 
     /** Allows any [[Card]] to start a [[CardBuilder]] chain using `|`. */
     extension (card: Card)

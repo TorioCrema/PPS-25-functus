@@ -98,25 +98,25 @@ object BoardDSL:
       new BoardBuilder(lockMode, customisations :+ c)
 
     def build: Board =
-      val field1Ovr: Option[Field] = customisations.collectFirst { case PlayerOneCards(f) => f }
-      val field2Ovr: Option[Field] = customisations.collectFirst { case PlayerTwoCards(f) => f }
-      val deckOvr: Option[Deck] = customisations.collectFirst { case CustomDeck(d) => d }
-      val discOvr: Option[List[Card]] = customisations.collectFirst { case CustomDiscard(cs) => cs }
+      val field1: Option[Field] = customisations.collectFirst { case PlayerOneCards(f) => f }
+      val field2: Option[Field] = customisations.collectFirst { case PlayerTwoCards(f) => f }
+      val deckNew: Option[Deck] = customisations.collectFirst { case CustomDeck(d) => d }
+      val discPile: Option[List[Card]] = customisations.collectFirst { case CustomDiscard(cs) => cs }
 
       val assignedCards: List[Card] =
-        field1Ovr.map(_.cardsList).getOrElse(Nil) ++
-          field2Ovr.map(_.cardsList).getOrElse(Nil) ++
-          discOvr.getOrElse(Nil)
+        field1.map(_.cardsList).getOrElse(Nil) ++
+          field2.map(_.cardsList).getOrElse(Nil) ++
+          discPile.getOrElse(Nil)
 
       val freshDeck: Deck = DeckFactory().shuffle()
-      val finalDeck: Deck = deckOvr.getOrElse {
+      val finalDeck: Deck = deckNew.getOrElse {
         lockMode match
           case Locked   => removeCards(freshDeck, assignedCards)
           case Unlocked => freshDeck
       }
 
-      val (deckAfterField1, field1) = resolveField(field1Ovr, finalDeck, 4)
-      val (deckAfterField2, field2) = resolveField(field2Ovr, deckAfterField1, 4)
+      val (deckAfterField1, field1New) = resolveField(field1, finalDeck, 4)
+      val (deckAfterField2, field2New) = resolveField(field2, deckAfterField1, 4)
 
       val actualDeck: Deck = lockMode match
         case Locked   => deckAfterField2
@@ -124,10 +124,10 @@ object BoardDSL:
 
       BoardImpl(
         deck = actualDeck,
-        discardPile = discOvr.getOrElse(Nil),
+        discardPile = discPile.getOrElse(Nil),
         players = Map(
-          Player.Player1 -> field1,
-          Player.Player2 -> field2
+          Player.Player1 -> field1New,
+          Player.Player2 -> field2New
         )
       )
 
@@ -136,8 +136,8 @@ object BoardDSL:
 
   private def removeCards(deck: Deck, toRemove: List[Card]): Deck =
     val remaining = toRemove.foldLeft(deck.cards.toList) { (cards, target) =>
-      val idx = cards.indexWhere(c => c.value == target.value && c.suit == target.suit)
-      if idx >= 0 then cards.patch(idx, Nil, 1) else cards
+      val id = cards.indexWhere(c => c.value == target.value && c.suit == target.suit)
+      if id >= 0 then cards.patch(id, Nil, 1) else cards
     }
     DeckImpl(remaining.toVector)
 
