@@ -44,11 +44,13 @@ case class Game(
     * @throws IllegalStateException
     *   if called when the game is already [[GamePhase.Over]]
     */
-  def act(action: Action): Game =
-    require(!isOver, "Cannot act on a finished game")
-    val updatedTurn = currentTurn.act(action)
-    if !updatedTurn.isOver then copy(currentTurn = updatedTurn)
-    else advancePhase(updatedTurn)
+  def act(action: Action): Option[Game] =
+    Option
+      .when(!isOver)(currentTurn.act(action))
+      .flatMap(updatedTurn =>
+        if !updatedTurn.isOver then Some(copy(currentTurn = updatedTurn))
+        else advancePhase(updatedTurn)
+      )
 
   /** Returns the cards on the field of each player at the end of the game.
     *
@@ -57,9 +59,10 @@ case class Game(
     * @throws IllegalStateException
     *   if the game is not yet [[GamePhase.Over]]
     */
-  def finalCards: Map[Player, List[Card]] =
-    require(isOver, "Cannot retrieve final cards before the game is over")
-    Player.values.map(p => p -> board.getField(p).cardsList).toMap
+  def finalCards: Option[Map[Player, List[Card]]] =
+    Option.when(isOver)(
+      Player.values.map(p => p -> board.getField(p).cardsList).toMap
+    )
 
   /** Returns the score of the cards on the field of each player at the end of the game.
     *
@@ -69,37 +72,37 @@ case class Game(
   def playerScore: Map[Player, Int] =
     Player.values.map(p => p -> board.getField(p).cardsList.map(_.value).sum).toMap
 
-  private def advancePhase(finishedTurn: Turn): Game =
+  private def advancePhase(finishedTurn: Turn): Option[Game] =
     phase match
       case GamePhase.FirstTurns =>
         finishedTurn.player match
           case Player1 =>
             val nextTurn = FirstTurn(finishedTurn.board, Player2)
-            copy(board = finishedTurn.board, currentTurn = nextTurn)
+            Some(copy(board = finishedTurn.board, currentTurn = nextTurn))
           case Player2 =>
             val nextTurn = SimpleTurn(finishedTurn.board, Player1)
-            copy(board = finishedTurn.board, phase = GamePhase.Playing, currentTurn = nextTurn)
+            Some(copy(board = finishedTurn.board, phase = GamePhase.Playing, currentTurn = nextTurn))
 
       case GamePhase.Playing =>
         if finishedTurn.cactus then
           val opponent = finishedTurn.player.other
           val lastTurn = SimpleTurn(finishedTurn.board, opponent)
-          copy(
-            board = finishedTurn.board,
-            phase = GamePhase.LastTurn,
-            currentTurn = lastTurn,
-            cactusCaller = Some(finishedTurn.player)
+          Some(
+            copy(
+              board = finishedTurn.board,
+              phase = GamePhase.LastTurn,
+              currentTurn = lastTurn,
+              cactusCaller = Some(finishedTurn.player)
+            )
           )
         else
-          val nextPlayer = finishedTurn.player.other
-          val nextTurn = SimpleTurn(finishedTurn.board, nextPlayer)
-          copy(board = finishedTurn.board, currentTurn = nextTurn)
+          val nextTurn = SimpleTurn(finishedTurn.board, finishedTurn.player.other)
+          Some(copy(board = finishedTurn.board, currentTurn = nextTurn))
 
       case GamePhase.LastTurn =>
-        copy(board = finishedTurn.board, phase = GamePhase.Over)
+        Some(copy(board = finishedTurn.board, phase = GamePhase.Over))
 
-      case GamePhase.Over =>
-        throw IllegalStateException("Game is already over")
+      case GamePhase.Over => None
 
 /** Factory for [[Game]] instances.
   */

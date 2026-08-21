@@ -14,11 +14,11 @@ import org.scalatest.matchers.should.Matchers
 import scala.language.postfixOps
 
 class GameTest extends AnyFlatSpec with Matchers:
+
   private def playFirstTurn(game: Game): Game =
-    game.act(Observe).act(Confirm).act(EndTurn)
+    game.act(Observe).get.act(Confirm).get.act(EndTurn).get
   private def playBothFirstTurns(game: Game): Game =
     playFirstTurn(playFirstTurn(game))
-
   private def boardTest = default board
 
   "A new Game" should "start in the FirstTurns phase" in:
@@ -38,60 +38,60 @@ class GameTest extends AnyFlatSpec with Matchers:
     game.isOver should be(false)
 
   "A game while current player1" should "remain in FirstTurns after Player1 observes" in:
-    val game = Game(default board).act(Observe)
-    game.phase shouldBe GamePhase.FirstTurns
+    val game = Game(boardTest).act(Observe).get
+    game.phase shouldBe FirstTurns
 
   it should "still be Player1's turn after Observe" in:
-    val game = Game(default board).act(Observe)
+    val game = Game(boardTest).act(Observe).get
     game.currentPlayer shouldBe Player1
 
   it should "expose only Confirm after Observe" in:
-    val game = Game(default board).act(Observe)
+    val game = Game(boardTest).act(Observe).get
     game.currentTurn.actions shouldBe List(Confirm)
 
   it should "expose only EndTurn after Confirm" in:
-    val game = Game(default board).act(Observe).act(Confirm)
+    val game = Game(boardTest).act(Observe).get.act(Confirm).get
     game.currentTurn.actions shouldBe List(EndTurn)
 
   "Switching players new game" should "switch to Player2 after Player1 completes the first turn" in:
-    val game = playFirstTurn(Game(default board))
+    val game = playFirstTurn(Game(boardTest))
     game.currentPlayer shouldBe Player2
 
   it should "remain in FirstTurns after Player1 finishes" in:
-    val game = playFirstTurn(Game(default board))
-    game.phase shouldBe GamePhase.FirstTurns
+    val game = playFirstTurn(Game(boardTest))
+    game.phase shouldBe FirstTurns
 
   it should "give Player2 Observe as first available action" in:
-    val game = playFirstTurn(Game(default board))
+    val game = playFirstTurn(Game(boardTest))
     game.currentTurn.actions shouldBe List(Observe)
 
   "A game from first turn to simple turn" should "transition to Playing after both players complete their first turns" in:
-    val game = playBothFirstTurns(Game(default board))
-    game.phase shouldBe GamePhase.Playing
+    val game = playBothFirstTurns(Game(boardTest))
+    game.phase shouldBe Playing
 
   it should "have Player1 as the current player when Playing begins" in:
-    val game = playBothFirstTurns(Game(default board))
+    val game = playBothFirstTurns(Game(boardTest))
     game.currentPlayer shouldBe Player1
 
   it should "not be over after the first turns phase" in:
-    val game = playBothFirstTurns(Game(default board))
+    val game = playBothFirstTurns(Game(boardTest))
     game.isOver shouldBe false
 
   it should "leave each player with 4 cards in their field after the first turns" in:
-    val game = playBothFirstTurns(Game(default board))
+    val game = playBothFirstTurns(Game(boardTest))
     game.board.getField(Player1).length shouldBe 4
     game.board.getField(Player2).length shouldBe 4
 
   it should "have no cactusCaller set after the first turns phase" in:
-    val game = playBothFirstTurns(Game(default board))
+    val game = playBothFirstTurns(Game(boardTest))
     game.cactusCaller shouldBe None
 
-  "act" should "throw if called on a finished game" in:
-    val overGame = Game(boardTest).copy(phase = GamePhase.Over)
-    an[IllegalStateException] should be thrownBy overGame.act(Observe)
+  "act" should "return None if called on a finished game" in:
+    val overGame = Game(boardTest).copy(phase = Over)
+    overGame.act(Observe) shouldBe None
 
-  "finalCards" should "throw before the game is over" in:
-    an[IllegalStateException] should be thrownBy Game(boardTest).finalCards
+  "finalCards" should "return None before the game is over" in:
+    Game(boardTest).finalCards shouldBe None
 
   "playerScore" should "return a score for each player" in:
     val game = playBothFirstTurns(Game(boardTest))
