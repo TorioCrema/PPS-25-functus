@@ -1,7 +1,7 @@
 package org.pps.functus
 package model.deck.card
 
-/** Represents the four suits of a Italian deck. */
+/** Represents the four suits of an Italian deck. */
 enum Suit:
   case Pentacles, Cups, Swords, Wands
 
