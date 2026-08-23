@@ -41,7 +41,7 @@ import model.field.{Field, FieldImpl}
   *   val b4 = (board from default)
   *     .withCustom(playerOne(c1 and c2))
   *     .withCustom(playerTwo(c3 and c4))
-  *     .withCustom(deck(myDeck))
+  *     .withCustom(customDeck(myDeck))
   *     .withCustom(discardPile(c5 and c6))
   * }}}
   */
@@ -76,7 +76,7 @@ object BoardDSL:
   infix def playerTwo(field: Field): PlayerTwoCards = PlayerTwoCards(field)
   infix def playerTwo(card: Card): PlayerTwoCards = PlayerTwoCards(FieldImpl(Vector(card)))
 
-  infix def deck(d: Deck): CustomDeck = CustomDeck(d)
+  infix def customDeck(d: Deck): CustomDeck = CustomDeck(d)
   infix def discardPile(builder: CardBuilder): CustomDiscard =
     CustomDiscard(builder.cards.toList)
 
