@@ -2,7 +2,7 @@ package org.pps.functus
 package model
 
 import model.game.{Game, GamePhase}
-import model.turn.Action.{Activate, Cactus, ChooseDiscard, ChooseReplace, Confirm, Discard, Draw, EndTurn, Observe}
+import model.turn.Action.{Activate, Cactus, ChooseReplace, Confirm, Draw, EndTurn, Observe}
 import model.board.Player.{Player1, Player2}
 import model.game.GamePhase.*
 import model.deck.card.Suit.*
