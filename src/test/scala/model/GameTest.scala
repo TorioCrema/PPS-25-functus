@@ -28,10 +28,9 @@ class GameTest extends AnyFlatSpec with Matchers:
     *
     *   - Fixed cards (values 1–5, no special effects) on both fields.
     *   - Custom deck contains only cards with values 1–5 so Activate never triggers a special effect and always returns
-    *     List(Cactus, EndTurn).
-    *   - Discard pile has one non-king card → SimpleTurn always offers ChooseDiscard.
+    *     List(ChooseReplace(0..3)).
     *
-    * Deterministic SimpleTurn flow: ChooseDiscard(0) → Discard(0) → Draw → Activate → EndTurn | Cactus + EndTurn
+    * Deterministic SimpleTurn flow: Draw → Activate → ChooseReplace(0) → EndTurn | Cactus + EndTurn
     */
   private def safeDeck = deckDSL from (
     (ace of Cups) | (two of Cups) | (three of Cups) | (four of Cups) | (five of Cups) |
