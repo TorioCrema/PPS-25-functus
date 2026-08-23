@@ -63,7 +63,7 @@ object DeckDSL:
       * @return
       *   a [[CardBuilder]] with the single card
       */
-    def single(card: Card): CardBuilder = CardBuilder(Vector(card))
+    infix def single(card: Card): CardBuilder = CardBuilder(Vector(card))
 
     /** Accumulates cards via the `|` operator.
       *

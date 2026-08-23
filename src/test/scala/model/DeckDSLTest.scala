@@ -5,6 +5,7 @@ import model.deck.sugar.DeckDSL.deck
 import model.deck.sugar.DeckDSL.deck.*
 import model.deck.sugar.CardDSL.*
 import model.deck.card.Suit.*
+import model.deck.Deck
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -24,46 +25,67 @@ class DeckDSLTest extends AnyFlatSpec with Matchers:
       (ace of Cups) | (two of Cups) | (three of Cups) | (four of Cups) | (five of Cups)
     builder.cards.length should be(5)
 
-  "CardBuilder |" should "append a card to an existing builder" in:
-    val builder = ((ace of Cups) | (two of Cups)) | (three of Cups)
-    builder.cards should be(Vector(ace of Cups, two of Cups, three of Cups))
+  "deck.single" should "produce a CardBuilder with exactly one card" in:
+    val singleBuilder = deck single (ace of Cups)
+    singleBuilder.cards should be(Vector(ace of Cups))
+
+  it should "convert to a Deck with one card via given Conversion" in:
+    val singleCardDeck: Deck = deck single (ace of Cups)
+    singleCardDeck.cards should be(Vector(ace of Cups))
+
+  "deck.fromShuffled" should "produce a deck with the same cards as the builder" in:
+    val shuffledDeck = deck fromShuffled ((ace of Cups) | (two of Swords) | (three of Wands))
+    shuffledDeck.cards should contain allOf (ace of Cups, two of Swords, three of Wands)
+    shuffledDeck.cards.length should be(3)
+
+  "CardBuilder" should "convert implicitly to a Deck" in:
+    val implicitDeck: Deck = (ace of Cups) | (two of Swords)
+    implicitDeck.cards should be(Vector(ace of Cups, two of Swords))
+
+  it should "convert a single-card builder to a Deck" in:
+    val singleCardDeck: Deck = deck single(ace of Cups)
+    singleCardDeck.cards should be(Vector(ace of Cups))
+
+  it should "convert an empty builder to an empty Deck" in:
+    val emptyDeck: Deck = CardBuilder(Vector.empty)
+    emptyDeck.cards should be(Vector.empty)
+    emptyDeck.draw() should be(None)
 
   "deck from CardBuilder" should "produce a deck with the given cards" in:
-    val d = deck from ((ace of Cups) | (two of Swords))
-    d.cards should be(Vector(ace of Cups, two of Swords))
+    val twoCardDeck = deck from ((ace of Cups) | (two of Swords))
+    twoCardDeck.cards should be(Vector(ace of Cups, two of Swords))
 
   it should "preserve the card order" in:
-    val d = deck from ((three of Wands) | (ace of Cups) | (two of Pentacles))
-    d.cards should be(Vector(three of Wands, ace of Cups, two of Pentacles))
+    val orderedDeck = deck from ((three of Wands) | (ace of Cups) | (two of Pentacles))
+    orderedDeck.cards should be(Vector(three of Wands, ace of Cups, two of Pentacles))
 
   it should "produce a deck with a single card when the builder has one" in:
-    val builder = CardBuilder(Vector(king of Cups))
-    val d = deck from builder
-    d.cards should be(Vector(king of Cups))
-
-  it should "allow drawing cards in insertion order" in:
-    val d = deck from ((ace of Cups) | (two of Swords) | (three of Wands))
-    val (first, remaining) = d.draw().get
-    first should be(ace of Cups)
-    val (second, _) = remaining.draw().get
-    second should be(two of Swords)
+    val singleCardDeck = deck from CardBuilder(Vector(king of Cups))
+    singleCardDeck.cards should be(Vector(king of Cups))
 
   it should "produce an empty deck from an empty builder" in:
-    val d = deck from CardBuilder(Vector.empty)
-    d.cards should be(Vector.empty)
-    d.draw() should be(None)
+    val emptyDeck = deck from CardBuilder(Vector.empty)
+    emptyDeck.cards should be(Vector.empty)
+    emptyDeck.draw() should be(None)
 
-  "A deck built from CardBuilder" should "return None when drawn from empty" in:
-    val d = deck from CardBuilder(Vector.empty)
-    d.draw() should be(None)
+  "A deck built from CardBuilder" should "draw cards in insertion order" in:
+    val threeCardDeck = deck from ((ace of Cups) | (two of Swords) | (three of Wands))
+    val (firstCard, deckAfterFirst) = threeCardDeck.draw().get
+    firstCard should be(ace of Cups)
+    val (secondCard, _) = deckAfterFirst.draw().get
+    secondCard should be(two of Swords)
 
-  it should "return the remaining deck after draw" in:
-    val d = deck from ((ace of Cups) | (two of Swords))
-    val (_, remaining) = d.draw().get
-    remaining.cards should be(Vector(two of Swords))
+  it should "return None when drawn from empty" in:
+    val emptyDeck = deck from CardBuilder(Vector.empty)
+    emptyDeck.draw() should be(None)
+
+  it should "return the correct remaining deck after draw" in:
+    val twoCardDeck = deck from ((ace of Cups) | (two of Swords))
+    val (_, deckAfterDraw) = twoCardDeck.draw().get
+    deckAfterDraw.cards should be(Vector(two of Swords))
 
   it should "be empty after drawing all cards" in:
-    val d = deck from ((ace of Cups) | (two of Swords))
-    val (_, r1) = d.draw().get
-    val (_, r2) = r1.draw().get
-    r2.draw() should be(None)
+    val twoCardDeck = deck from ((ace of Cups) | (two of Swords))
+    val (_, afterFirst) = twoCardDeck.draw().get
+    val (_, afterSecond) = afterFirst.draw().get
+    afterSecond.draw() should be(None)
