@@ -3,9 +3,11 @@ package view
 
 import view.{GameState, InputMode, Key}
 import view.CardRenderExtensions.*
+
 import org.jline.keymap.{BindingReader, KeyMap}
 import org.jline.terminal.{Terminal, TerminalBuilder}
 import org.jline.utils.InfoCmp.Capability
+
 
 class CLIView:
   private val terminal: Terminal = TerminalBuilder.builder().system(true).build()
@@ -61,16 +63,46 @@ class CLIView:
 
   /** * render on the terminal the board in this order Header adversary field draw and discard pile player field hand
     * zone action list
-    * @param gameState
+    * @param state
     *   the actual gameState with all the information to be printed
     */
-  def render(gameState: GameState): Unit =
-    val length = terminal.getColumns
+  def render(state: GameState): Unit =
+    given length: Int                 = terminal.getColumns
+    given viewBuilder: StringBuilder  = StringBuilder()
+    given separator: String           = "_" * length
+    given gameState: GameState        = state
+
+    clearScreen()
+    drawHeader
+
+    gameState.inputMode match
+      case InputMode.EndGame =>
+        clearScreen()
+        drawAdversaryField
+        drawDeckAndDiscard
+        drawPlayerField
+        drawEndGameMessage
+
+      case InputMode.WaitingRoom =>
+        clearScreen()
+        drawWaitingRoom
+
+      case _ =>
+
+        drawAdversaryField
+        drawDeckAndDiscard
+        drawPlayerField
+        drawHandZone
+        drawActionMenu
+
+    print(viewBuilder.toString())
+
+
+  private def clearScreen(): Unit =
     terminal.puts(Capability.clear_screen)
     terminal.flush()
-    val viewBuilder = StringBuilder()
-    val separator = "_" * length
 
+  private def drawHeader(using viewBuilder: StringBuilder, length: Int): Unit =
     // Header
     HEADER_ART.foreach { line =>
       viewBuilder
@@ -80,97 +112,112 @@ class CLIView:
         .append("\n")
     }
 
+  private def drawAdversaryField(using viewBuilder: StringBuilder, gameState: GameState ,separator: String, length: Int) =
+    // Adversary Card Zone
+    viewBuilder.append(s"$separator\n")
+    viewBuilder.append(centerText("ADVERSARY", length)).append("\n\n")
+    val selectedAdversaryIndex =
+      if gameState.inputMode == InputMode.SelectAdversaryCardOnBoard then Some(gameState.selectedCardOnBoard)
+      else None
+
+    val adversaryLines = gameState.adversaryCard.toAsciiRows(
+      terminalWidth = length,
+      selectedIdx = selectedAdversaryIndex
+    )
+    adversaryLines.foreach(line => viewBuilder.append(centerText(line, length)).append("\n"))
+    viewBuilder.append("\n")
+
+  private def drawDeckAndDiscard(using viewBuilder: StringBuilder, gameState: GameState ,separator: String, length: Int) =
+    // Central Zone: Deck and Discard Pile
+    val deckLines =
+      None.toAsciiLines(label = Some(s"░░░░$ANSI_GREEN_BOLD${gameState.remainingCardInDeck}$ANSI_RESET░░░░░"))
+    val discardLines = gameState.lastDiscardedCard.toAsciiLines(
+      label = if gameState.lastDiscardedCard.isEmpty then Some("EMPTY") else None
+    )
+    val centerLines = List(deckLines, discardLines).joinHorizontally(
+      spacers = List(" DECK          DISCARD ")
+    )
+    centerLines.foreach(line => viewBuilder.append(centerText(line, length)).append("\n"))
+    viewBuilder.append("\n")
+
+  private def drawPlayerField(using viewBuilder: StringBuilder, gameState: GameState ,separator: String, length: Int) =
+    // Player Card Zone
+    val selectedIdx =
+      if gameState.inputMode == InputMode.SelectCardOnBoard then Some(gameState.selectedCardOnBoard)
+      else None
+
+    val playerLines = gameState.playerCard.toAsciiRows(
+      terminalWidth = length,
+      selectedIdx = selectedIdx
+    )
+    playerLines.foreach(line => viewBuilder.append(centerText(line, length)).append("\n"))
+    viewBuilder.append(centerText("PLAYER", length)).append("\n")
+
+    viewBuilder.append(s"$separator\n")
+
+  private def drawEndGameMessage(using viewBuilder: StringBuilder, gameState: GameState, separator: String, length: Int) =
+    val transitionBlock = StringBuilder()
+    transitionBlock.append(s"$separator\n")
+    transitionBlock.append(centerText("END GAME", length)).append("\n\n")
+    if gameState.winner.isEmpty then
+      transitionBlock.append(centerText(s"GAME IS ENDED IN A TIE ", length)).append("\n\n")
+    else
+      transitionBlock.append(centerText(s"GAME IS OVER ${gameState.winner.get} WIN ", length)).append("\n\n")
+    transitionBlock.append(centerText(s"Player 1 has done ${gameState.playerScore} points | Player 2 has done ${gameState.adversaryScore} points ", length)).append("\n\n")
+    transitionBlock.append(centerText("[ Press ENTER to return to main Menu ]", length)).append("\n")
+    transitionBlock.append(s"$separator\n")
+
+    viewBuilder.append(transitionBlock)
+
+
+  private def drawWaitingRoom(using viewBuilder: StringBuilder, separator: String, length: Int) =
+    val transitionBlock = StringBuilder()
+    transitionBlock.append(s"$separator\n")
+    transitionBlock.append(centerText("PLAYER SWAP", length)).append("\n\n")
+    transitionBlock.append(centerText("Make sure the other player isn't watching!", length)).append("\n\n")
+    transitionBlock.append(centerText("[ Press ENTER to begin the turn ]", length)).append("\n")
+    transitionBlock.append(s"$separator\n")
+
+    // center vertically the changing player block
+    val blockString = transitionBlock.toString()
+    val blockHeight = blockString.linesIterator.length
+    val terminalHeight = Option(terminal.getRows).filter(_ > 0).getOrElse(24)
+    val topPadding = Math.max(0, (terminalHeight - blockHeight) / 2) - 10
+    viewBuilder.append("\n" * topPadding)
+    viewBuilder.append(blockString)
+
+
+  private def drawHandZone(using viewBuilder: StringBuilder, gameState: GameState, separator: String, length: Int) = // Hand Zone
+    viewBuilder.append(centerText("CARD IN HAND:", length)).append("\n")
+    val handLines = if gameState.cardsInHand.flatten.isEmpty then List("[ No card drawn ]")
+    else gameState.cardsInHand.toAsciiRows(terminalWidth = length)
+
+    handLines.foreach(line => viewBuilder.append(centerText(line, length)).append("\n"))
+
+    viewBuilder.append(s"$separator\n")
+
+
+  private def drawActionMenu(using viewBuilder: StringBuilder, gameState: GameState, separator: String, length: Int) =
+    // Menu / Action Zone
     gameState.inputMode match
-      case InputMode.WaitingRoom =>
-        terminal.puts(Capability.clear_screen)
-        terminal.flush()
-        val transitionBlock = StringBuilder()
-        transitionBlock.append(s"$separator\n")
-        transitionBlock.append(centerText("PLAYER SWAP", length)).append("\n\n")
-        transitionBlock.append(centerText("Make sure the other player isn't watching!", length)).append("\n\n")
-        transitionBlock.append(centerText("[ Press ENTER to begin the turn ]", length)).append("\n")
-        transitionBlock.append(s"$separator\n")
+      case InputMode.ActionMenu =>
+        viewBuilder.append(" AVAILABLE ACTIONS (Use ↑/↓ and Press ENTER):\n")
+        if gameState.possibleAction.isEmpty then viewBuilder.append(" (No possible action)\n")
+        else
+          gameState.possibleAction.zipWithIndex.foreach { case (action, i) =>
+            val current = if i == gameState.selectedAction then " -> " else "    "
+            viewBuilder.append(s"$current${i + 1}. ${action.label}\n")
+          }
+      case InputMode.SelectCardOnBoard =>
+        viewBuilder.append(" SELECT A CARD ON THE BOARD (Use ←/→ and press ENTER to exchange):\n")
+        viewBuilder.append(s" Selected Card: Position ${gameState.selectedCardOnBoard + 1}\n")
+      case InputMode.SelectAdversaryCardOnBoard =>
+        viewBuilder.append(" SELECT A CARD ON ADVERSARY BOARD (Use ←/→ and press ENTER to exchange):\n")
+        viewBuilder.append(s" Selected Card: Position ${gameState.selectedCardOnBoard + 1}\n")
+      case InputMode.WaitingRoom => ()
+      case InputMode.EndGame => ()
 
-        // center vertically the changing player block
-        val blockString = transitionBlock.toString()
-        val blockHeight = blockString.linesIterator.length
-        val terminalHeight = Option(terminal.getRows).filter(_ > 0).getOrElse(24)
-        val topPadding = Math.max(0, (terminalHeight - blockHeight) / 2) - 10
-        viewBuilder.append("\n" * topPadding)
-        viewBuilder.append(blockString)
-
-      case _ =>
-        // Adversary Card Zone
-        viewBuilder.append(s"$separator\n")
-        viewBuilder.append(centerText("ADVERSARY", length)).append("\n\n")
-        val selectedAdversaryIndex =
-          if gameState.inputMode == InputMode.SelectAdversaryCardOnBoard then Some(gameState.selectedCardOnBoard)
-          else None
-
-        val adversaryLines = gameState.adversaryCard.toAsciiRows(
-          terminalWidth = length,
-          selectedIdx = selectedAdversaryIndex
-        )
-        adversaryLines.foreach(line => viewBuilder.append(centerText(line, length)).append("\n"))
-        viewBuilder.append("\n")
-
-        // Central Zone: Deck and Discard Pile
-        val deckLines =
-          None.toAsciiLines(label = Some(s"░░░░$ANSI_GREEN_BOLD${gameState.remainingCardInDeck}$ANSI_RESET░░░░░"))
-        val discardLines = gameState.lastDiscardedCard.toAsciiLines(
-          label = if gameState.lastDiscardedCard.isEmpty then Some("EMPTY") else None
-        )
-        val centerLines = List(deckLines, discardLines).joinHorizontally(
-          spacers = List(" DECK          DISCARD ")
-        )
-        centerLines.foreach(line => viewBuilder.append(centerText(line, length)).append("\n"))
-        viewBuilder.append("\n")
-
-        // Player Card Zone
-        val selectedIdx =
-          if gameState.inputMode == InputMode.SelectCardOnBoard then Some(gameState.selectedCardOnBoard)
-          else None
-
-        val playerLines = gameState.playerCard.toAsciiRows(
-          terminalWidth = length,
-          selectedIdx = selectedIdx,
-          lastChangedIdx = gameState.lastChangedPlayerCard
-        )
-        playerLines.foreach(line => viewBuilder.append(centerText(line, length)).append("\n"))
-        viewBuilder.append(centerText("PLAYER", length)).append("\n")
-
-        viewBuilder.append(s"$separator\n")
-
-        // Hand Zone
-        viewBuilder.append(centerText("CARD IN HAND:", length)).append("\n")
-        val handLines = if gameState.cardsInHand.flatten.isEmpty then List("[ No card drawn ]")
-        else gameState.cardsInHand.toAsciiRows(terminalWidth = length)
-
-        handLines.foreach(line => viewBuilder.append(centerText(line, length)).append("\n"))
-
-        viewBuilder.append(s"$separator\n")
-
-        // Menu / Action Zone
-        gameState.inputMode match
-          case InputMode.ActionMenu =>
-            viewBuilder.append(" AVAILABLE ACTIONS (Use ↑/↓ and Press ENTER):\n")
-            if gameState.possibleAction.isEmpty then viewBuilder.append(" (No possible action)\n")
-            else
-              gameState.possibleAction.zipWithIndex.foreach { case (action, i) =>
-                val current = if i == gameState.selectedAction then " -> " else "    "
-                viewBuilder.append(s"$current${i + 1}. ${action.label}\n")
-              }
-          case InputMode.SelectCardOnBoard =>
-            viewBuilder.append(" SELECT A CARD ON THE BOARD (Use ←/→ and press ENTER to exchange):\n")
-            viewBuilder.append(s" Selected Card: Position ${gameState.selectedCardOnBoard + 1}\n")
-          case InputMode.SelectAdversaryCardOnBoard =>
-            viewBuilder.append(" SELECT A CARD ON ADVERSARY BOARD (Use ←/→ and press ENTER to exchange):\n")
-            viewBuilder.append(s" Selected Card: Position ${gameState.selectedCardOnBoard + 1}\n")
-          case InputMode.WaitingRoom => ()
-
-        viewBuilder.append(s"\n (Press 'Q' to exit)\n")
-
-    print(viewBuilder.toString())
+    viewBuilder.append(s"\n (Press 'Q' to exit)\n")
 
   /** * center the given text on the terminal
     * @param text
