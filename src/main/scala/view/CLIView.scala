@@ -8,7 +8,6 @@ import org.jline.keymap.{BindingReader, KeyMap}
 import org.jline.terminal.{Terminal, TerminalBuilder}
 import org.jline.utils.InfoCmp.Capability
 
-
 class CLIView:
   private val terminal: Terminal = TerminalBuilder.builder().system(true).build()
   private val bindingReader = new BindingReader(terminal.reader())
@@ -67,10 +66,10 @@ class CLIView:
     *   the actual gameState with all the information to be printed
     */
   def render(state: GameState): Unit =
-    given length: Int                 = terminal.getColumns
-    given viewBuilder: StringBuilder  = StringBuilder()
-    given separator: String           = "_" * length
-    given gameState: GameState        = state
+    given length: Int = terminal.getColumns
+    given viewBuilder: StringBuilder = StringBuilder()
+    given separator: String = "_" * length
+    given gameState: GameState = state
 
     clearScreen()
     drawHeader
@@ -97,7 +96,6 @@ class CLIView:
 
     print(viewBuilder.toString())
 
-
   private def clearScreen(): Unit =
     terminal.puts(Capability.clear_screen)
     terminal.flush()
@@ -112,7 +110,12 @@ class CLIView:
         .append("\n")
     }
 
-  private def drawAdversaryField(using viewBuilder: StringBuilder, gameState: GameState ,separator: String, length: Int) =
+  private def drawAdversaryField(using
+      viewBuilder: StringBuilder,
+      gameState: GameState,
+      separator: String,
+      length: Int
+  ) =
     // Adversary Card Zone
     viewBuilder.append(s"$separator\n")
     viewBuilder.append(centerText("ADVERSARY", length)).append("\n\n")
@@ -127,7 +130,12 @@ class CLIView:
     adversaryLines.foreach(line => viewBuilder.append(centerText(line, length)).append("\n"))
     viewBuilder.append("\n")
 
-  private def drawDeckAndDiscard(using viewBuilder: StringBuilder, gameState: GameState ,separator: String, length: Int) =
+  private def drawDeckAndDiscard(using
+      viewBuilder: StringBuilder,
+      gameState: GameState,
+      separator: String,
+      length: Int
+  ) =
     // Central Zone: Deck and Discard Pile
     val deckLines =
       None.toAsciiLines(label = Some(s"░░░░$ANSI_GREEN_BOLD${gameState.remainingCardInDeck}$ANSI_RESET░░░░░"))
@@ -140,7 +148,7 @@ class CLIView:
     centerLines.foreach(line => viewBuilder.append(centerText(line, length)).append("\n"))
     viewBuilder.append("\n")
 
-  private def drawPlayerField(using viewBuilder: StringBuilder, gameState: GameState ,separator: String, length: Int) =
+  private def drawPlayerField(using viewBuilder: StringBuilder, gameState: GameState, separator: String, length: Int) =
     // Player Card Zone
     val selectedIdx =
       if gameState.inputMode == InputMode.SelectCardOnBoard then Some(gameState.selectedCardOnBoard)
@@ -155,20 +163,31 @@ class CLIView:
 
     viewBuilder.append(s"$separator\n")
 
-  private def drawEndGameMessage(using viewBuilder: StringBuilder, gameState: GameState, separator: String, length: Int) =
+  private def drawEndGameMessage(using
+      viewBuilder: StringBuilder,
+      gameState: GameState,
+      separator: String,
+      length: Int
+  ) =
     val transitionBlock = StringBuilder()
     transitionBlock.append(s"$separator\n")
     transitionBlock.append(centerText("END GAME", length)).append("\n\n")
     if gameState.winner.isEmpty then
       transitionBlock.append(centerText(s"GAME IS ENDED IN A TIE ", length)).append("\n\n")
-    else
-      transitionBlock.append(centerText(s"GAME IS OVER ${gameState.winner.get} WIN ", length)).append("\n\n")
-    transitionBlock.append(centerText(s"Player 1 has done ${gameState.playerScore} points | Player 2 has done ${gameState.adversaryScore} points ", length)).append("\n\n")
+    else transitionBlock.append(centerText(s"GAME IS OVER ${gameState.winner.get} WIN ", length)).append("\n\n")
+    transitionBlock
+      .append(
+        centerText(
+          s"Player 1 has done ${gameState.playerScore} points | Player 2 has done ${gameState.adversaryScore} points ",
+          length
+        )
+      )
+      .append("\n\n")
     transitionBlock.append(centerText("[ Press ENTER to return to main Menu ]", length)).append("\n")
+    transitionBlock.append(centerText("[ Press Q to Exit the Game ]", length)).append("\n")
     transitionBlock.append(s"$separator\n")
 
     viewBuilder.append(transitionBlock)
-
 
   private def drawWaitingRoom(using viewBuilder: StringBuilder, separator: String, length: Int) =
     val transitionBlock = StringBuilder()
@@ -186,8 +205,12 @@ class CLIView:
     viewBuilder.append("\n" * topPadding)
     viewBuilder.append(blockString)
 
-
-  private def drawHandZone(using viewBuilder: StringBuilder, gameState: GameState, separator: String, length: Int) = // Hand Zone
+  private def drawHandZone(using
+      viewBuilder: StringBuilder,
+      gameState: GameState,
+      separator: String,
+      length: Int
+  ) = // Hand Zone
     viewBuilder.append(centerText("CARD IN HAND:", length)).append("\n")
     val handLines = if gameState.cardsInHand.flatten.isEmpty then List("[ No card drawn ]")
     else gameState.cardsInHand.toAsciiRows(terminalWidth = length)
@@ -195,7 +218,6 @@ class CLIView:
     handLines.foreach(line => viewBuilder.append(centerText(line, length)).append("\n"))
 
     viewBuilder.append(s"$separator\n")
-
 
   private def drawActionMenu(using viewBuilder: StringBuilder, gameState: GameState, separator: String, length: Int) =
     // Menu / Action Zone
@@ -215,7 +237,7 @@ class CLIView:
         viewBuilder.append(" SELECT A CARD ON ADVERSARY BOARD (Use ←/→ and press ENTER to exchange):\n")
         viewBuilder.append(s" Selected Card: Position ${gameState.selectedCardOnBoard + 1}\n")
       case InputMode.WaitingRoom => ()
-      case InputMode.EndGame => ()
+      case InputMode.EndGame     => ()
 
     viewBuilder.append(s"\n (Press 'Q' to exit)\n")
 
