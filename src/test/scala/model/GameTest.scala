@@ -46,7 +46,7 @@ class GameTest extends AnyFlatSpec with Matchers:
       .withCustom(playerOne(p1Field))
       .withCustom(playerTwo(p2Field))
       .withCustom(discardPile((5 of Cups) | (6 of Cups)))
-      .withCustom(deck(safeDeck))
+      .withCustom(customDeck(safeDeck))
 
   private def playFirstTurn(game: Game): Game =
     game.act(Observe).get.act(Confirm).get.act(EndTurn).get
