@@ -12,7 +12,7 @@ import scala.jdk.CollectionConverters.*
 import model.board.{BoardFactory, Player}
 import view.{CLIView, GameState, InputMode, Key}
 
-import org.pps.functus.model.game.Game
+import model.game.Game
 
 
 class GameControllerTest extends AnyFunSpec with Matchers with MockitoSugar:
