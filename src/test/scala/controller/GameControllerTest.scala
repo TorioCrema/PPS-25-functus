@@ -12,6 +12,8 @@ import scala.jdk.CollectionConverters.*
 import model.board.{BoardFactory, Player}
 import view.{CLIView, GameState, InputMode, Key}
 
+import org.pps.functus.model.game.Game
+
 
 class GameControllerTest extends AnyFunSpec with Matchers with MockitoSugar:
 
@@ -233,7 +235,7 @@ class GameControllerTest extends AnyFunSpec with Matchers with MockitoSugar:
         when(mockView.readInput()).thenReturn(Key.ESCAPE)
 
         val initialBoard = BoardFactory.BoardWithPopulatedFields()
-        val controller = new GameController(mockView, initialBoard)
+        val controller = new GameController(mockView, Some(Game(initialBoard)))
         controller.start()
 
         val state = getLastState(mockView)

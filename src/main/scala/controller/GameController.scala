@@ -1,17 +1,20 @@
 package org.pps.functus
 package controller
 
-import model.board.{Board, BoardFactory, Player}
-import model.turn.{Action, Turn, Turns}
-import view.{ViewAction, CLIView, GameState, InputMode, Key}
+import model.board.{BoardFactory, Player}
+import model.turn.{Action, Turn}
+import view.{CLIView, GameState, InputMode, Key, ViewAction}
+
+import model.board.Player.{Player1, Player2}
+import model.game.{Game, GamePhase}
+import view.InputMode.EndGame
 
 class GameController(
     private val view: CLIView,
-    initialBoard: Board = BoardFactory.BoardWithPopulatedFields()
+    private var game: Option[Game] = Some(Game(BoardFactory.BoardWithPopulatedFields()))
 ):
-
-  private var currentPlayer: Player = Player.Player1
-  private var turn: Turn = Turns.FirstTurn(initialBoard, currentPlayer)
+  
+  private var turn: Turn = game.get.currentTurn
   private var observedPlayers: Set[Player] = Set.empty
 
   private var currentModelActions: List[Action] = Nil
@@ -48,7 +51,7 @@ class GameController(
    *   [[InputMode.ActionMenu]]: Switching current selection between the possible action
    *   [[InputMode.SelectCardOnBoard]] and [[InputMode.SelectAdversaryCardOnBoard]]: navigate between
    *   card on the player or adversary field
-   *   [[InputMode.WaitingRoom]]: No behaviour expected
+   *   [[InputMode.WaitingRoom]]: No behavior expected
    */
   private def moveSelection(delta: Int): Unit = state.inputMode match
     case InputMode.ActionMenu =>
@@ -61,7 +64,7 @@ class GameController(
       val total = state.playerCard.length
       if total > 0 then
         val newIndex = (state.selectedCardOnBoard + delta + total) % total
-        state = state.copy(selectedCardOnBoard = newIndex, lastChangedPlayerCard = Some(newIndex))
+        state = state.copy(selectedCardOnBoard = newIndex)
 
     case InputMode.SelectAdversaryCardOnBoard =>
       val total = state.adversaryCard.length
@@ -69,9 +72,9 @@ class GameController(
         val newIndex = (state.selectedCardOnBoard + delta + total) % total
         state = state.copy(selectedCardOnBoard = newIndex)
 
-    case InputMode.WaitingRoom => ()
+    case _ => ()
 
-  /** Handles the user's confirm input (e.g., pressing ENTER) based on the current [[InputMode]].
+  /** Handles the user's confirmation input (e.g., pressing ENTER) based on the current [[InputMode]].
    *
    * Behavior per mode:
    *   - [[InputMode.ActionMenu]]: Triggers the currently highlighted menu action. If the action
@@ -155,6 +158,8 @@ class GameController(
       pendingOpponentSwapIdx = None
       state = syncState(determineNextInputMode())
 
+    case EndGame => () /// SHOULD GO INTO MAIN MENU 
+
   /** Executes an [[Action]] against the current turn logic and synchronizes state.
    *
    * Registers initial observation completion when executing a [[Action.Confirm]] action,
@@ -165,15 +170,15 @@ class GameController(
    * the domain [[Action]] to be performed
    */
   private def executeAction(action: Action): Unit =
-    if action == Action.Confirm then observedPlayers += currentPlayer
-
-    turn = turn.act(action)
+    game = game.get.act(action)
+    turn = game.get.currentTurn
     checkTurnEndAndSync(action)
+
 
   /** Evaluates if the current player's turn has ended and updates the game controller's state.
    *
    * If the turn is complete, this method toggles the active player, initializes the appropriate
-   * turn type (a initial observation turn or a standard turn), and transitions the UI to
+   * turn type (an initial observation turn or a standard turn), and transitions the UI to
    * [[InputMode.WaitingRoom]]. Otherwise, it advances the UI state using the next expected
    * [[InputMode]] while preserving board selection coordinates.
    *
@@ -181,14 +186,13 @@ class GameController(
    * the latest [[Action]] executed within the turn
    */
   private def checkTurnEndAndSync(action: Action): Unit =
-    if turn.isOver || action == Action.EndTurn then
-      currentPlayer = currentPlayer.other
-      turn = if !observedPlayers.contains(currentPlayer) then Turns.FirstTurn(turn.board, currentPlayer)
-      else Turns.SimpleTurn(turn.board, currentPlayer)
-
-      state = syncState(InputMode.WaitingRoom)
+    if action.equals(Action.EndTurn) then
+      if game.get.phase.equals(GamePhase.Over) then {
+        state = syncState(InputMode.EndGame)
+      } else
+        state = syncState(InputMode.WaitingRoom)
     else
-      state = syncState(determineNextInputMode(), selectedCardOnBoard = state.selectedCardOnBoard)
+        state = syncState(determineNextInputMode(), selectedCardOnBoard = state.selectedCardOnBoard)
 
   /** Determines the appropriate [[InputMode]] for the upcoming turn state based on
    * the available model actions.
@@ -238,18 +242,22 @@ class GameController(
     val board = turn.board
     val (modelActions, viewActions) = prepareActions(turn.actions)
     currentModelActions = modelActions
-
-    GameState(
-      adversaryCard = List.fill(board.getField(currentPlayer.other).cardsList.size)(None),
-      playerCard = List.fill(board.getField(currentPlayer).cardsList.size)(None),
-      remainingCardInDeck = board.deck.cards.size,
-      lastDiscardedCard = Option.when(board.discardPile.nonEmpty)(board.getTopDiscardStack),
-      cardsInHand = if turn.hand.nonEmpty then turn.hand.map(Some(_)) else List(None),
-      possibleAction = viewActions,
-      inputMode = inputMode,
-      selectedAction = selectedAction,
-      selectedCardOnBoard = selectedCardOnBoard
-    )
+    val isEndgame = inputMode.equals(EndGame)
+      GameState(
+        adversaryCard = if isEndgame then board.getField(turn.player.other).cardsList.map(Some(_)) else List.fill(board.getField(turn.player.other).cardsList.size)(None),
+        playerCard = if isEndgame then board.getField(turn.player).cardsList.map(Some(_)) else List.fill(board.getField(turn.player).cardsList.size)(None),
+        remainingCardInDeck = board.deck.cards.size,
+        lastDiscardedCard = Option.when(board.discardPile.nonEmpty)(board.getTopDiscardStack),
+        cardsInHand = if turn.hand.nonEmpty then turn.hand.map(Some(_)) else List(None),
+        possibleAction = if isEndgame then List.empty else viewActions,
+        inputMode = inputMode,
+        selectedAction = selectedAction,
+        selectedCardOnBoard = selectedCardOnBoard,
+        winner = if isEndgame then getWinner else None,
+        playerScore = if isEndgame then getPlayerScore else 0,
+        adversaryScore = if isEndgame then getAdversaryScore else 0
+      )
+      
 
   /**
    * Grouping logic for board-selection actions:
@@ -337,3 +345,19 @@ class GameController(
     case Action.ReturnToField(i)    => ViewAction(s"return_$i", s"Return card to your field")
     case Action.Swap(pIdx, oIdx)    => ViewAction(s"swap_${pIdx}_$oIdx", s"Swap your card with opponent's")
 
+  private def getWinner: Option[Player] =
+    val scores = game.get.playerScore
+    val p1Score = scores(Player1)
+    val p2Score = scores(Player2)
+
+    val winner =
+      if p1Score > p2Score then Some(Player2)
+      else if p2Score > p1Score then Some(Player1)
+      else None // Handle a tie scenario
+    winner
+
+  private def getPlayerScore: Int =
+    game.get.playerScore(Player1)
+
+  private def getAdversaryScore: Int =
+    game.get.playerScore(Player2)
