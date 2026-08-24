@@ -156,3 +156,11 @@ class GameTest extends AnyFlatSpec with Matchers:
 
   it should "be available before the game is over" in:
     gameInPlaying.playerScore.keySet shouldBe Set(Player1, Player2)
+
+  "A Game in the Over phase" should "throw an IllegalStateException when act is called" in:
+    an[IllegalStateException] should be thrownBy gameOver.act(EndTurn)
+
+  it should "throw an IllegalStateException regardless of which action is attempted" in:
+    an[IllegalStateException] should be thrownBy gameOver.act(Draw)
+    an[IllegalStateException] should be thrownBy gameOver.act(Observe)
+    an[IllegalStateException] should be thrownBy gameOver.act(Cactus)
