@@ -1,11 +1,14 @@
 package org.pps.functus
-package model.turn
+package model.playable.turn
 
 import model.deck.card.Card
 import model.board.{Board, Player}
-import model.turn.Action.*
+
+import Action.*
 import model.deck.sugar.CardDSL.*
-import model.turn.Effects.effect
+
+import Effects.effect
+import model.playable.Playable
 
 /** Turn class that allows to play a turn from start to finish via the [[act]] method.
   * @param hand
@@ -19,7 +22,8 @@ import model.turn.Effects.effect
   * @param cactus
   *   whether cactus was called
   */
-case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Action], cactus: Boolean = false):
+case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Action], cactus: Boolean = false)
+    extends Playable[Turn]:
   private val observableCards = 2
 
   private def drawnFromField(index: Int) =
@@ -43,7 +47,7 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
     * @return
     *   the next phase of the [[Turn]]
     */
-  def act(action: Action): Turn =
+  override def act(action: Action): Turn =
     require(actions.contains(action))
     action match
       case Observe =>
@@ -90,7 +94,7 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
   /** @return
     *   [[true]] if the [[Turn]] is over.
     */
-  def isOver: Boolean = this match
+  override def isOver: Boolean = this match
     case Turn(_, _, _, Nil, _) => true
     case _                     => false
 

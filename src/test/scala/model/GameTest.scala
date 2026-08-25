@@ -1,19 +1,18 @@
 package org.pps.functus
 package model
 
-import model.game.{Game, GamePhase}
-import model.turn.Action.{Activate, Cactus, ChooseReplace, Confirm, Draw, EndTurn, Observe}
+import model.playable.turn.Action.{Activate, Cactus, ChooseReplace, Confirm, Draw, EndTurn, Observe}
 import model.board.Player.{Player1, Player2}
-import model.game.GamePhase.*
 import model.deck.card.Suit.*
 import model.deck.sugar.CardDSL.*
 import model.deck.sugar.BoardDSL.*
 import model.deck.sugar.CardDSL.of
-import model.deck.sugar.FieldDSL.given_Conversion_Card_FieldBuilderLike
+import model.deck.sugar.FieldDSL.given
 import model.deck.sugar.DeckDSL.deck.|
 import model.deck.sugar.DeckDSL.deck as deckDSL
 import model.deck.sugar.FieldDSL.{*, given}
-
+import model.playable.game.{Game, GamePhase}
+import model.playable.game.GamePhase.*
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -49,7 +48,7 @@ class GameTest extends AnyFlatSpec with Matchers:
       .withCustom(customDeck(safeDeck))
 
   private def playFirstTurn(game: Game): Game =
-    game.act(Observe).get.act(Confirm).get.act(EndTurn).get
+    game.act(Observe).act(Confirm).act(EndTurn)
 
   private def playBothFirstTurns(game: Game): Game =
     playFirstTurn(playFirstTurn(game))
@@ -58,27 +57,18 @@ class GameTest extends AnyFlatSpec with Matchers:
   private def playSimpleTurn(game: Game): Game =
     game
       .act(Draw)
-      .get
       .act(Activate)
-      .get
       .act(ChooseReplace(0))
-      .get
       .act(EndTurn)
-      .get
 
   /** Plays one SimpleTurn and calls Cactus at the end. */
   private def playSimpleTurnWithCactus(game: Game): Game =
     game
       .act(Draw)
-      .get
       .act(Activate)
-      .get
       .act(ChooseReplace(0))
-      .get
       .act(Cactus)
-      .get
       .act(EndTurn)
-      .get
 
   private def gameInPlaying: Game = playBothFirstTurns(Game(deterministicBoard))
 
@@ -99,16 +89,16 @@ class GameTest extends AnyFlatSpec with Matchers:
     Game(boardTest).isOver should be(false)
 
   "A game during Player1 first turn" should "remain in FirstTurns after Observe" in:
-    Game(boardTest).act(Observe).get.phase shouldBe FirstTurns
+    Game(boardTest).act(Observe).phase shouldBe FirstTurns
 
   it should "still be Player1's turn after Observe" in:
-    Game(boardTest).act(Observe).get.currentPlayer shouldBe Player1
+    Game(boardTest).act(Observe).currentPlayer shouldBe Player1
 
   it should "expose only Confirm after Observe" in:
-    Game(boardTest).act(Observe).get.currentTurn.actions shouldBe List(Confirm)
+    Game(boardTest).act(Observe).currentTurn.actions shouldBe List(Confirm)
 
   it should "expose only EndTurn after Confirm" in:
-    Game(boardTest).act(Observe).get.act(Confirm).get.currentTurn.actions shouldBe List(EndTurn)
+    Game(boardTest).act(Observe).act(Confirm).currentTurn.actions shouldBe List(EndTurn)
 
   "After Player1 first turn" should "switch to Player2" in:
     playFirstTurn(Game(boardTest)).currentPlayer shouldBe Player2
@@ -154,39 +144,22 @@ class GameTest extends AnyFlatSpec with Matchers:
   it should "assign the last turn to the opponent of who called Cactus" in:
     gameInLastTurn.currentPlayer shouldBe Player2
 
-  it should "return None on act when the game is over" in:
-    Game(boardTest).copy(phase = Over).act(Observe) shouldBe None
-
   "LastTurn phase" should "transition to Over after the last turn is played" in:
     gameOver.phase shouldBe Over
 
   it should "be over after the last turn" in:
     gameOver.isOver shouldBe true
 
-  "finalCards" should "return None before the game is over" in:
-    Game(boardTest).finalCards shouldBe None
-
-  it should "return Some with cards for both players when the game is over" in:
-    gameOver.finalCards shouldBe defined
-
-  it should "contain entries for both players" in:
-    gameOver.finalCards.get.keySet shouldBe Set(Player1, Player2)
-
-  it should "return 4 cards per player" in:
-    val cards = gameOver.finalCards.get
-    println(cards(Player1))
-    println(cards(Player2))
-    cards(Player1).length shouldBe 4
-    cards(Player2).length shouldBe 4
-
   "playerScore" should "return a score for each player" in:
     gameOver.playerScore.keySet shouldBe Set(Player1, Player2)
 
-  it should "be consistent with finalCards at game over" in:
-    val cards = gameOver.finalCards.get
-    val scores = gameOver.playerScore
-    scores(Player1) shouldBe cards(Player1).map(_.value).sum
-    scores(Player2) shouldBe cards(Player2).map(_.value).sum
-
   it should "be available before the game is over" in:
     gameInPlaying.playerScore.keySet shouldBe Set(Player1, Player2)
+
+  "A Game in the Over phase" should "throw an IllegalStateException when act is called" in:
+    an[IllegalStateException] should be thrownBy gameOver.act(EndTurn)
+
+  it should "throw an IllegalStateException regardless of which action is attempted" in:
+    an[IllegalStateException] should be thrownBy gameOver.act(Draw)
+    an[IllegalStateException] should be thrownBy gameOver.act(Observe)
+    an[IllegalStateException] should be thrownBy gameOver.act(Cactus)

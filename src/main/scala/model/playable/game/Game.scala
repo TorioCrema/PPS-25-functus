@@ -1,11 +1,11 @@
 package org.pps.functus
-package model.game
+package model.playable.game
 
 import model.board.{Board, Player}
 import model.board.Player.{Player1, Player2}
-import model.turn.{Action, Turn}
-import model.turn.Turns.{FirstTurn, SimpleTurn}
-import model.deck.card.Card
+import model.playable.turn.Turns.{FirstTurn, SimpleTurn}
+import model.playable.Playable
+import model.playable.turn.{Action, Turn}
 
 /** Represents the phase of the game.
   */
@@ -23,14 +23,13 @@ enum GamePhase:
   case Over
 
 case class Game(
-    board: Board,
     phase: GamePhase,
     currentTurn: Turn,
     cactusCaller: Option[Player]
-):
-  def currentPlayer: Player = currentTurn.player
+) extends Playable[Game]:
+  export currentTurn.{player as currentPlayer, isOver as isTurnOver, act as _, *}
 
-  def isOver: Boolean = phase == GamePhase.Over
+  override def isOver: Boolean = phase == GamePhase.Over
 
   /** Delegates an [[Action]] to the current [[Turn]] and advances the game state.
     *
@@ -44,25 +43,11 @@ case class Game(
     * @throws IllegalStateException
     *   if called when the game is already [[GamePhase.Over]]
     */
-  def act(action: Action): Option[Game] =
-    Option
-      .when(!isOver)(currentTurn.act(action))
-      .flatMap(updatedTurn =>
-        if !updatedTurn.isOver then Some(copy(currentTurn = updatedTurn))
-        else advancePhase(updatedTurn)
-      )
-
-  /** Returns the cards on the field of each player at the end of the game.
-    *
-    * @return
-    *   a [[Map]] from [[Player]] to their [[List]] of [[Card]]s
-    * @throws IllegalStateException
-    *   if the game is not yet [[GamePhase.Over]]
-    */
-  def finalCards: Option[Map[Player, List[Card]]] =
-    Option.when(isOver)(
-      Player.values.map(p => p -> board.getField(p).cardsList).toMap
-    )
+  override def act(action: Action): Game =
+    if isOver then throw IllegalStateException("Game is already over, you cannot make any new actions.")
+    val updatedTurn = currentTurn.act(action)
+    if !updatedTurn.isOver then copy(currentTurn = updatedTurn)
+    else advancePhase(updatedTurn)
 
   /** Returns the score of the cards on the field of each player at the end of the game.
     *
@@ -70,39 +55,36 @@ case class Game(
     *   a [[Map]] from [[Player]] to their scores
     */
   def playerScore: Map[Player, Int] =
-    Player.values.map(p => p -> board.getField(p).cardsList.map(_.value).sum).toMap
+    Player.values.map(p => p -> currentTurn.board.getField(p).cardsList.map(_.value).sum).toMap
 
-  private def advancePhase(finishedTurn: Turn): Option[Game] =
+  private def advancePhase(finishedTurn: Turn): Game =
     phase match
       case GamePhase.FirstTurns =>
         finishedTurn.player match
           case Player1 =>
             val nextTurn = FirstTurn(finishedTurn.board, Player2)
-            Some(copy(board = finishedTurn.board, currentTurn = nextTurn))
+            copy(currentTurn = nextTurn)
           case Player2 =>
             val nextTurn = SimpleTurn(finishedTurn.board, Player1)
-            Some(copy(board = finishedTurn.board, phase = GamePhase.Playing, currentTurn = nextTurn))
+            copy(phase = GamePhase.Playing, currentTurn = nextTurn)
 
       case GamePhase.Playing =>
         if finishedTurn.cactus then
           val opponent = finishedTurn.player.other
           val lastTurn = SimpleTurn(finishedTurn.board, opponent)
-          Some(
-            copy(
-              board = finishedTurn.board,
-              phase = GamePhase.LastTurn,
-              currentTurn = lastTurn,
-              cactusCaller = Some(finishedTurn.player)
-            )
+          copy(
+            phase = GamePhase.LastTurn,
+            currentTurn = lastTurn,
+            cactusCaller = Some(finishedTurn.player)
           )
         else
           val nextTurn = SimpleTurn(finishedTurn.board, finishedTurn.player.other)
-          Some(copy(board = finishedTurn.board, currentTurn = nextTurn))
+          copy(currentTurn = nextTurn)
 
       case GamePhase.LastTurn =>
-        Some(copy(board = finishedTurn.board, phase = GamePhase.Over))
+        copy(phase = GamePhase.Over)
 
-      case GamePhase.Over => None
+      case GamePhase.Over => this
 
 /** Factory for [[Game]] instances.
   */
@@ -119,4 +101,4 @@ object Game:
     */
   def apply(board: Board): Game =
     val firstTurn = FirstTurn(board, Player1)
-    Game(board, GamePhase.FirstTurns, firstTurn, cactusCaller = None)
+    Game(GamePhase.FirstTurns, firstTurn, cactusCaller = None)
