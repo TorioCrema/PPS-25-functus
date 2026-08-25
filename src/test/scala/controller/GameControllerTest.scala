@@ -7,11 +7,10 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.mockito.Mockito.*
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-
 import scala.jdk.CollectionConverters.*
 import model.board.{BoardFactory, Player}
 import view.{CLIView, GameState, InputMode, Key}
-
+import model.playable.game.Game
 
 class GameControllerTest extends AnyFunSpec with Matchers with MockitoSugar:
 
@@ -233,7 +232,7 @@ class GameControllerTest extends AnyFunSpec with Matchers with MockitoSugar:
         when(mockView.readInput()).thenReturn(Key.ESCAPE)
 
         val initialBoard = BoardFactory.BoardWithPopulatedFields()
-        val controller = new GameController(mockView, initialBoard)
+        val controller = new GameController(mockView, Game(initialBoard))
         controller.start()
 
         val state = getLastState(mockView)

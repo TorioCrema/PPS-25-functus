@@ -9,3 +9,4 @@ enum InputMode:
   case SelectCardOnBoard
   case SelectAdversaryCardOnBoard
   case WaitingRoom
+  case EndGame
