@@ -106,5 +106,25 @@ class OpponentTest extends AnyFlatSpec with Matchers:
     val opponent = Opponent()
     opponent.play(FirstTurn(BoardFactory.CustomBoard(opponentField :: otherField :: Nil), Player1))
     opponent.getKnownCard(0) should be(Some(six of Swords))
-    opponent.forget(0)
+    opponent.forgetOwn(0)
     opponent.getKnownCard(0) should be(None)
+
+  it should "observe adversary cards" in:
+    val observeBoard = BoardFactory.CustomBoard(opponentField :: otherField :: Nil, DeckImpl(Vector(six of Wands)))
+    val opponent = Opponent()
+    opponent.play(FirstTurn(observeBoard, Player1))
+    val (drawnTurn, _) = opponent.play(SimpleTurn(observeBoard, Player1))
+    val (activatedTurn, _) = opponent.play(drawnTurn)
+    val (observedTurn, selectedAction) = opponent.play(activatedTurn)
+    selectedAction should be(ObserveOpponent(0))
+    opponent.getKnownAdversaryCard(0) should be(Some(otherField.getCard(0)._1))
+
+  it should "observe its cards" in:
+    val observeBoard = BoardFactory.CustomBoard(longOpponentField :: otherField :: Nil, DeckImpl(Vector(seven of Wands)))
+    val opponent = Opponent()
+    opponent.play(FirstTurn(observeBoard, Player1))
+    val (drawnTurn, _) = opponent.play(SimpleTurn(observeBoard, Player1))
+    val (activatedTurn, _) = opponent.play(drawnTurn)
+    val (observedTurn, selectedAction) = opponent.play(activatedTurn)
+    selectedAction should be(ObservePlayer(2))
+    opponent.getKnownCard(2) should be(Some(longOpponentField.getCard(2)._1))
