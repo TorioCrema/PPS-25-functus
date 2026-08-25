@@ -1,8 +1,6 @@
 package org.pps.functus
 package model
 
-import model.game.{GamePhase, Match}
-
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import model.board.Player.*
@@ -12,10 +10,10 @@ import model.deck.sugar.BoardDSL.*
 import model.deck.sugar.DeckDSL
 import model.deck.sugar.DeckDSL.deck.*
 import model.deck.sugar.FieldDSL.{*, given}
-import model.turn.Action.*
 import model.board.Board
-
 import model.deck.Deck
+import model.playable.game.{GamePhase, Match}
+import model.playable.turn.Action.*
 
 class MatchTest extends AnyFlatSpec with Matchers:
   private val threshold = 10
@@ -35,27 +33,18 @@ class MatchTest extends AnyFlatSpec with Matchers:
       .withCustom(customDeck(deck))
 
   private def playFirstTurn(game: Match): Match =
-    game.act(Observe).act(Confirm).act(EndTurn)
+    game.actAll(Observe :: Confirm :: EndTurn :: Nil)
 
   private def playBothFirstTurns(game: Match): Match =
     playFirstTurn(playFirstTurn(game))
 
   /** Plays one SimpleTurn without calling Cactus. */
   private def playSimpleTurn(game: Match): Match =
-    game
-      .act(Draw)
-      .act(Activate)
-      .act(ChooseReplace(0))
-      .act(EndTurn)
+    game.actAll(Draw :: Activate :: ChooseReplace(0) :: EndTurn :: Nil)
 
   /** Plays one SimpleTurn and calls Cactus at the end. */
   private def playSimpleTurnWithCactus(game: Match): Match =
-    game
-      .act(Draw)
-      .act(Activate)
-      .act(ChooseReplace(0))
-      .act(Cactus)
-      .act(EndTurn)
+    game.actAll(Draw :: Activate :: ChooseReplace(0) :: Cactus :: EndTurn :: Nil)
 
   private def gameInPlaying(board: Board): Match = playBothFirstTurns(Match(threshold, board))
 

@@ -1,11 +1,11 @@
 package org.pps.functus
-package model.game
+package model.playable.game
 
 import model.board.{Board, Player}
 import model.board.Player.{Player1, Player2}
-import model.turn.{Action, Turn}
-import model.turn.Turns.{FirstTurn, SimpleTurn}
-import model.deck.card.Card
+import model.playable.turn.Turns.{FirstTurn, SimpleTurn}
+import model.playable.Playable
+import model.playable.turn.{Action, Turn}
 
 /** Represents the phase of the game.
   */
@@ -23,14 +23,13 @@ enum GamePhase:
   case Over
 
 case class Game(
-    board: Board,
     phase: GamePhase,
     currentTurn: Turn,
     cactusCaller: Option[Player]
-):
-  def currentPlayer: Player = currentTurn.player
+) extends Playable[Game]:
+  export currentTurn.{player as currentPlayer, isOver as isTurnOver, act as _, *}
 
-  def isOver: Boolean = phase == GamePhase.Over
+  override def isOver: Boolean = phase == GamePhase.Over
 
   /** Delegates an [[Action]] to the current [[Turn]] and advances the game state.
     *
@@ -44,7 +43,7 @@ case class Game(
     * @throws IllegalStateException
     *   if called when the game is already [[GamePhase.Over]]
     */
-  def act(action: Action): Game =
+  override def act(action: Action): Game =
     if isOver then throw IllegalStateException("Game is already over, you cannot make any new actions.")
     val updatedTurn = currentTurn.act(action)
     if !updatedTurn.isOver then copy(currentTurn = updatedTurn)
@@ -56,7 +55,7 @@ case class Game(
     *   a [[Map]] from [[Player]] to their scores
     */
   def playerScore: Map[Player, Int] =
-    Player.values.map(p => p -> board.getField(p).cardsList.map(_.value).sum).toMap
+    Player.values.map(p => p -> currentTurn.board.getField(p).cardsList.map(_.value).sum).toMap
 
   private def advancePhase(finishedTurn: Turn): Game =
     phase match
@@ -64,27 +63,26 @@ case class Game(
         finishedTurn.player match
           case Player1 =>
             val nextTurn = FirstTurn(finishedTurn.board, Player2)
-            copy(board = finishedTurn.board, currentTurn = nextTurn)
+            copy(currentTurn = nextTurn)
           case Player2 =>
             val nextTurn = SimpleTurn(finishedTurn.board, Player1)
-            copy(board = finishedTurn.board, phase = GamePhase.Playing, currentTurn = nextTurn)
+            copy(phase = GamePhase.Playing, currentTurn = nextTurn)
 
       case GamePhase.Playing =>
         if finishedTurn.cactus then
           val opponent = finishedTurn.player.other
           val lastTurn = SimpleTurn(finishedTurn.board, opponent)
           copy(
-            board = finishedTurn.board,
             phase = GamePhase.LastTurn,
             currentTurn = lastTurn,
             cactusCaller = Some(finishedTurn.player)
           )
         else
           val nextTurn = SimpleTurn(finishedTurn.board, finishedTurn.player.other)
-          copy(board = finishedTurn.board, currentTurn = nextTurn)
+          copy(currentTurn = nextTurn)
 
       case GamePhase.LastTurn =>
-        copy(board = finishedTurn.board, phase = GamePhase.Over)
+        copy(phase = GamePhase.Over)
 
       case GamePhase.Over => this
 
@@ -103,4 +101,4 @@ object Game:
     */
   def apply(board: Board): Game =
     val firstTurn = FirstTurn(board, Player1)
-    Game(board, GamePhase.FirstTurns, firstTurn, cactusCaller = None)
+    Game(GamePhase.FirstTurns, firstTurn, cactusCaller = None)

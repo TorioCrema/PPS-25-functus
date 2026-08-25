@@ -1,10 +1,11 @@
 package org.pps.functus
-package model.game
+package model.playable.game
 
 import model.board.{Board, Player}
 import model.board.Player.*
-import model.deck.sugar.BoardDSL.*
-import model.turn.*
+import model.deck.sugar.BoardDSL.{board as newBoard, *}
+import model.playable.Playable
+import model.playable.turn.{Action, Turn}
 
 /** Represent a match composed of multiple games, ends when at least one player reaches a score above the maximum.
   * @param maxScore
@@ -14,10 +15,12 @@ import model.turn.*
   * @param scores
   *   the current accumulated player scores
   */
-case class Match(maxScore: Int, game: Game, scores: Map[Player, Int]):
+case class Match(maxScore: Int, game: Game, scores: Map[Player, Int]) extends Playable[Match]:
+
+  export game.{act as _, isOver as isGameOver, *}
 
   /** Returns true if the match is over. */
-  def isOver: Boolean = scores.values.max > maxScore
+  override def isOver: Boolean = scores.values.max > maxScore
 
   /** Acts upon the current [[Turn]] and calculates end scores if the game is over.
     * @param action
@@ -25,7 +28,7 @@ case class Match(maxScore: Int, game: Game, scores: Map[Player, Int]):
     * @return
     *   the [[Match]] with updated [[Game]].
     */
-  def act(action: Action): Match =
+  override def act(action: Action): Match =
     val nextGame = game.act(action)
     if nextGame.isOver then
       Match(
@@ -48,7 +51,7 @@ case class Match(maxScore: Int, game: Game, scores: Map[Player, Int]):
     */
   def nextGame: Match =
     if !game.isOver then throw new IllegalStateException("Cannot start new game while current game has not ended.")
-    copy(game = Game(board from default))
+    copy(game = Game(newBoard from default))
 
 object Match:
   /** Creates a new [[Match]] with a given max score and [[Board]], and player scores at zero.
@@ -59,5 +62,5 @@ object Match:
     * @return
     *   a new [[Match]]
     */
-  def apply(maxScore: Int, board: Board = board from default): Match =
+  def apply(maxScore: Int, board: Board = newBoard from default): Match =
     Match(maxScore, Game(board), Map((Player1, 0), (Player2, 0)))

@@ -1,9 +1,9 @@
 package org.pps.functus
 package model
 
-import model.turn.Action.*
 import model.deck.DeckFactory
-import model.turn.Action
+import model.playable.turn.Action.*
+import model.playable.turn.Action
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

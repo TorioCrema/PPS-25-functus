@@ -1,9 +1,9 @@
 package org.pps.functus
-package model.turn
+package model.playable.turn
 
 import model.deck.card.Card
 import model.board.Player
-import model.turn.Action.{ChooseReplace, ObserveOpponent, ObservePlayer, Swap}
+import Action.{ChooseReplace, ObserveOpponent, ObservePlayer, Swap}
 import model.deck.sugar.CardDSL.*
 
 object Effects:

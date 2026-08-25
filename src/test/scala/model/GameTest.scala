@@ -1,19 +1,18 @@
 package org.pps.functus
 package model
 
-import model.game.{Game, GamePhase}
-import model.turn.Action.{Activate, Cactus, ChooseReplace, Confirm, Draw, EndTurn, Observe}
+import model.playable.turn.Action.{Activate, Cactus, ChooseReplace, Confirm, Draw, EndTurn, Observe}
 import model.board.Player.{Player1, Player2}
-import model.game.GamePhase.*
 import model.deck.card.Suit.*
 import model.deck.sugar.CardDSL.*
 import model.deck.sugar.BoardDSL.*
 import model.deck.sugar.CardDSL.of
-import model.deck.sugar.FieldDSL.given_Conversion_Card_FieldBuilderLike
+import model.deck.sugar.FieldDSL.given
 import model.deck.sugar.DeckDSL.deck.|
 import model.deck.sugar.DeckDSL.deck as deckDSL
 import model.deck.sugar.FieldDSL.{*, given}
-
+import model.playable.game.{Game, GamePhase}
+import model.playable.game.GamePhase.*
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

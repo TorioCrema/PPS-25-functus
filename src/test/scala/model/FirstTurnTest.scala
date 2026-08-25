@@ -9,9 +9,8 @@ import model.deck.card.Card
 import model.deck.card.Suit.*
 import model.deck.sugar.CardDSL.*
 import model.deck.sugar.FieldDSL.{*, given}
-import model.turn.Action.*
-import model.turn.Turns.*
-
+import model.playable.turn.Action.*
+import model.playable.turn.Turns.*
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -43,7 +42,7 @@ class FirstTurnTest extends AnyFlatSpec with Matchers:
   it should "restore the board after executing the Confirm action" in:
     for player <- Player.values
     do
-      val afterConfirm = FirstTurn(board, player).act(Observe).act(Confirm)
+      val afterConfirm = FirstTurn(board, player).actAll(Observe :: Confirm :: Nil)
       afterConfirm.board.getField(player) should be(board.getField(player))
       afterConfirm.board.getField(player.other) should be(board.getField(player.other))
 
