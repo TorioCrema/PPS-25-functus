@@ -1,9 +1,9 @@
 package org.pps.functus
-package model.turn
+package model.playable.turn
 
 import model.deck.card.Card
 import model.board.Player
-import model.turn.Action.{ChooseReplace, ObserveOpponent, ObservePlayer, Swap}
+import Action.{ChooseReplace, ObserveOpponent, ObservePlayer, Swap}
 import model.deck.sugar.CardDSL.*
 
 object Effects:
@@ -24,15 +24,15 @@ object Effects:
       card.value match
         case `six` =>
           Turn(
-            Nil,
-            on.board.discard(on.hand.head),
+            on.hand,
+            on.board,
             on.player,
             actionsFromFieldLength(getFieldLength(on.player.other))(ObserveOpponent(_))
           )
         case `seven` =>
           Turn(
-            Nil,
-            on.board.discard(on.hand.head),
+            on.hand,
+            on.board,
             on.player,
             actionsFromFieldLength(getFieldLength(on.player))(ObservePlayer(_))
           )
@@ -42,5 +42,5 @@ object Effects:
               playerIndex <- 0 until getFieldLength(on.player)
               opponentIndex <- 0 until getFieldLength(on.player)
             yield Swap(playerIndex, opponentIndex)
-          Turn(Nil, on.board.discard(on.hand.head), on.player, replaceActions.appendedAll(swapActions))
+          Turn(on.hand, on.board, on.player, replaceActions.appendedAll(swapActions))
         case _ => Turn(on.hand, on.board, on.player, replaceActions)

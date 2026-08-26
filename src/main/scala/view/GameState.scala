@@ -4,6 +4,8 @@ package view
 import model.deck.card.Card
 import view.InputMode.ActionMenu
 
+import model.board.Player
+
 /** * a case class containing all the information needed by the view representing the actual game state
   * @param adversaryCard
   *   The list of Cards of the opponent
@@ -23,18 +25,24 @@ import view.InputMode.ActionMenu
   *   the index of the action the player is hovering
   * @param selectedCardOnBoard
   *   the index of the card the player is overing
- *  @param lastChangedPlayerCard
- *    the Index of the last card exchanged on the board by the player 
+  * @param winner
+  *   the winner of the game
+  * @param playerScore
+  *   the player1 score
+  * @param adversaryScore
+  *   the player2 score
   */
 case class GameState(
-                      adversaryCard: List[Option[Card]],
-                      playerCard: List[Option[Card]],
-                      remainingCardInDeck: Int,
-                      lastDiscardedCard: Option[Card],
-                      cardsInHand: List[Option[Card]],
-                      possibleAction: List[ViewAction],
-                      inputMode: InputMode = ActionMenu,
-                      selectedAction: Int = 0,
-                      selectedCardOnBoard: Int = 0,
-                      lastChangedPlayerCard: Option[Int] = None
+    adversaryCard: List[Option[Card]],
+    playerCard: List[Option[Card]],
+    remainingCardInDeck: Int,
+    lastDiscardedCard: Option[Card],
+    cardsInHand: List[Option[Card]],
+    possibleAction: List[ViewAction],
+    inputMode: InputMode = ActionMenu,
+    selectedAction: Int = 0,
+    selectedCardOnBoard: Int = 0,
+    winner: Option[Player] = None,
+    playerScore: Int = 0,
+    adversaryScore: Int = 0
 )

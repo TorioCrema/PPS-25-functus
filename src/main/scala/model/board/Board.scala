@@ -5,6 +5,8 @@ import model.deck.card.Card
 import model.field.Field
 import model.deck.{Deck, DeckFactory, DeckImpl}
 
+import model.deck.sugar.CardDSL.king
+
 enum Player:
   case Player1, Player2
 
@@ -19,6 +21,9 @@ sealed trait Board:
   /** The current deck of cards available for drawing. */
   val deck: Deck
 
+  /** The current fields of the players. */
+  val players: Map[Player, Field]
+
   /** The pile of cards that have been discarded during the game. The head of the list represents the top of the pile
     * (most recently discarded card).
     */
@@ -26,9 +31,10 @@ sealed trait Board:
 
   /** Draws the card on top of the draw stack.
     * @return
-    *   the updated board
+    *   [[Some]] containing the drawn [[Card]] and the updated [[Board]], or [[None]] if the deck and discardPile are
+    *   empty
     */
-  def draw: (Card, Board)
+  def draw(): Option[(Card, Board)]
 
   /** Discards a card on top of the discard stack.
     * @param card
@@ -56,8 +62,13 @@ sealed trait Board:
     */
   def getTopDiscardStack: Card
 
-  /** Returns the King on top of the discard pile and the updated Board with the King removed from the discard pile. */
-  def kingTopDiscardStack(): (Card, Board)
+  /** Returns the King on top of the discard pile and the updated Board with the King removed from the discard pile.
+    *
+    * @return
+    *   [[Right]] containing the [[Card]] and the updated [[Board]], or [[Left]] with an error message if the top of the
+    *   discard pile is not a King
+    */
+  def kingTopDiscardStack(): Either[String, (Card, Board)]
 
   /** Getter for a player's field
     * @param player
@@ -96,11 +107,9 @@ final case class BoardImpl(
     players: Map[Player, Field] = Map.empty
 ) extends Board:
 
-  override def draw: (Card, BoardImpl) =
-    checkDeckAndDiscardPile()
+  override def draw(): Option[(Card, BoardImpl)] =
     val checked = checkDeck()
-    val draw = checked.deck.draw()
-    (draw._1, checked.copy(deck = draw._2))
+    checked.deck.draw().map((card, remainingDeck) => (card, checked.copy(deck = remainingDeck)))
 
   override def discard(card: Card): BoardImpl = copy(discardPile = card :: discardPile)
 
@@ -113,9 +122,12 @@ final case class BoardImpl(
 
   override def getTopDiscardStack: Card = discardPile.head
 
-  override def kingTopDiscardStack(): (Card, BoardImpl) =
-    checkKingTopDiscardStack()
-    (getTopDiscardStack, copy(discardPile = this.discardPile.tail))
+  override def kingTopDiscardStack(): Either[String, (Card, BoardImpl)] =
+    Either.cond(
+      checkKingTopDiscardStack,
+      (getTopDiscardStack, copy(discardPile = this.discardPile.tail)),
+      "Cannot replace: discard pile top element is not a king."
+    )
 
   override def getField(player: Player): Field = players(player)
 
@@ -132,10 +144,5 @@ final case class BoardImpl(
   private def checkDeck(): BoardImpl =
     if this.deck.cards.isEmpty then copy(deck = DeckImpl(discardPile.toVector).shuffle(), discardPile = Nil) else this
 
-  private def checkDeckAndDiscardPile(): Unit =
-    if deck.cards.isEmpty && discardPile.isEmpty then
-      throw IllegalStateException("Cannot draw: deck and discard pile are both empty.")
-
-  private def checkKingTopDiscardStack(): Unit =
-    if getTopDiscardStack.value != 0 then
-      throw IllegalStateException("Cannot replace: discard pile top element is not a king.")
+  private def checkKingTopDiscardStack: Boolean =
+    getTopDiscardStack.value == king

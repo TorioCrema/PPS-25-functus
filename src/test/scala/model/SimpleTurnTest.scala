@@ -5,11 +5,10 @@ import model.deck.DeckImpl
 import model.deck.sugar.CardDSL.*
 import model.deck.sugar.FieldDSL.given
 import model.deck.card.Suit.*
-import model.turn.Action.{ChooseDiscard, ChooseReplace}
-import model.turn.Turns.SimpleTurn
+import model.playable.turn.Action.*
+import model.playable.turn.Turns.*
 import model.board.BoardImpl
 import model.board.Player.*
-import model.turn.Action.*
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -62,7 +61,7 @@ class SimpleTurnTest extends AnyFlatSpec with Matchers:
     for index <- 0 until player1Field.length
     do
       val replacedCard = afterDraw.board.getField(player).getCard(index)._1
-      val afterReplace = afterDraw.act(Activate).act(ChooseReplace(index))
+      val afterReplace = afterDraw.actAll(Activate :: ChooseReplace(index) :: Nil)
       afterReplace.hand.isEmpty should be(true)
       afterReplace.board.discardPile.head should be(replacedCard)
       val replacedField = afterReplace.board.getField(player)
@@ -70,16 +69,16 @@ class SimpleTurnTest extends AnyFlatSpec with Matchers:
       replacedField.length should be(player1Field.length)
 
   it should "have cactus and end turn as next actions after replacing" in:
-    val afterReplace = simpleTurn.act(Draw).act(Activate).act(ChooseReplace(0))
+    val afterReplace = simpleTurn.actAll(Draw :: Activate :: ChooseReplace(0) :: Nil)
     afterReplace.actions should be(Cactus :: EndTurn :: Nil)
 
   it should "end with cactus" in:
-    val afterCactus = simpleTurn.act(Draw).act(Activate).act(ChooseReplace(0)).act(Cactus)
+    val afterCactus = simpleTurn.actAll(Draw :: Activate :: ChooseReplace(0) :: Cactus :: Nil)
     afterCactus.cactus should be(true)
     afterCactus.actions should be(EndTurn :: Nil)
 
   it should "be over after end turn action" in:
-    val afterEndTurn = simpleTurn.act(Draw).act(Activate).act(ChooseReplace(0)).act(EndTurn)
+    val afterEndTurn = simpleTurn.actAll(Draw :: Activate :: ChooseReplace(0) :: EndTurn :: Nil)
     afterEndTurn.isOver should be(true)
 
   it should "draw the chosen card to the player's hand" in:
@@ -89,13 +88,13 @@ class SimpleTurnTest extends AnyFlatSpec with Matchers:
       afterChooseDiscard.hand should be(discardableTurn.board.getField(player).getCard(i)._1 :: Nil)
 
   it should "discard without penalty when discarding the correct value" in:
-    val afterCorrectDiscard = discardableTurn.act(ChooseDiscard(0)).act(Discard(0))
+    val afterCorrectDiscard = discardableTurn.actAll(ChooseDiscard(0) :: Discard(0) :: Nil)
     afterCorrectDiscard.board.getField(player).length should be(player1Field.length - 1)
     afterCorrectDiscard.board.discardPile.length should be(discardableTurn.board.discardPile.length + 1)
     afterCorrectDiscard.board.discardPile.head should be(threeOfCups)
 
   it should "apply penalty when discarding the wrong value" in:
-    val afterWrongDiscard = discardableTurn.act(ChooseDiscard(1)).act(Discard(1))
+    val afterWrongDiscard = discardableTurn.actAll(ChooseDiscard(1) :: Discard(1) :: Nil)
     afterWrongDiscard.board.getField(player).length should be(player1Field.length + 1)
     afterWrongDiscard.board.getTopDiscardStack should be(three of Pentacles)
 

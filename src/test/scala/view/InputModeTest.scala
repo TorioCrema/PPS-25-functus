@@ -1,6 +1,7 @@
 package org.pps.functus
 package view
 
+import view.InputMode.EndGame
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -12,7 +13,10 @@ class InputModeTest extends AnyFunSpec with Matchers:
       val expectedModes = Array(
         InputMode.ActionMenu,
         InputMode.SelectCardOnBoard,
-        InputMode.WaitingRoom
+        InputMode.SelectAdversaryCardOnBoard,
+        InputMode.WaitingRoom,
+        InputMode.EndGame
+
       )
 
       InputMode.values should contain theSameElementsInOrderAs expectedModes
@@ -21,7 +25,9 @@ class InputModeTest extends AnyFunSpec with Matchers:
     it("should correctly resolve InputMode from string name using valueOf") {
       InputMode.valueOf("ActionMenu") shouldBe InputMode.ActionMenu
       InputMode.valueOf("SelectCardOnBoard") shouldBe InputMode.SelectCardOnBoard
+      InputMode.valueOf("SelectAdversaryCardOnBoard") shouldBe InputMode.SelectAdversaryCardOnBoard
       InputMode.valueOf("WaitingRoom") shouldBe InputMode.WaitingRoom
+      InputMode.valueOf("EndGame") shouldBe EndGame
     }
 
     it("should throw an IllegalArgumentException when valueOf receives an invalid mode name") {
@@ -32,8 +38,11 @@ class InputModeTest extends AnyFunSpec with Matchers:
 
     it("should support pattern matching for state switching") {
       def getModeDescription(mode: InputMode): String = mode match
-        case InputMode.ActionMenu        => "Navigating action menu"
-        case InputMode.SelectCardOnBoard => "Selecting a card on the board"
+        case InputMode.ActionMenu                 => "Navigating action menu"
+        case InputMode.SelectCardOnBoard          => "Selecting a card on the board"
+        case InputMode.SelectAdversaryCardOnBoard => "Select a card on adversary board"
+        case InputMode.WaitingRoom                => "Swapping players"
+        case InputMode.EndGame                    => "Game is Ended"
 
       getModeDescription(InputMode.ActionMenu) shouldBe "Navigating action menu"
       getModeDescription(InputMode.SelectCardOnBoard) shouldBe "Selecting a card on the board"

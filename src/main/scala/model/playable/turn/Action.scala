@@ -1,5 +1,5 @@
 package org.pps.functus
-package model.turn
+package model.playable.turn
 
 enum Action:
   /** Action used to observe cards on the player's field.
