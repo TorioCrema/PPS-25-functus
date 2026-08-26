@@ -2,16 +2,14 @@ package org.pps.functus
 package model
 
 import model.board.BoardFactory
-import model.turn.Turns.*
+import model.playable.turn.Turns.*
 import model.board.Player.Player1
 import model.opponent.Opponent
-import model.turn.Action.*
+import model.playable.turn.Action.*
 import model.deck.sugar.CardDSL.*
 import model.deck.card.Suit.*
 import model.deck.sugar.FieldDSL.given
 import model.deck.DeckImpl
-
-import org.pps.functus.model.turn.Action
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

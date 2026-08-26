@@ -1,9 +1,9 @@
 package org.pps.functus
 package model.opponent
 
-import model.turn.{Action, Turn}
+import model.playable.turn.{Action, Turn}
 import model.deck.card.Card
-import model.turn.Action.*
+import model.playable.turn.Action.*
 
 /** Class that represents a virtual opponent, capable of remembering the cards it observes and playing accordingly. */
 class Opponent:
