@@ -2,7 +2,7 @@ package org.pps.functus
 package model
 
 import model.playable.turn.Turns.*
-import model.board.Player.Player1
+import model.board.Player.*
 import model.opponent.Opponent
 import model.playable.turn.Action.*
 import model.deck.sugar.CardDSL.*
@@ -154,5 +154,9 @@ class OpponentTest extends AnyFlatSpec with Matchers:
       val res = opponent.play(turn)
       chosenAction = res._2
       turn = res._1
-    chosenAction = opponent.play(turn)._2
+    val res = opponent.play(turn)
+    turn = res._1
+    chosenAction = res._2
     chosenAction should be(Swap(0, 0))
+    opponent.getKnownCard(0) should be(Some(turn.board.players(Player1).getCard(0)._1))
+    opponent.getKnownAdversaryCard(0) should be(Some(turn.board.players(Player2).getCard(0)._1))

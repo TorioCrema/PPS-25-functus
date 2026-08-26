@@ -28,8 +28,9 @@ class Opponent:
     case ObserveOpponent(index)            => drawAndUpdateKnownCards(turn, ObserveOpponent(index))
     case ObservePlayer(index)              => drawAndUpdateKnownCards(turn, ObservePlayer(index))
     case Swap(playerIndex, adversaryIndex) =>
+      val ownSwappedCard = knownCards(playerIndex)
       knownCards = knownCards.updated(playerIndex, adversaryCards(adversaryIndex))
-      forgetAdversary(adversaryIndex)
+      adversaryCards = adversaryCards.updated(adversaryIndex, ownSwappedCard)
       (turn.act(Swap(playerIndex, adversaryIndex)), Swap(playerIndex, adversaryIndex))
     case ChooseReplace(index) =>
       knownCards = knownCards.updated(index, turn.hand.head)
