@@ -66,6 +66,7 @@ class Opponent:
     action match
       case ObserveOpponent(index) => adversaryCards = adversaryCards.updated(index, drawn.hand.head)
       case ObservePlayer(index)   => knownCards = knownCards.updated(index, drawn.hand.head)
+      case _ => throw new IllegalArgumentException(s"Action not allowed: $action")
     (drawn, action)
 
   private def getChosenAction(turn: Turn): Action =
