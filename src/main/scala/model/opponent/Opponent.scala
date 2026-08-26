@@ -25,9 +25,13 @@ class Opponent:
       for x <- index until knownCards.size - 1 do knownCards = knownCards.updated(x, knownCards(x + 1))
       knownCards = knownCards.removed(knownCards.size - 1)
       (turn.act(ChooseDiscard(index)), ChooseDiscard(index))
-    case ObserveOpponent(index) => drawAndUpdateKnownCards(turn, ObserveOpponent(index))
-    case ObservePlayer(index)   => drawAndUpdateKnownCards(turn, ObservePlayer(index))
-    case chosenAction           => (turn.act(chosenAction), chosenAction)
+    case ObserveOpponent(index)            => drawAndUpdateKnownCards(turn, ObserveOpponent(index))
+    case ObservePlayer(index)              => drawAndUpdateKnownCards(turn, ObservePlayer(index))
+    case Swap(playerIndex, adversaryIndex) =>
+      knownCards = knownCards.updated(playerIndex, adversaryCards(adversaryIndex))
+      forgetAdversary(adversaryIndex)
+      (turn.act(Swap(playerIndex, adversaryIndex)), Swap(playerIndex, adversaryIndex))
+    case chosenAction => (turn.act(chosenAction), chosenAction)
 
   /** Returns [[Option]] of the card within the [[Opponent]] field if known, [[None]] otherwise.
     * @param index
@@ -50,6 +54,13 @@ class Opponent:
     */
   def forgetOwn(index: Int): Unit = if knows(knownCards)(index) then knownCards = knownCards.removed(index)
 
+  /** Removes the card at the given index from known adversary cards.
+    * @param index
+    *   the index of the card to forget.
+    */
+  def forgetAdversary(index: Int): Unit =
+    if knows(adversaryCards)(index) then adversaryCards = adversaryCards.removed(index)
+
   private def drawAndUpdateKnownCards(turn: Turn, action: Action): (Turn, Action) =
     val drawn = turn.act(action)
     action match
@@ -63,6 +74,7 @@ class Opponent:
       ChooseDiscard(chosenDiscard)
     else if canObserveAdversary(turn.actions) then turn.actions.find(unknownObserveOpponent(adversaryCards)).get
     else if canObservePlayer(turn.actions) then turn.actions.find(unknownObservePlayer(knownCards)).get
+    else if canSwap(turn.actions) then turn.actions.find(favourableSwap).get
     else if canReplace(turn.actions) then
       val unknownCards = for
         x <- 0 until turn.board.getField(turn.player).length
@@ -78,6 +90,7 @@ class Opponent:
         case `Draw` :: `DrawKing` :: Nil  => DrawKing
         case `Cactus` :: `EndTurn` :: Nil => checkCactus(turn)
         case action :: Nil                => action
+        case _ => throw new NotImplementedError("Not choice of action implemented for given actions.")
 
   private def canDiscard(actions: List[Action]): Boolean = checkActions(actions) {
     case ChooseDiscard(_) => true
@@ -116,6 +129,13 @@ class Opponent:
     if turn.board.discardPile.nonEmpty then
       knownCards.values.toList.map(_.value).contains(turn.board.getTopDiscardStack.value)
     else false
+
+  private def favourableSwap(action: Action): Boolean = action match
+    case Swap(ownIndex, adversaryIndex) if knows(knownCards)(ownIndex) && knows(adversaryCards)(adversaryIndex) =>
+      knownCards(ownIndex).value > adversaryCards(adversaryIndex).value
+    case _ => false
+
+  private def canSwap(actions: List[Action]): Boolean = checkActions(actions)(favourableSwap)
 
   private def mapFromHand(hand: List[Card]): Map[Int, Card] =
     hand.zipWithIndex.foldLeft(Map())((map, pair) => map.updated(pair._2, pair._1))

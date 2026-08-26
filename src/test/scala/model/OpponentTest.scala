@@ -10,6 +10,8 @@ import model.deck.sugar.CardDSL.*
 import model.deck.card.Suit.*
 import model.deck.sugar.FieldDSL.given
 import model.deck.DeckImpl
+
+import org.pps.functus.model.turn.Action
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -88,8 +90,10 @@ class OpponentTest extends AnyFlatSpec with Matchers:
     val (afterDraw, _) = opponent.play(SimpleTurn(replaceBoard, Player1))
     val (afterActivate, _) = opponent.play(afterDraw)
     val (afterReplace, _) = opponent.play(afterActivate)
-    val (_, chosenAction) = opponent.play(afterReplace)
+    val (afterCactus, chosenAction) = opponent.play(afterReplace)
     chosenAction should be(Cactus)
+    val (_, chosenAfterCactus) = opponent.play(afterCactus)
+    chosenAfterCactus should be(EndTurn)
 
   it should "end the turn when calling cactus isn't optimal" in:
     val replaceBoard =
@@ -109,7 +113,7 @@ class OpponentTest extends AnyFlatSpec with Matchers:
     opponent.forgetOwn(0)
     opponent.getKnownCard(0) should be(None)
 
-  it should "observe adversary cards" in:
+  it should "observe adversary cards and forget them" in:
     val observeBoard = BoardFactory.CustomBoard(opponentField :: otherField :: Nil, DeckImpl(Vector(six of Wands)))
     val opponent = Opponent()
     opponent.play(FirstTurn(observeBoard, Player1))
@@ -118,9 +122,12 @@ class OpponentTest extends AnyFlatSpec with Matchers:
     val (observedTurn, selectedAction) = opponent.play(activatedTurn)
     selectedAction should be(ObserveOpponent(0))
     opponent.getKnownAdversaryCard(0) should be(Some(otherField.getCard(0)._1))
+    opponent.forgetAdversary(0)
+    opponent.getKnownAdversaryCard(0) should be(None)
 
   it should "observe its cards" in:
-    val observeBoard = BoardFactory.CustomBoard(longOpponentField :: otherField :: Nil, DeckImpl(Vector(seven of Wands)))
+    val observeBoard =
+      BoardFactory.CustomBoard(longOpponentField :: otherField :: Nil, DeckImpl(Vector(seven of Wands)))
     val opponent = Opponent()
     opponent.play(FirstTurn(observeBoard, Player1))
     val (drawnTurn, _) = opponent.play(SimpleTurn(observeBoard, Player1))
@@ -128,3 +135,29 @@ class OpponentTest extends AnyFlatSpec with Matchers:
     val (observedTurn, selectedAction) = opponent.play(activatedTurn)
     selectedAction should be(ObservePlayer(2))
     opponent.getKnownCard(2) should be(Some(longOpponentField.getCard(2)._1))
+
+  it should "chose to replace when all its cards are known" in:
+    val observeBoard =
+      BoardFactory.CustomBoard(opponentField :: otherField :: Nil, DeckImpl(Vector(seven of Wands)))
+    val opponent = Opponent()
+    var (turn, chosenAction) = opponent.play(FirstTurn(observeBoard, Player1))
+    while !turn.isOver do turn = opponent.play(turn)._1
+    turn = opponent.play(SimpleTurn(turn.board, Player1))._1
+    turn = opponent.play(turn)._1
+    opponent.play(turn)._2 should be(ChooseReplace(0))
+
+  it should "play a favourable swap" in:
+    val swapBoard =
+      BoardFactory.CustomBoard(opponentField :: otherField :: Nil, DeckImpl(Vector(six of Wands, jack of Wands)))
+    val opponent = Opponent()
+    var (turn, chosenAction) = opponent.play(FirstTurn(swapBoard, Player1))
+    while !turn.isOver do turn = opponent.play(turn)._1
+    turn = SimpleTurn(turn.board, Player1)
+    while !turn.isOver do turn = opponent.play(turn)._1
+    turn = SimpleTurn(turn.board, Player1)
+    while chosenAction != Activate do
+      val res = opponent.play(turn)
+      chosenAction = res._2
+      turn = res._1
+    chosenAction = opponent.play(turn)._2
+    chosenAction should be(Swap(0, 0))
