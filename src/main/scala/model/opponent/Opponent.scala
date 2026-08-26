@@ -31,6 +31,9 @@ class Opponent:
       knownCards = knownCards.updated(playerIndex, adversaryCards(adversaryIndex))
       forgetAdversary(adversaryIndex)
       (turn.act(Swap(playerIndex, adversaryIndex)), Swap(playerIndex, adversaryIndex))
+    case ChooseReplace(index) =>
+      knownCards = knownCards.updated(index, turn.hand.head)
+      (turn.act(ChooseReplace(index)), ChooseReplace(index))
     case chosenAction => (turn.act(chosenAction), chosenAction)
 
   /** Returns [[Option]] of the card within the [[Opponent]] field if known, [[None]] otherwise.
@@ -44,9 +47,6 @@ class Opponent:
     *   the index of the card in the field.
     */
   def getKnownAdversaryCard(index: Int): Option[Card] = getKnownCardFrom(adversaryCards)(index)
-
-  private def getKnownCardFrom(cardMap: Map[Int, Card])(index: Int): Option[Card] =
-    if knows(cardMap)(index) then Some(cardMap(index)) else None
 
   /** Removes the card at the given index from known cards.
     * @param index
@@ -69,54 +69,45 @@ class Opponent:
     (drawn, action)
 
   private def getChosenAction(turn: Turn): Action =
-    if canDiscard(turn.actions) && checkKnownDiscard(turn) then
-      val chosenDiscard = knownCards.map((index, card) => (card.value, index))(turn.board.getTopDiscardStack.value)
-      ChooseDiscard(chosenDiscard)
-    else if canObserveAdversary(turn.actions) then turn.actions.find(unknownObserveOpponent(adversaryCards)).get
-    else if canObservePlayer(turn.actions) then turn.actions.find(unknownObservePlayer(knownCards)).get
-    else if canSwap(turn.actions) then turn.actions.find(favourableSwap).get
-    else if canReplace(turn.actions) then
-      val unknownCards = for
-        x <- 0 until turn.board.getField(turn.player).length
-        if !knownCards.contains(x)
-      yield x
-      val chosenReplace =
-        if unknownCards.nonEmpty then unknownCards.head
-        else knownCards.maxBy((i, card) => card.value)._1
-      knownCards = knownCards.updated(chosenReplace, turn.hand.head)
-      ChooseReplace(chosenReplace)
+    val actions = turn.actions
+      .filter(isDiscardable(_, turn))
+      .appendedAll(turn.actions.filter(unknownObservePlayer))
+      .appendedAll(turn.actions.filter(unknownObserveOpponent))
+      .appendedAll(turn.actions.filter(favourableSwap))
+      .appendedAll(turn.actions.filter(unknownReplace(turn)))
+    if actions.nonEmpty then actions.head
+    else if canReplace(turn.actions) then ChooseReplace(knownCards.maxBy((index, card) => card.value)._1)
     else
       turn.actions match
         case `Draw` :: `DrawKing` :: Nil  => DrawKing
         case `Cactus` :: `EndTurn` :: Nil => checkCactus(turn)
         case action :: Nil                => action
-        case _ => throw new NotImplementedError("Not choice of action implemented for given actions.")
+        case _ => throw new NotImplementedError("No choice of action implemented for given actions.")
 
-  private def canDiscard(actions: List[Action]): Boolean = checkActions(actions) {
-    case ChooseDiscard(_) => true
-    case _                => false
+  private def isDiscardable(action: Action, turn: Turn): Boolean = action match
+    case ChooseDiscard(index) if knows(knownCards)(index) =>
+      knownCards(index).value == turn.board.getTopDiscardStack.value
+    case _ => false
+
+  private def canReplace(actions: List[Action]): Boolean =
+    actions.exists {
+      case ChooseReplace(_) => true
+      case _                => false
+    }
+
+  private def unknownObserveOpponent: Action => Boolean = {
+    case ObserveOpponent(index) if !knows(adversaryCards)(index) => true
+    case _                                                       => false
   }
-
-  private def canReplace(actions: List[Action]): Boolean = checkActions(actions) {
-    case ChooseReplace(_) => true
-    case _                => false
-  }
-
-  private def unknownObserveOpponent(knownMap: Map[Int, Card]): Action => Boolean = {
-    case ObserveOpponent(index) if !knows(knownMap)(index) => true
+  private def unknownObservePlayer: Action => Boolean = {
+    case ObservePlayer(index) if !knows(knownCards)(index) => true
     case _                                                 => false
   }
-  private def unknownObservePlayer(knownMap: Map[Int, Card]): Action => Boolean = {
-    case ObservePlayer(index) if !knows(knownMap)(index) => true
-    case _                                               => false
+
+  private def unknownReplace(turn: Turn): Action => Boolean = {
+    case ChooseReplace(index) if turn.hand.nonEmpty && !knows(knownCards)(index) => true
+    case _                                                                       => false
   }
-
-  private def canObserveAdversary(actions: List[Action]): Boolean =
-    checkActions(actions)(unknownObserveOpponent(adversaryCards))
-  private def canObservePlayer(actions: List[Action]): Boolean =
-    checkActions(actions)(unknownObservePlayer(knownCards))
-
-  private def checkActions(action: List[Action])(p: Action => Boolean): Boolean = action.exists(p)
 
   private def checkCactus(turn: Turn): Action =
     def checkKnownCards: Boolean =
@@ -125,19 +116,15 @@ class Opponent:
       knownCards.values.foldLeft(0)((acc, card) => acc + card.value) <= cactusThreshold
     if checkKnownCards && checkKnownFieldValue then Cactus else EndTurn
 
-  private def checkKnownDiscard(turn: Turn): Boolean =
-    if turn.board.discardPile.nonEmpty then
-      knownCards.values.toList.map(_.value).contains(turn.board.getTopDiscardStack.value)
-    else false
-
   private def favourableSwap(action: Action): Boolean = action match
     case Swap(ownIndex, adversaryIndex) if knows(knownCards)(ownIndex) && knows(adversaryCards)(adversaryIndex) =>
       knownCards(ownIndex).value > adversaryCards(adversaryIndex).value
     case _ => false
 
-  private def canSwap(actions: List[Action]): Boolean = checkActions(actions)(favourableSwap)
-
   private def mapFromHand(hand: List[Card]): Map[Int, Card] =
     hand.zipWithIndex.foldLeft(Map())((map, pair) => map.updated(pair._2, pair._1))
+
+  private def getKnownCardFrom(cardMap: Map[Int, Card])(index: Int): Option[Card] =
+    if knows(cardMap)(index) then Some(cardMap(index)) else None
 
   private def knows(knownMap: Map[Int, Card])(index: Int): Boolean = knownMap.contains(index)
