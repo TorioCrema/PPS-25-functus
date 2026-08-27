@@ -1,5 +1,5 @@
 package org.pps.functus
-package view
+package view.utils
 
 enum MenuItem(val label: String):
   case SingleGame extends MenuItem("Play a single game")

@@ -4,8 +4,8 @@ package view
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import model.board.Player.*
-import view.{CLIView, GameState, InputMode, ViewAction}
-import view.utils.Utils
+import view.CLIView
+import view.utils.{GameState, InputMode, Utils, ViewAction}
 
 import org.scalatest.BeforeAndAfterEach
 

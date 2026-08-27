@@ -1,10 +1,9 @@
 package org.pps.functus
-package view
-
-import model.deck.card.Card
-import view.InputMode.ActionMenu
+package view.utils
 
 import model.board.Player
+import model.deck.card.Card
+import InputMode.ActionMenu
 
 /** * a case class containing all the information needed by the view representing the actual game state
   * @param adversaryCard

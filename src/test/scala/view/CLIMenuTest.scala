@@ -3,7 +3,7 @@ package view
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import view.utils.Utils
+import view.utils.{MenuItem, Utils}
 
 import org.scalatest.BeforeAndAfterEach
 

@@ -2,13 +2,13 @@ package org.pps.functus
 package controller
 
 import model.board.{BoardFactory, Player}
-import view.{CLIMenu, CLIView, GameState, InputMode, Key, ViewAction}
+import view.{CLIMenu, CLIView}
 import model.playable.turn.{Action, Turn}
 import model.playable.game.{Game, GamePhase}
-import view.InputMode.*
+import view.utils.InputMode.*
 import model.board.Player.*
 
-import view.utils.Utils
+import view.utils.{GameState, InputMode, Key, Utils, ViewAction}
 
 class GameController(
     private val view: CLIView,

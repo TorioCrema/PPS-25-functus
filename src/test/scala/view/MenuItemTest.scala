@@ -1,6 +1,7 @@
 package org.pps.functus
 package view
 
+import view.utils.MenuItem
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 

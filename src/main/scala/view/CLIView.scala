@@ -1,9 +1,8 @@
 package org.pps.functus
 package view
 
-import view.{GameState, InputMode}
-import view.CardRenderExtensions.*
-import view.utils.Utils
+import view.utils.CardRenderExtensions.*
+import view.utils.{GameState, InputMode, Utils}
 import view.utils.Utils.{ANSI_GREEN_BOLD, ANSI_RESET, SEPARATOR_CHAR, terminalWidth, viewBuilder}
 
 import scala.util.Try

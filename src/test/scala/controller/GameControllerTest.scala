@@ -7,7 +7,8 @@ import model.board.BoardFactory
 import model.board.Player.*
 import model.playable.game.Game
 import model.playable.turn.Action
-import view.{CLIView, GameState, InputMode, ViewAction}
+import view.CLIView
+import view.utils.{GameState, InputMode, ViewAction}
 
 class GameControllerTest extends AnyFlatSpec with Matchers {
 

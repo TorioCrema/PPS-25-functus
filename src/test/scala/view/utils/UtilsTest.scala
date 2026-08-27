@@ -3,7 +3,6 @@ package view.utils
 
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
-import view.Key
 
 import view.utils.Utils.{ANSI_GREEN_BOLD, ANSI_RESET, terminalWidth}
 

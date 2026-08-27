@@ -1,9 +1,9 @@
 package org.pps.functus
 package controller
 
-import view.{CLIMenu, CLIView, Key, MenuItem}
-import view.utils.Utils
-import view.MenuItem.{Match, SingleGame}
+import view.{CLIMenu, CLIView}
+import view.utils.{Key, MenuItem, Utils}
+import MenuItem.{Match, SingleGame}
 
 class MenuController(private val menu: CLIMenu):
 

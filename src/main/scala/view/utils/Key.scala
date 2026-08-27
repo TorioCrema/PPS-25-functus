@@ -1,5 +1,5 @@
 package org.pps.functus
-package view
+package view.utils
 
 /** * a mapper for the keyboard keys
   */

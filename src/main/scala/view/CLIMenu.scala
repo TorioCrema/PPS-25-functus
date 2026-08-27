@@ -1,7 +1,7 @@
 package org.pps.functus
 package view
 
-import view.utils.Utils
+import view.utils.{MenuItem, Utils}
 import view.utils.Utils.{SEPARATOR_CHAR, terminalWidth, viewBuilder}
 
 import scala.util.Try

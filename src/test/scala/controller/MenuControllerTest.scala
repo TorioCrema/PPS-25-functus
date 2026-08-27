@@ -3,9 +3,10 @@ package controller
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import view.{CLIMenu, Key}
+import view.CLIMenu
 
 import controller.MenuController
+import view.utils.Key
 
 /** CLIMenu fake that logs all indexes passed to render().
   */

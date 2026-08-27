@@ -4,7 +4,6 @@ package view.utils
 import org.jline.keymap.{BindingReader, KeyMap}
 import org.jline.terminal.{Terminal, TerminalBuilder}
 import org.jline.utils.InfoCmp.Capability
-import view.Key
 
 import scala.util.Try
 
