@@ -2,7 +2,7 @@ package org.pps.functus
 package view
 
 import view.utils.Utils
-import view.utils.Utils.{SEPARATOR_CHAR, length, viewBuilder}
+import view.utils.Utils.{SEPARATOR_CHAR, terminalWidth, viewBuilder}
 
 import scala.util.Try
 
@@ -10,7 +10,7 @@ class CLIMenu:
   val menuItem: List[MenuItem] = MenuItem.values.toList
 
   def render(selectedModeIndex: Int): Unit =
-    given separator: String = SEPARATOR_CHAR * length
+    given separator: String = SEPARATOR_CHAR * terminalWidth
     Utils.clearScreen()
     Utils.drawHeader
     printMenu(selectedModeIndex)

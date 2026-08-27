@@ -4,7 +4,7 @@ package view
 import view.{GameState, InputMode}
 import view.CardRenderExtensions.*
 import view.utils.Utils
-import view.utils.Utils.{ANSI_GREEN_BOLD, ANSI_RESET, SEPARATOR_CHAR, length, viewBuilder}
+import view.utils.Utils.{ANSI_GREEN_BOLD, ANSI_RESET, SEPARATOR_CHAR, terminalWidth, viewBuilder}
 
 import scala.util.Try
 
@@ -17,7 +17,8 @@ class CLIView:
     */
   def render(state: GameState): Unit =
     given gameState: GameState = state
-    given separator: String = SEPARATOR_CHAR * length
+    given separator: String = SEPARATOR_CHAR * terminalWidth
+
     Utils.viewBuilder.clear()
     Utils.clearScreen()
     Utils.drawHeader
@@ -48,13 +49,13 @@ class CLIView:
   ) =
     // Adversary Card Zone
     viewBuilder.append(s"$separator\n\n")
-    viewBuilder.append(Utils.centerText("ADVERSARY")).append("\n\n")
+    viewBuilder.append(Utils.centerText("ADVERSARY", terminalWidth)).append("\n\n")
     val selectedAdversaryIndex =
       if gameState.inputMode == InputMode.SelectAdversaryCardOnBoard then Some(gameState.selectedCardOnBoard)
       else None
 
     val adversaryLines = gameState.adversaryCard.toAsciiRows(
-      terminalWidth = length,
+      terminalWidth = terminalWidth,
       selectedIdx = selectedAdversaryIndex
     )
     adversaryLines.foreach(line => viewBuilder.append(Utils.centerText(line)).append("\n"))
@@ -84,7 +85,7 @@ class CLIView:
       else None
 
     val playerLines = gameState.playerCard.toAsciiRows(
-      terminalWidth = length,
+      terminalWidth = terminalWidth,
       selectedIdx = selectedIdx
     )
     playerLines.foreach(line => viewBuilder.append(Utils.centerText(line)).append("\n"))
@@ -138,7 +139,7 @@ class CLIView:
   ) = // Hand Zone
     viewBuilder.append(Utils.centerText("CARD IN HAND:")).append("\n")
     val handLines = if gameState.cardsInHand.flatten.isEmpty then List("[ No card drawn ]")
-    else gameState.cardsInHand.toAsciiRows(terminalWidth = length)
+    else gameState.cardsInHand.toAsciiRows(terminalWidth = terminalWidth)
 
     handLines.foreach(line => viewBuilder.append(Utils.centerText(line)).append("\n"))
 

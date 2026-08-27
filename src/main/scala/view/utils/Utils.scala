@@ -19,10 +19,7 @@ object Utils:
   val ANSI_GREEN_BOLD = "\u001B[1;32m"
   val SEPARATOR_CHAR = "_"
 
-  var length: Int = terminal.getColumns
-
   given viewBuilder: StringBuilder = StringBuilder()
-
 
   private val HEADER_ART = List(
     "    /$$$$$$$$                              /$$                            ",
@@ -35,9 +32,12 @@ object Utils:
     " |__/    \\______/ |__/  |__/ \\_______/   \\___/   \\______/ |_______/   "
   )
 
-  var readInputProvider: () => Key = () => {
-    Key.UNKNOWN
-  }
+  // Recupero sicuro delle dimensioni del terminale con fallback per i test
+  def terminalWidth: Int =
+    Try(terminal.getColumns).toOption.filter(_ > 0).getOrElse(120)
+
+  def terminalHeight: Int =
+    Try(terminal.getRows).toOption.filter(_ > 0).getOrElse(120)
 
   /** * init the terminal to be ready to print the game board and bind the keyboard keys to the to Key enum
     */
@@ -70,8 +70,10 @@ object Utils:
     *   the key pressed or Key.UNKOWN if is not bind
     */
   def readInput(): Key =
-    val key = bindingReader.readBinding(keyMap)
-    if key == null then Key.UNKNOWN else key
+    Try {
+      val key = bindingReader.readBinding(keyMap)
+      if key == null then Key.UNKNOWN else key
+    }.getOrElse(Key.UNKNOWN)
 
   /** * center the given text on the terminal
     *
@@ -80,24 +82,23 @@ object Utils:
     * @return
     *   the padded string with enough blank spaces to be printed at the center of the terminal
     */
-  def centerText(text: String): String =
-    length = terminal.getColumns
-    // regex to search and delete all ANSI color commands to ensure correct visual length measurement
+  def centerText(text: String, targetLength: Int = terminalWidth): String =
     val visualLen = text.replaceAll("\u001B\\[[;\\d]*m", "").length
-    val space = Math.max(0, (length - visualLen) / 2)
+    val space = Math.max(0, (targetLength - visualLen) / 2)
     " " * space + text
 
-  def clearScreen(): Unit =
+  def clearScreen(): Unit = {
+    viewBuilder.clear()
     Try {
-      if (terminal != null) {
+      if terminal != null then
         viewBuilder.clear()
         terminal.puts(Capability.clear_screen)
         terminal.flush()
-      }
     }.getOrElse {
-      // Fallback ANSI clear screen se JLine è disabilitato/chiuso durante i test
+      // Fallback ANSI clear screen if JLine terminal is disabled/close during test
       print("\u001b[H\u001b[2J")
     }
+  }
 
   def drawHeader(using viewBuilder: StringBuilder): Unit =
     // Header
