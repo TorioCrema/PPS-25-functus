@@ -3,7 +3,7 @@ package model.playable.game
 
 import model.board.{Board, Player}
 import model.board.Player.{Player1, Player2}
-import model.playable.turn.Turns.{FirstTurn, SimpleTurn}
+import model.playable.turn.Turns.{FirstTurn, LastTurn, SimpleTurn}
 import model.playable.Playable
 import model.playable.turn.{Action, Turn}
 
@@ -71,7 +71,7 @@ case class Game(
       case GamePhase.Playing =>
         if finishedTurn.cactus then
           val opponent = finishedTurn.player.other
-          val lastTurn = SimpleTurn(finishedTurn.board, opponent)
+          val lastTurn = LastTurn(finishedTurn.board, opponent)
           copy(
             phase = GamePhase.LastTurn,
             currentTurn = lastTurn,

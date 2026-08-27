@@ -10,7 +10,7 @@ object Effects:
   extension (card: Card)
     /** Activates the card's effect on the given [[Turn]], returns the resulting [[Turn]].
       * @param on
-      *   the [[Turn]] to act on
+      *   the [[Turn]] to activate the effect on
       * @return
       *   the resulting [[Turn]]
       */
@@ -22,25 +22,13 @@ object Effects:
         replaceActions.appendedAll(for i <- 0 until fieldLength yield action(i))
 
       card.value match
-        case `six` =>
-          Turn(
-            on.hand,
-            on.board,
-            on.player,
-            actionsFromFieldLength(getFieldLength(on.player.other))(ObserveOpponent(_))
-          )
-        case `seven` =>
-          Turn(
-            on.hand,
-            on.board,
-            on.player,
-            actionsFromFieldLength(getFieldLength(on.player))(ObservePlayer(_))
-          )
-        case `jack` =>
+        case `six`   => on.copy(actions = actionsFromFieldLength(getFieldLength(on.player.other))(ObserveOpponent(_)))
+        case `seven` => on.copy(actions = actionsFromFieldLength(getFieldLength(on.player))(ObservePlayer(_)))
+        case `jack`  =>
           val swapActions =
             for
               playerIndex <- 0 until getFieldLength(on.player)
               opponentIndex <- 0 until getFieldLength(on.player)
             yield Swap(playerIndex, opponentIndex)
-          Turn(on.hand, on.board, on.player, replaceActions.appendedAll(swapActions))
-        case _ => Turn(on.hand, on.board, on.player, replaceActions)
+          on.copy(actions = replaceActions.appendedAll(swapActions))
+        case _ => on.copy(actions = replaceActions)

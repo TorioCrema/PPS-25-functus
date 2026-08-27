@@ -60,15 +60,24 @@ sealed trait Board:
     * @return
     *   the card on top of the discard stack
     */
-  def getTopDiscardStack: Card
+  def getTopDiscardStack: Card = discardPile.head
 
   /** Returns the King on top of the discard pile and the updated Board with the King removed from the discard pile.
-    *
+    * @throws java.lang.IllegalMonitorStateException
+    *   if the top of the discard pile is not a king
     * @return
-    *   [[Right]] containing the [[Card]] and the updated [[Board]], or [[Left]] with an error message if the top of the
-    *   discard pile is not a King
+    *   The [[Card]] and the updated [[Board]]
     */
-  def kingTopDiscardStack(): Either[String, (Card, Board)]
+  def kingTopDiscardStack(): (Card, Board)
+
+  /** Returns [[true]] if the top of the discard pile is a king card.
+    */
+  def checkKingTopDiscardStack: Boolean =
+    if discardPile.nonEmpty then
+      getTopDiscardStack.value match
+        case `king` => true
+        case _      => false
+    else false
 
   /** Getter for a player's field
     * @param player
@@ -76,7 +85,7 @@ sealed trait Board:
     * @return
     *   the player's field
     */
-  def getField(player: Player): Field
+  def getField(player: Player): Field = players(player)
 
   /** Draws a card from a player's field
     * @param player
@@ -120,16 +129,9 @@ final case class BoardImpl(
       discardPile = result._1 :: discardPile
     )
 
-  override def getTopDiscardStack: Card = discardPile.head
-
-  override def kingTopDiscardStack(): Either[String, (Card, BoardImpl)] =
-    Either.cond(
-      checkKingTopDiscardStack,
-      (getTopDiscardStack, copy(discardPile = this.discardPile.tail)),
-      "Cannot replace: discard pile top element is not a king."
-    )
-
-  override def getField(player: Player): Field = players(player)
+  override def kingTopDiscardStack(): (Card, BoardImpl) =
+    if !checkKingTopDiscardStack then throw new IllegalStateException("No king on top of discard pile.")
+    (getTopDiscardStack, copy(discardPile = this.discardPile.tail))
 
   override def drawPlayerCard(player: Player, index: Int): (Card, Board) =
     val drawnCard = getField(player).getCard(index)
@@ -143,6 +145,3 @@ final case class BoardImpl(
 
   private def checkDeck(): BoardImpl =
     if this.deck.cards.isEmpty then copy(deck = DeckImpl(discardPile.toVector).shuffle(), discardPile = Nil) else this
-
-  private def checkKingTopDiscardStack: Boolean =
-    getTopDiscardStack.value == king
