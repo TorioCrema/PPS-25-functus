@@ -6,6 +6,8 @@ import org.jline.terminal.{Terminal, TerminalBuilder}
 import org.jline.utils.InfoCmp.Capability
 import view.Key
 
+import scala.util.Try
+
 object Utils:
 
   val terminal: Terminal = TerminalBuilder.builder().system(true).build()
@@ -15,12 +17,12 @@ object Utils:
   // ANSI Code for console color
   val ANSI_RESET = "\u001B[0m"
   val ANSI_GREEN_BOLD = "\u001B[1;32m"
+  val SEPARATOR_CHAR = "_"
 
-  given length: Int = Utils.terminal.getColumns
+  var length: Int = terminal.getColumns
 
   given viewBuilder: StringBuilder = StringBuilder()
-
-  given separator: String = "_" * length
+  
 
   private val HEADER_ART = List(
     "    /$$$$$$$$                              /$$                            ",
@@ -80,24 +82,32 @@ object Utils:
     * @return
     *   the padded string with enough blank spaces to be printed at the center of the terminal
     */
-  def centerText(text: String, length: Int): String =
+  def centerText(text: String): String =
+    length = terminal.getColumns
     // regex to search and delete all ANSI color commands to ensure correct visual length measurement
     val visualLen = text.replaceAll("\u001B\\[[;\\d]*m", "").length
     val space = Math.max(0, (length - visualLen) / 2)
     " " * space + text
 
   def clearScreen(): Unit =
-    viewBuilder.clear()
-    terminal.puts(Capability.clear_screen)
-    terminal.flush()
+    Try {
+      if (terminal != null) {
+        viewBuilder.clear()
+        terminal.puts(Capability.clear_screen)
+        terminal.flush()
+      }
+    }.getOrElse {
+      // Fallback ANSI clear screen se JLine è disabilitato/chiuso durante i test
+      print("\u001b[H\u001b[2J")
+    }
 
-  def drawHeader(using viewBuilder: StringBuilder, length: Int): Unit =
+  def drawHeader(using viewBuilder: StringBuilder): Unit =
     // Header
     viewBuilder.append("\n\n")
     HEADER_ART.foreach { line =>
       viewBuilder
         .append(ANSI_GREEN_BOLD)
-        .append(centerText(line, length))
+        .append(centerText(line))
         .append(ANSI_RESET)
         .append("\n")
     }
