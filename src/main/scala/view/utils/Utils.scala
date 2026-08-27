@@ -22,7 +22,7 @@ object Utils:
   var length: Int = terminal.getColumns
 
   given viewBuilder: StringBuilder = StringBuilder()
-  
+
 
   private val HEADER_ART = List(
     "    /$$$$$$$$                              /$$                            ",
@@ -77,8 +77,6 @@ object Utils:
     *
     * @param text
     *   the text to be centered
-    * @param length
-    *   the width of the terminal
     * @return
     *   the padded string with enough blank spaces to be printed at the center of the terminal
     */
