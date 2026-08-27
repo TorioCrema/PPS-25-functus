@@ -1,12 +1,14 @@
 package org.pps.functus
 package controller
 
-import model.board.{Board, BoardFactory, Player}
-import view.{CLIView, GameState, InputMode, Key, ViewAction}
-import model.playable.turn.{Action, Turn, Turns}
+import model.board.{BoardFactory, Player}
+import view.{CLIMenu, CLIView, GameState, InputMode, Key, ViewAction}
+import model.playable.turn.{Action, Turn}
 import model.playable.game.{Game, GamePhase}
 import view.InputMode.*
 import model.board.Player.*
+
+import view.utils.Utils
 
 class GameController(
     private val view: CLIView,
@@ -28,20 +30,15 @@ class GameController(
   /** Starts the main game loop, initializing the view and processing user input.
     */
   def start(): Unit =
-    view.init()
     var running = true
-
-    try
-      while running do
-        view.render(state)
-        view.readInput() match
-          case Key.UP | Key.LEFT    => moveSelection(delta = STEP_NEXT)
-          case Key.DOWN | Key.RIGHT => moveSelection(delta = STEP_PREVIOUS)
-          case Key.ENTER            => confirmAction()
-          case Key.ESCAPE           => running = false
-          case _                    => ()
-    finally
-      view.restore()
+    while running do
+      view.render(state)
+      Utils.readInput() match
+        case Key.UP | Key.LEFT    => moveSelection(delta = STEP_NEXT)
+        case Key.DOWN | Key.RIGHT => moveSelection(delta = STEP_PREVIOUS)
+        case Key.ENTER            => confirmAction()
+        case Key.ESCAPE           => running = false
+        case _                    => ()
 
   /** Handles the user's arrow input (e.g., pressing UP, DOWN) based on the current [[InputMode]].
     *
@@ -153,7 +150,7 @@ class GameController(
       pendingOpponentSwapIdx = None
       state = syncState(determineNextInputMode())
 
-    case EndGame => () /// SHOULD GO INTO MAIN MENU
+    case EndGame => MenuController(CLIMenu()).start()
 
   /** Executes an [[Action]] against the current turn logic and synchronizes state.
     *
@@ -327,7 +324,7 @@ class GameController(
     case Action.ReturnToField(i)   => ViewAction(s"return_$i", s"Return card to your field")
     case Action.Swap(pIdx, oIdx)   => ViewAction(s"swap_${pIdx}_$oIdx", s"Swap your card with opponent's")
 
-  private def getWinner: Option[Player] =
+  def getWinner: Option[Player] =
     val scores = game.playerScore
     val p1Score = scores(Player1)
     val p2Score = scores(Player2)
@@ -343,3 +340,6 @@ class GameController(
 
   private def getAdversaryScore: Int =
     game.playerScore(Player2)
+
+  def playerScore(): Map[Player, Int] =
+    game.playerScore
