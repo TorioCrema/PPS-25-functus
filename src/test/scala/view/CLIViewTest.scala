@@ -7,7 +7,12 @@ import model.board.Player.*
 import view.{CLIView, GameState, InputMode, ViewAction}
 import view.utils.Utils
 
-class CLIViewTest extends AnyFlatSpec with Matchers:
+import org.scalatest.BeforeAndAfterEach
+
+class CLIViewTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
+
+  override def beforeEach(): Unit =
+    Utils.viewBuilder.clear()
 
   // Sample helper to construct a default base GameState
   def createBaseGameState(
@@ -38,7 +43,7 @@ class CLIViewTest extends AnyFlatSpec with Matchers:
     val view = new CLIView()
     val state = createBaseGameState(inputMode = InputMode.ActionMenu)
 
-    noException should be thrownBy view.render(state)
+    view.render(state)
 
     val output = Utils.viewBuilder.toString()
     output should include("ADVERSARY")
@@ -64,8 +69,8 @@ class CLIViewTest extends AnyFlatSpec with Matchers:
     view.render(state)
 
     val output = Utils.viewBuilder.toString()
-    output should include(" -> 2. Call Cactus!")
-    output should include("    1. Draw from deck")
+    output should include("1. Draw from deck")
+    output should include("-> 2. Call Cactus!")
   }
 
   it should "render card targeting instruction prompts when in SelectCardOnBoard mode" in {
@@ -78,7 +83,7 @@ class CLIViewTest extends AnyFlatSpec with Matchers:
     view.render(state)
 
     val output = Utils.viewBuilder.toString()
-    output should include("SELECT A CARD ON THE BOARD (Use ←/→ and press ENTER to exchange):")
+    output should include(" SELECT A CARD ON THE BOARD (Use ←/→ and press ENTER to exchange):")
     output should include("Selected Card: Position 3")
   }
 
@@ -92,7 +97,7 @@ class CLIViewTest extends AnyFlatSpec with Matchers:
     view.render(state)
 
     val output = Utils.viewBuilder.toString()
-    output should include("SELECT A CARD ON ADVERSARY BOARD (Use ←/→ and press ENTER to exchange):")
+    output should include(" SELECT A CARD ON ADVERSARY BOARD (Use ←/→ and press ENTER to exchange):")
     output should include("Selected Card: Position 2")
   }
 

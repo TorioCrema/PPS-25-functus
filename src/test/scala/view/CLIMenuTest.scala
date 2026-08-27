@@ -5,7 +5,12 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import view.utils.Utils
 
-class CLIMenuTest extends AnyFlatSpec with Matchers:
+import org.scalatest.BeforeAndAfterEach
+
+class CLIMenuTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
+
+  override def beforeEach(): Unit =
+    Utils.viewBuilder.clear()
 
   "CLIMenu" should "contain all MenuItem enum values in order" in {
     val menu = new CLIMenu()
@@ -56,7 +61,7 @@ class CLIMenuTest extends AnyFlatSpec with Matchers:
     // Block height = top separator + item lines + bottom separator + exit instruction line
     val blockHeight = 1 + menuItemsCount + 1 + 1
 
-    val terminalHeight = Option(Utils.terminal.getRows).filter(_ > 0).getOrElse(24)
+    val terminalHeight = Utils.terminalHeight
     val expectedPadding = Math.max(0, (terminalHeight - blockHeight) / 2)
 
     expectedPadding should be >= 0
