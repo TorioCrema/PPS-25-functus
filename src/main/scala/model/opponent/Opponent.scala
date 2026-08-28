@@ -37,6 +37,20 @@ class Opponent:
       (turn.act(ChooseReplace(index)), ChooseReplace(index))
     case chosenAction => (turn.act(chosenAction), chosenAction)
 
+  /** Reacts an action performed by the adversary based on the [[Opponent]]'s current knowledge.
+    * @param action
+    *   the adversary's [[Action]]
+    * @param turn
+    *   the [[Turn]] the [[Action]] is being performed on
+    */
+  def react(action: Action, turn: Turn): Unit = action match
+    case ChooseDiscard(index)
+        if knows(adversaryCards)(index)
+          && turn.board.getTopDiscardStack.value == getKnownAdversaryCard(index).get.value =>
+      adversaryCards = adversaryCards.removed(index)
+    case ChooseReplace(index) if knows(adversaryCards)(index) => adversaryCards = adversaryCards.removed(index)
+    case _                                                    => ()
+
   /** Returns [[Option]] of the card within the [[Opponent]] field if known, [[None]] otherwise.
     * @param index
     *   the index of the card in the field.
@@ -53,13 +67,13 @@ class Opponent:
     * @param index
     *   the index of the card to forget.
     */
-  def forgetOwn(index: Int): Unit = if knows(knownCards)(index) then knownCards = knownCards.removed(index)
+  private def forgetOwn(index: Int): Unit = if knows(knownCards)(index) then knownCards = knownCards.removed(index)
 
   /** Removes the card at the given index from known adversary cards.
     * @param index
     *   the index of the card to forget.
     */
-  def forgetAdversary(index: Int): Unit =
+  private def forgetAdversary(index: Int): Unit =
     if knows(adversaryCards)(index) then adversaryCards = adversaryCards.removed(index)
 
   private def drawAndUpdateKnownCards(turn: Turn, action: Action): (Turn, Action) =
@@ -67,7 +81,7 @@ class Opponent:
     action match
       case ObserveOpponent(index) => adversaryCards = adversaryCards.updated(index, drawn.hand.head)
       case ObservePlayer(index)   => knownCards = knownCards.updated(index, drawn.hand.head)
-      case _ => throw new IllegalArgumentException(s"Action not allowed: $action")
+      case _                      => throw new IllegalArgumentException(s"Action not allowed: $action")
     (drawn, action)
 
   private def getChosenAction(turn: Turn): Action =

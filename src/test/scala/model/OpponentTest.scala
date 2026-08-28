@@ -11,6 +11,9 @@ import model.deck.sugar.FieldDSL.given
 import model.deck.sugar.BoardDSL.*
 import model.deck.sugar.DeckDSL.*
 import model.deck.sugar.DeckDSL.deck.*
+import model.board.Board
+import model.playable.turn.{Action, Turn}
+
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -18,9 +21,27 @@ class OpponentTest extends AnyFlatSpec with Matchers:
   private val opponentField = (six of Swords) and (five of Wands)
   private val otherField = (three of Cups) and (seven of Pentacles) and (four of Wands) and (six of Pentacles)
   private val longOpponentField = (ace of Swords) and (three of Wands) and (jack of Wands) and (four of Pentacles)
+  private val adversaryFieldForDiscard = (six of Pentacles) and (jack of Swords)
   private val shortBoard = board from default withCustom playerOne(opponentField) withCustom playerTwo(otherField)
   private val longBoard = board from default withCustom playerOne(longOpponentField) withCustom playerTwo(otherField)
   private val firstTurn = FirstTurn(longBoard, Player1)
+
+  private def playFirstTurn(board: Board, opponent: Opponent): Turn =
+    var turn = opponent.play(FirstTurn(board, Player1))._1
+    while !turn.isOver do turn = opponent.play(turn)._1
+    turn
+
+  private def playSimpleTurn(board: Board, opponent: Opponent): (Turn, Action) = playSimpleTurn(board, opponent, 100)
+  private def playSimpleTurn(board: Board, opponent: Opponent, maxMoves: Int): (Turn, Action) =
+    var (turn, lastAction) = opponent.play(SimpleTurn(board, Player1))
+    var moves = 1
+    while !turn.isOver && moves < maxMoves do
+      val (nextPhase, action) = opponent.play(turn)
+      moves = moves + 1
+      turn = nextPhase
+      lastAction = action
+    (turn, lastAction)
+
 
   "Opponent" should "observe and remember observed cards" in:
     val opponent = Opponent()
@@ -40,7 +61,8 @@ class OpponentTest extends AnyFlatSpec with Matchers:
   it should "DrawKing when available" in:
     val boardWithDrawableKing = firstTurn.board.discard(king of Cups)
     val drawKingTurn = SimpleTurn(boardWithDrawableKing, Player1)
-    Opponent().play(drawKingTurn)._2 should be(DrawKing)
+    val opponent = Opponent()
+    playSimpleTurn(boardWithDrawableKing, opponent, 1)._2 should be(DrawKing)
 
   it should "Draw when DrawKing is unavailable" in:
     Opponent().play(SimpleTurn(firstTurn.board, Player1))._2 should be(Draw)
@@ -54,10 +76,8 @@ class OpponentTest extends AnyFlatSpec with Matchers:
   it should "Discard when top of discard stack value matches a known card value" in:
     val boardWithDiscard = shortBoard.discard(six of Wands)
     val opponent = Opponent()
-    val afterObserve = opponent.play(FirstTurn(boardWithDiscard, Player1))._1
-    opponent.play(afterObserve)
-    val discardTurn = SimpleTurn(boardWithDiscard, Player1)
-    val (_, chosenAction) = opponent.play(discardTurn)
+    playFirstTurn(boardWithDiscard, opponent)
+    val (_, chosenAction) = playSimpleTurn(boardWithDiscard, opponent, 1)
     chosenAction should be(ChooseDiscard(0))
     opponent.getKnownCard(0) should be(Some(five of Wands))
     opponent.getKnownCard(1) should be(None)
@@ -65,31 +85,24 @@ class OpponentTest extends AnyFlatSpec with Matchers:
   it should "Replace drawn card with an unknown card whenever possible and remember the new card" in:
     val replaceBoard = longBoard withCustom customDeck(deck from single(four of Cups))
     val opponent = Opponent()
-    opponent.play(FirstTurn(replaceBoard, Player1))
-    val (afterDraw, _) = opponent.play(SimpleTurn(replaceBoard, Player1))
-    val (afterActivate, _) = opponent.play(afterDraw)
-    val (_, chosenAction) = opponent.play(afterActivate)
+    playFirstTurn(replaceBoard, opponent)
+    val (_, chosenAction) = playSimpleTurn(replaceBoard, opponent, 3)
     chosenAction should be(ChooseReplace(2))
     opponent.getKnownCard(2) should be(Some(four of Cups))
 
   it should "Replace drawn card with known card of max value when all cards are known and remember the new card" in:
     val replaceBoard = shortBoard withCustom customDeck(deck from single(three of Wands))
     val opponent = Opponent()
-    opponent.play(FirstTurn(replaceBoard, Player1))
-    val (afterDraw, _) = opponent.play(SimpleTurn(replaceBoard, Player1))
-    val (afterActivate, _) = opponent.play(afterDraw)
-    val (_, chosenAction) = opponent.play(afterActivate)
+    playFirstTurn(replaceBoard, opponent)
+    val (_, chosenAction) = playSimpleTurn(replaceBoard, opponent, 3)
     chosenAction should be(ChooseReplace(0))
     opponent.getKnownCard(0) should be(Some(three of Wands))
 
   it should "call cactus when half or more of its field is known and known values amount to five or less" in:
     val replaceBoard = longBoard withCustom customDeck(deck from single(ace of Cups))
     val opponent = Opponent()
-    opponent.play(FirstTurn(replaceBoard, Player1))
-    val (afterDraw, _) = opponent.play(SimpleTurn(replaceBoard, Player1))
-    val (afterActivate, _) = opponent.play(afterDraw)
-    val (afterReplace, _) = opponent.play(afterActivate)
-    val (afterCactus, chosenAction) = opponent.play(afterReplace)
+    playFirstTurn(replaceBoard, opponent)
+    val (afterCactus, chosenAction) = playSimpleTurn(replaceBoard, opponent, 4)
     chosenAction should be(Cactus)
     val (_, chosenAfterCactus) = opponent.play(afterCactus)
     chosenAfterCactus should be(EndTurn)
@@ -97,66 +110,50 @@ class OpponentTest extends AnyFlatSpec with Matchers:
   it should "end the turn when calling cactus isn't optimal" in:
     val replaceBoard = longBoard withCustom customDeck(deck from single(knight of Cups))
     val opponent = Opponent()
-    opponent.play(FirstTurn(replaceBoard, Player1))
-    val (afterDraw, _) = opponent.play(SimpleTurn(replaceBoard, Player1))
-    val (afterActivate, _) = opponent.play(afterDraw)
-    val (afterReplace, replaced) = opponent.play(afterActivate)
-    val (_, chosenAction) = opponent.play(afterReplace)
+    playFirstTurn(replaceBoard, opponent)
+    val (_, chosenAction) = playSimpleTurn(replaceBoard, opponent, 4)
     chosenAction should be(EndTurn)
 
-  it should "forget known cards" in:
-    val opponent = Opponent()
-    opponent.play(FirstTurn(shortBoard, Player1))
-    opponent.getKnownCard(0) should be(Some(six of Swords))
-    opponent.forgetOwn(0)
-    opponent.getKnownCard(0) should be(None)
-
-  it should "observe adversary cards and forget them" in:
+  it should "observe adversary cards" in:
     val observeBoard = shortBoard withCustom customDeck(deck from single(six of Wands))
     val opponent = Opponent()
-    opponent.play(FirstTurn(observeBoard, Player1))
-    val (drawnTurn, _) = opponent.play(SimpleTurn(observeBoard, Player1))
-    val (activatedTurn, _) = opponent.play(drawnTurn)
-    val (observedTurn, selectedAction) = opponent.play(activatedTurn)
-    selectedAction should be(ObserveOpponent(0))
+    playFirstTurn(observeBoard, opponent)
+    val (_, chosenAction) = playSimpleTurn(observeBoard, opponent, 3)
+    chosenAction should be(ObserveOpponent(0))
     opponent.getKnownAdversaryCard(0) should be(Some(otherField.getCard(0)._1))
-    opponent.forgetAdversary(0)
+
+  it should "forget adversary cards when discarded or replaced" in:
+    val observeAndDiscardBoard = board from default withCustom playerOne(opponentField) withCustom
+      playerTwo(adversaryFieldForDiscard) withCustom customDeck(deck from ((six of Wands) | (four of Pentacles)))
+    val opponent = Opponent()
+    var turn = playFirstTurn(observeAndDiscardBoard, opponent)
+    turn = playSimpleTurn(turn.board, opponent)._1
+    opponent.getKnownAdversaryCard(0) should be(Some(six of Pentacles))
+    val adversaryTurn = SimpleTurn(turn.board, Player2)
+    opponent.react(ChooseDiscard(0), adversaryTurn)
     opponent.getKnownAdversaryCard(0) should be(None)
 
   it should "observe its cards" in:
     val observeBoard = longBoard withCustom customDeck(deck from single(seven of Wands))
     val opponent = Opponent()
-    opponent.play(FirstTurn(observeBoard, Player1))
-    val (drawnTurn, _) = opponent.play(SimpleTurn(observeBoard, Player1))
-    val (activatedTurn, _) = opponent.play(drawnTurn)
-    val (observedTurn, selectedAction) = opponent.play(activatedTurn)
+    playFirstTurn(observeBoard, opponent)
+    val (_, selectedAction) = playSimpleTurn(observeBoard, opponent, 3)
     selectedAction should be(ObservePlayer(2))
     opponent.getKnownCard(2) should be(Some(longOpponentField.getCard(2)._1))
 
   it should "chose to replace when all its cards are known" in:
     val observeBoard = shortBoard withCustom customDeck(deck from single(five of Wands))
     val opponent = Opponent()
-    var (turn, chosenAction) = opponent.play(FirstTurn(observeBoard, Player1))
-    while !turn.isOver do turn = opponent.play(turn)._1
-    turn = opponent.play(SimpleTurn(turn.board, Player1))._1
-    turn = opponent.play(turn)._1
-    opponent.play(turn)._2 should be(ChooseReplace(0))
+    playFirstTurn(observeBoard, opponent)
+    val (_, chosenAction) = playSimpleTurn(observeBoard, opponent, 3)
+    chosenAction should be(ChooseReplace(0))
 
   it should "play a favourable swap" in:
-    val swapBoard = shortBoard withCustom customDeck(deck from ((six of Wands) :: (jack of Wands) :: Nil))
+    val swapBoard = shortBoard withCustom customDeck(deck from ((six of Wands) | (jack of Wands)))
     val opponent = Opponent()
-    var (turn, chosenAction) = opponent.play(FirstTurn(swapBoard, Player1))
-    while !turn.isOver do turn = opponent.play(turn)._1
-    turn = SimpleTurn(turn.board, Player1)
-    while !turn.isOver do turn = opponent.play(turn)._1
-    turn = SimpleTurn(turn.board, Player1)
-    while chosenAction != Activate do
-      val res = opponent.play(turn)
-      chosenAction = res._2
-      turn = res._1
-    val res = opponent.play(turn)
-    turn = res._1
-    chosenAction = res._2
+    playFirstTurn(swapBoard, opponent)
+    val (turn, _) = playSimpleTurn(swapBoard, opponent)
+    val (afterSwap, chosenAction) = playSimpleTurn(turn.board, opponent, 5)
     chosenAction should be(Swap(0, 0))
-    opponent.getKnownCard(0) should be(Some(turn.board.players(Player1).getCard(0)._1))
-    opponent.getKnownAdversaryCard(0) should be(Some(turn.board.players(Player2).getCard(0)._1))
+    opponent.getKnownCard(0) should be(Some(afterSwap.board.players(Player1).getCard(0)._1))
+    opponent.getKnownAdversaryCard(0) should be(Some(afterSwap.board.players(Player2).getCard(0)._1))
