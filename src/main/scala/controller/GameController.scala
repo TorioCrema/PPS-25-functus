@@ -26,11 +26,10 @@ class GameController(
   private val TO_BE_SELECTED = -1
   private val STEP_NEXT = -1
   private val STEP_PREVIOUS = 1
-
+  private var running = true
   /** Starts the main game loop, initializing the view and processing user input.
     */
   def start(): Unit =
-    var running = true
     while running do
       view.render(state)
       Utils.readInput() match
@@ -150,7 +149,7 @@ class GameController(
       pendingOpponentSwapIdx = None
       state = syncState(determineNextInputMode())
 
-    case EndGame => MenuController(CLIMenu()).start()
+    case EndGame => running = false
 
   /** Executes an [[Action]] against the current turn logic and synchronizes state.
     *
