@@ -28,9 +28,7 @@ class Opponent:
     case ObserveOpponent(index)            => drawAndUpdateKnownCards(turn, ObserveOpponent(index))
     case ObservePlayer(index)              => drawAndUpdateKnownCards(turn, ObservePlayer(index))
     case Swap(playerIndex, adversaryIndex) =>
-      val ownSwappedCard = knownCards(playerIndex)
-      knownCards = knownCards.updated(playerIndex, adversaryCards(adversaryIndex))
-      adversaryCards = adversaryCards.updated(adversaryIndex, ownSwappedCard)
+      swapKnowledge(playerIndex, adversaryIndex)
       (turn.act(Swap(playerIndex, adversaryIndex)), Swap(playerIndex, adversaryIndex))
     case ChooseReplace(index) =>
       knownCards = knownCards.updated(index, turn.hand.head)
@@ -49,6 +47,7 @@ class Opponent:
           && turn.board.getTopDiscardStack.value == getKnownAdversaryCard(index).get.value =>
       forgetAndUpdate(index)
     case ChooseReplace(index) if knows(adversaryCards)(index) => adversaryCards = adversaryCards.removed(index)
+    case Swap(adversaryIndex, ownIndex)                       => swapReaction(adversaryIndex, ownIndex)
     case _                                                    => ()
 
   /** Returns [[Option]] of the card within the [[Opponent]] field if known, [[None]] otherwise.
@@ -79,6 +78,24 @@ class Opponent:
   private def forgetAndUpdate(index: Int): Unit =
     adversaryCards = adversaryCards.removed(index)
     adversaryCards = adversaryCards.map((i, card) => if i > index then (i - 1, card) else (i, card))
+
+  private def swapReaction(adversaryIndex: Int, ownIndex: Int): Unit =
+    (knows(adversaryCards)(adversaryIndex), knows(knownCards)(ownIndex)) match
+      case (true, true)  => swapKnowledge(ownIndex, adversaryIndex)
+      case (true, false) =>
+        val adversaryCard = adversaryCards(adversaryIndex)
+        adversaryCards = adversaryCards.removed(adversaryIndex)
+        knownCards = knownCards.updated(ownIndex, adversaryCard)
+      case (false, true) =>
+        val ownCard = knownCards(ownIndex)
+        knownCards = knownCards.removed(ownIndex)
+        adversaryCards = adversaryCards.updated(adversaryIndex, ownCard)
+      case (_, _) => ()
+
+  private def swapKnowledge(ownIndex: Int, adversaryIndex: Int): Unit =
+    val ownSwappedCard = knownCards(ownIndex)
+    knownCards = knownCards.updated(ownIndex, adversaryCards(adversaryIndex))
+    adversaryCards = adversaryCards.updated(adversaryIndex, ownSwappedCard)
 
   private def drawAndUpdateKnownCards(turn: Turn, action: Action): (Turn, Action) =
     val drawn = turn.act(action)

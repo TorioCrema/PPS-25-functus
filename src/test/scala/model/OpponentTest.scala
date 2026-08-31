@@ -139,8 +139,7 @@ class OpponentTest extends AnyFlatSpec with Matchers:
     var turn = playFirstTurn(observeAndDiscardBoard, opponent)
     turn = playSimpleTurn(turn.board, opponent)._1
     turn = playSimpleTurn(turn.board, opponent)._1
-    turn = SimpleTurn(turn.board, Player2)
-    turn = turn.act(Draw)
+    turn = SimpleTurn(turn.board, Player2).actAll(Draw :: Activate :: Nil)
     opponent.react(ChooseReplace(0), turn)
     opponent.getKnownAdversaryCard(0) should be(None)
     opponent.getKnownAdversaryCard(1) should be(Some(adversaryFieldForDiscard.cardsList(1)))
@@ -154,6 +153,41 @@ class OpponentTest extends AnyFlatSpec with Matchers:
     opponent.react(ChooseDiscard(1), turn)
     opponent.getKnownAdversaryCard(0) should be(Some(adversaryFieldForDiscard.cardsList.head))
     opponent.getKnownAdversaryCard(1) should be(Some(adversaryFieldForDiscard.cardsList(1)))
+
+  it should "not alter knowledge when adversary swaps unknown cards" in:
+    val opponent = Opponent()
+    val swapBoard = shortBoard withCustom CustomDeck(deck from single(jack of Pentacles))
+    val turn = SimpleTurn(swapBoard, Player2).actAll(Draw :: Activate :: Nil)
+    opponent.react(Swap(0,0), turn)
+    opponent.getKnownCard(0) should be(None)
+    opponent.getKnownAdversaryCard(0) should be(None)
+
+  it should "alter knowledge when adversary swaps known owned card" in:
+    val opponent = Opponent()
+    val swapBoard = shortBoard withCustom CustomDeck(deck from single(jack of Pentacles))
+    var turn = playFirstTurn(swapBoard, opponent)
+    turn = SimpleTurn(turn.board, Player2).actAll(Draw :: Activate :: Nil)
+    opponent.react(Swap(0, 0), turn)
+    opponent.getKnownCard(0) should be(None)
+    opponent.getKnownAdversaryCard(0) should be(Some(opponentField.cardsList.head))
+
+  it should "alter knowledge when adversary swaps known adversary card" in:
+    val opponent = Opponent()
+    val swapBoard = shortBoard withCustom CustomDeck(deck from ((six of Pentacles) | (jack of Pentacles)))
+    var turn = playSimpleTurn(swapBoard, opponent)._1
+    turn = SimpleTurn(turn.board, Player2).actAll(Draw :: Activate :: Nil)
+    opponent.react(Swap(0, 0), turn)
+    opponent.getKnownCard(0) should be(Some(otherField.cardsList.head))
+
+  it should "alter knowledge when adversary swaps two known cards" in:
+    val opponent = Opponent()
+    val swapBoard = shortBoard withCustom CustomDeck(deck from ((six of Pentacles) | (jack of Pentacles)))
+    var turn = playFirstTurn(swapBoard, opponent)
+    turn = playSimpleTurn(turn.board, opponent)._1
+    turn = SimpleTurn(turn.board, Player2).actAll(Draw :: Activate :: Nil)
+    opponent.react(Swap(0, 0), turn)
+    opponent.getKnownCard(0) should be(Some(otherField.cardsList.head))
+    opponent.getKnownAdversaryCard(0) should be(Some(opponentField.cardsList.head))
 
   it should "observe its cards" in:
     val observeBoard = longBoard withCustom customDeck(deck from single(seven of Wands))
