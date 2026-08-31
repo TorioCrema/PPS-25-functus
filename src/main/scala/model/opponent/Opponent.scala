@@ -47,7 +47,7 @@ class Opponent:
     case ChooseDiscard(index)
         if knows(adversaryCards)(index)
           && turn.board.getTopDiscardStack.value == getKnownAdversaryCard(index).get.value =>
-      adversaryCards = adversaryCards.removed(index)
+      forgetAndUpdate(index)
     case ChooseReplace(index) if knows(adversaryCards)(index) => adversaryCards = adversaryCards.removed(index)
     case _                                                    => ()
 
@@ -75,6 +75,10 @@ class Opponent:
     */
   private def forgetAdversary(index: Int): Unit =
     if knows(adversaryCards)(index) then adversaryCards = adversaryCards.removed(index)
+
+  private def forgetAndUpdate(index: Int): Unit =
+    adversaryCards = adversaryCards.removed(index)
+    adversaryCards = adversaryCards.map((i, card) => if i > index then (i - 1, card) else (i, card))
 
   private def drawAndUpdateKnownCards(turn: Turn, action: Action): (Turn, Action) =
     val drawn = turn.act(action)

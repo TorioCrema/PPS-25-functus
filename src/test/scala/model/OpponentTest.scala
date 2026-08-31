@@ -25,6 +25,10 @@ class OpponentTest extends AnyFlatSpec with Matchers:
   private val shortBoard = board from default withCustom playerOne(opponentField) withCustom playerTwo(otherField)
   private val longBoard = board from default withCustom playerOne(longOpponentField) withCustom playerTwo(otherField)
   private val firstTurn = FirstTurn(longBoard, Player1)
+  private val observeAndDiscardBoard = board from default withCustom playerOne(opponentField) withCustom
+    playerTwo(adversaryFieldForDiscard) withCustom customDeck(
+    deck from ((six of Wands) | (six of Pentacles) | (four of Pentacles))
+  )
 
   private def playFirstTurn(board: Board, opponent: Opponent): Turn =
     var turn = opponent.play(FirstTurn(board, Player1))._1
@@ -41,7 +45,6 @@ class OpponentTest extends AnyFlatSpec with Matchers:
       turn = nextPhase
       lastAction = action
     (turn, lastAction)
-
 
   "Opponent" should "observe and remember observed cards" in:
     val opponent = Opponent()
@@ -122,16 +125,35 @@ class OpponentTest extends AnyFlatSpec with Matchers:
     chosenAction should be(ObserveOpponent(0))
     opponent.getKnownAdversaryCard(0) should be(Some(otherField.getCard(0)._1))
 
-  it should "forget adversary cards when discarded or replaced" in:
-    val observeAndDiscardBoard = board from default withCustom playerOne(opponentField) withCustom
-      playerTwo(adversaryFieldForDiscard) withCustom customDeck(deck from ((six of Wands) | (four of Pentacles)))
+  it should "forget adversary cards when discarded" in:
     val opponent = Opponent()
     var turn = playFirstTurn(observeAndDiscardBoard, opponent)
     turn = playSimpleTurn(turn.board, opponent)._1
-    opponent.getKnownAdversaryCard(0) should be(Some(six of Pentacles))
+    turn = playSimpleTurn(turn.board, opponent)._1
     val adversaryTurn = SimpleTurn(turn.board, Player2)
     opponent.react(ChooseDiscard(0), adversaryTurn)
+    opponent.getKnownAdversaryCard(0) should be(Some(jack of Swords))
+
+  it should "forget adversary cards when replaced" in:
+    val opponent = Opponent()
+    var turn = playFirstTurn(observeAndDiscardBoard, opponent)
+    turn = playSimpleTurn(turn.board, opponent)._1
+    turn = playSimpleTurn(turn.board, opponent)._1
+    turn = SimpleTurn(turn.board, Player2)
+    turn = turn.act(Draw)
+    opponent.react(ChooseReplace(0), turn)
     opponent.getKnownAdversaryCard(0) should be(None)
+    opponent.getKnownAdversaryCard(1) should be(Some(adversaryFieldForDiscard.cardsList(1)))
+
+  it should "remember cards when adversary discard is incorrect" in:
+    val opponent = Opponent()
+    var turn = playFirstTurn(observeAndDiscardBoard, opponent)
+    turn = playSimpleTurn(turn.board, opponent)._1
+    turn = playSimpleTurn(turn.board, opponent)._1
+    turn = SimpleTurn(turn.board, Player2)
+    opponent.react(ChooseDiscard(1), turn)
+    opponent.getKnownAdversaryCard(0) should be(Some(adversaryFieldForDiscard.cardsList.head))
+    opponent.getKnownAdversaryCard(1) should be(Some(adversaryFieldForDiscard.cardsList(1)))
 
   it should "observe its cards" in:
     val observeBoard = longBoard withCustom customDeck(deck from single(seven of Wands))
