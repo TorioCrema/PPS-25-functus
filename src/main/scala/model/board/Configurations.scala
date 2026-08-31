@@ -6,6 +6,7 @@ import model.deck.sugar.DeckDSL.deck.*
 import model.deck.sugar.CardDSL.*
 import model.deck.sugar.BoardDSL.*
 import model.deck.card.Suit.*
+import model.deck.sugar.FieldDSL.{*, given}
 
 object Configurations:
 
@@ -33,46 +34,42 @@ object Configurations:
     (king of Cups) |
     (knight of Pentacles)
 
-  private val discardPileWithKing = List(king of Swords, three of Cups)
+  private val discardPileWithKing = (king of Swords) | (three of Cups)
 
-  private val discardPileWithoutKing = List(three of Cups, seven of Cups)
+  private val discardPileWithoutKing = (three of Cups) | (seven of Cups)
 
-  private val discardPileForSuccessfulDiscard = List(three of Cups)
-
-  private val discardPileForFailedDiscard = List(three of Cups)
-
-  val boardForSixEffect = lockedBoard from default
+  def boardForSixEffect = (lockedBoard from default)
     .withCustom(customDeck(deckForSixEffect))
     .withCustom(discardPile(discardPileWithoutKing))
-    .withCustom(playerOne(three of Pentacles and knight of Pentacles))
-    .withCustom(playerTwo(four of Pentacles and five of Pentacles))
+    .withCustom(playerOne((three of Pentacles) and (knight of Pentacles)))
+    .withCustom(playerTwo((four of Pentacles) and (five of Pentacles)))
 
-  val boardForSevenEffect = lockedBoard from default
+  def boardForSevenEffect = (lockedBoard from default)
     .withCustom(customDeck(deckForSevenEffect))
     .withCustom(discardPile(discardPileWithoutKing))
-    .withCustom(playerOne(three of Pentacles and knight of Pentacles))
-    .withCustom(playerTwo(four of Pentacles and five of Pentacles))
+    .withCustom(playerOne((three of Swords) and (knight of Cups)))
+    .withCustom(playerTwo((four of Pentacles) and (five of Pentacles)))
 
-  val boardForJackEffect = lockedBoard from default
+  def boardForJackEffect = (lockedBoard from default)
     .withCustom(customDeck(deckForJackEffect))
     .withCustom(discardPile(discardPileWithoutKing))
-    .withCustom(playerOne(three of Pentacles and knight of Pentacles))
-    .withCustom(playerTwo(four of Pentacles and five of Pentacles))
+    .withCustom(playerOne((knight of Swords) and (ace of Pentacles)))
+    .withCustom(playerTwo((knight of Pentacles) and (six of Cups)))
 
-  val boardForKingDraw = lockedBoard from default
+  def boardForKingDraw = (lockedBoard from default)
     .withCustom(customDeck(deckForKingEffect))
     .withCustom(discardPile(discardPileWithKing))
-    .withCustom(playerOne(three of Pentacles and knight of Pentacles))
-    .withCustom(playerTwo(four of Pentacles and five of Pentacles))
+    .withCustom(playerOne((three of Cups) and (four of Swords)))
+    .withCustom(playerTwo((four of Pentacles) and (five of Pentacles)))
 
-  val boardForSuccessfulDiscard = lockedBoard from default
+  def boardForSuccessfulDiscard = (lockedBoard from default)
     .withCustom(customDeck(deckForSixEffect))
-    .withCustom(discardPile(discardPileForSuccessfulDiscard))
-    .withCustom(playerOne(three of Cups and knight of Pentacles))
-    .withCustom(playerTwo(four of Pentacles and five of Pentacles))
+    .withCustom(discardPile(discardPileWithKing))
+    .withCustom(playerOne((three of Cups) and (knight of Pentacles)))
+    .withCustom(playerTwo((four of Pentacles) and (five of Pentacles)))
 
-  val boardForFailedDiscard = lockedBoard from default
+  def boardForFailedDiscard = (lockedBoard from default)
     .withCustom(customDeck(deckForSixEffect))
-    .withCustom(discardPile(discardPileForFailedDiscard))
-    .withCustom(playerOne(six of Cups and knight of Pentacles))
-    .withCustom(playerTwo(four of Pentacles and five of Pentacles))
+    .withCustom(discardPile(discardPileWithoutKing))
+    .withCustom(playerOne((five of Swords) and (knight of Swords)))
+    .withCustom(playerTwo((four of Pentacles) and (jack of Cups)))
