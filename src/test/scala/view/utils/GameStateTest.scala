@@ -1,12 +1,12 @@
 package org.pps.functus
-package view
+package view.utils
+
+import model.deck.card.CardImpl
+import model.deck.card.Suit.{Cups, Swords}
+import view.utils.{GameState, InputMode, ViewAction}
 
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
-import model.deck.card.CardImpl
-import model.deck.card.Suit.{Cups, Swords}
-
-import view.utils.{GameState, InputMode, ViewAction}
 
 class GameStateTest extends AnyFunSpec with Matchers:
 
