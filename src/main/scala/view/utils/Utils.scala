@@ -31,10 +31,17 @@ object Utils:
     " |__/    \\______/ |__/  |__/ \\_______/   \\___/   \\______/ |_______/   "
   )
 
-  // Recupero sicuro delle dimensioni del terminale con fallback per i test
+  /** * Get the terminal width in a safe mode
+    * @return
+    *   the terminal width or fall-back to default value 120
+    */
   def terminalWidth: Int =
     Try(terminal.getColumns).toOption.filter(_ > 0).getOrElse(120)
 
+  /** * Get the terminal height in a safe mode
+    * @return
+    *   the terminal height or fall-back to default value 120
+    */
   def terminalHeight: Int =
     Try(terminal.getRows).toOption.filter(_ > 0).getOrElse(120)
 
@@ -74,19 +81,19 @@ object Utils:
       if key == null then Key.UNKNOWN else key
     }.getOrElse(Key.UNKNOWN)
 
-  /** * center the given text on the terminal
+  /** * center horizontally the given text on the terminal
     *
     * @param text
     *   the text to be centered
     * @return
-    *   the padded string with enough blank spaces to be printed at the center of the terminal
+    *   the padded string with enough blank spaces to be printed at the horizontal center of the terminal
     */
   def centerText(text: String, targetLength: Int = terminalWidth): String =
     val visualLen = text.replaceAll("\u001B\\[[;\\d]*m", "").length
     val space = Math.max(0, (targetLength - visualLen) / 2)
     " " * space + text
 
-  def clearScreen(): Unit = {
+  def clearScreen(): Unit =
     viewBuilder.clear()
     Try {
       if terminal != null then
@@ -97,8 +104,11 @@ object Utils:
       // Fallback ANSI clear screen if JLine terminal is disabled/close during test
       print("\u001b[H\u001b[2J")
     }
-  }
 
+  /** * draw the name of the game in ASCII-ART horizontally centered
+    * @param viewBuilder
+    *   the StringBuilder in which would be appended all the text to be rendered
+    */
   def drawHeader(using viewBuilder: StringBuilder): Unit =
     // Header
     viewBuilder.append("\n\n")
@@ -109,3 +119,14 @@ object Utils:
         .append(ANSI_RESET)
         .append("\n")
     }
+
+  /** * render a block of text in the vertical center of the screen
+    * @param blockString
+    *   the text to be centered vertically
+    */
+  def renderCenteredBlock(blockString: String): Unit =
+    val blockHeight = blockString.linesIterator.length
+    val terminalHeight = Try(terminal.getRows).toOption.filter(_ > 0).getOrElse(24)
+    val topPadding = Math.max(0, (terminalHeight - blockHeight) / 2) - 10
+    viewBuilder.append("\n" * topPadding)
+    viewBuilder.append(blockString)

@@ -4,8 +4,8 @@ package view
 import view.utils.CardRenderExtensions.*
 import view.utils.{GameState, InputMode, Utils}
 import view.utils.Utils.{ANSI_GREEN_BOLD, ANSI_RESET, SEPARATOR_CHAR, terminalWidth, viewBuilder}
+import model.board.Player
 
-import scala.util.Try
 
 class CLIView:
 
@@ -100,8 +100,7 @@ class CLIView:
     val transitionBlock = StringBuilder()
     transitionBlock.append(s"$separator\n")
     transitionBlock.append(Utils.centerText("END GAME")).append("\n\n")
-    if gameState.winner.isEmpty then
-      transitionBlock.append(Utils.centerText(s"GAME IS ENDED IN A TIE ")).append("\n\n")
+    if gameState.winner.isEmpty then transitionBlock.append(Utils.centerText(s"GAME IS ENDED IN A TIE ")).append("\n\n")
     else transitionBlock.append(Utils.centerText(s"GAME IS OVER ${gameState.winner.get} WIN ")).append("\n\n")
     transitionBlock
       .append(
@@ -115,21 +114,19 @@ class CLIView:
 
     viewBuilder.append(transitionBlock)
 
-  private def drawWaitingRoom(using viewBuilder: StringBuilder, separator: String) =
+  private def drawWaitingRoom(using viewBuilder: StringBuilder, separator: String): Unit =
+
+    Utils.viewBuilder.clear()
+    Utils.clearScreen()
+    Utils.drawHeader
+
     val transitionBlock = StringBuilder()
     transitionBlock.append(s"$separator\n")
     transitionBlock.append(Utils.centerText("PLAYER SWAP")).append("\n\n")
     transitionBlock.append(Utils.centerText("Make sure the other player isn't watching!")).append("\n\n")
     transitionBlock.append(Utils.centerText("[ Press ENTER to begin the turn ]")).append("\n")
     transitionBlock.append(s"$separator\n")
-
-    // center vertically the changing player block
-    val blockString = transitionBlock.toString()
-    val blockHeight = blockString.linesIterator.length
-    val terminalHeight = Try(Utils.terminal.getRows).toOption.filter(_ > 0).getOrElse(24)
-    val topPadding = Math.max(0, (terminalHeight - blockHeight) / 2) - 10
-    viewBuilder.append("\n" * topPadding)
-    viewBuilder.append(blockString)
+    Utils.renderCenteredBlock(transitionBlock.toString())
 
   private def drawHandZone(using
       viewBuilder: StringBuilder,
@@ -165,3 +162,66 @@ class CLIView:
       case InputMode.EndGame     => ()
 
     viewBuilder.append(s"\n (Press 'Q' to return to main menu)\n")
+
+  /***
+   * show score between games of a match
+   * @param scores the actual score of each player
+   * @param maxScore the score to be reached to end the match
+   */
+  def renderMatchStatus(scores: Map[Player, Int], maxScore: Int): Unit =
+    given separator: String = SEPARATOR_CHAR * terminalWidth
+
+    Utils.viewBuilder.clear()
+    Utils.clearScreen()
+    Utils.drawHeader
+
+    val transitionBlock = StringBuilder()
+    transitionBlock.append(s"$separator\n")
+    transitionBlock.append(Utils.centerText("MATCH IN PROGRESS")).append("\n\n")
+    transitionBlock.append(Utils.centerText(s"TARGET SCORE TO REACH: $maxScore")).append("\n\n")
+    transitionBlock.append(Utils.centerText(s"CURRENT SCORES:")).append("\n")
+    transitionBlock
+      .append(
+        Utils.centerText(s"Player 1: ${scores(Player.Player1)} pts  |  Player 2: ${scores(Player.Player2)} pts")
+      )
+      .append("\n\n")
+    transitionBlock.append(Utils.centerText("[ Press ENTER to start the next Game ]")).append("\n")
+    transitionBlock.append(s"$separator\n")
+
+    Utils.renderCenteredBlock(transitionBlock.toString())
+    print(viewBuilder.toString())
+
+  /***
+   * Render End of Match message Displaying the winner
+   * @param scores final score of each player
+   * @param winner the winner of the match if it's a tie the winner is [Option.None]
+   * @param maxScore the score to be reached to end the match
+   */
+  def renderMatchEnd(scores: Map[Player, Int], winner: Option[Player], maxScore: Int): Unit =
+    given separator: String = SEPARATOR_CHAR * terminalWidth
+
+    Utils.viewBuilder.clear()
+    Utils.clearScreen()
+    Utils.drawHeader
+
+    val transitionBlock = StringBuilder()
+    transitionBlock.append(s"$separator\n")
+    transitionBlock.append(Utils.centerText("MATCH OVER!")).append("\n\n")
+    winner match
+      case Some(player) =>
+        transitionBlock.append(Utils.centerText(s"🏆 WINNER OF THE MATCH IS $player! 🏆")).append("\n\n")
+      case None =>
+        transitionBlock.append(Utils.centerText("THE MATCH ENDED IN A DRAW!")).append("\n\n")
+
+    transitionBlock.append(Utils.centerText(s"FINAL SCORES (Target: $maxScore):")).append("\n")
+    transitionBlock
+      .append(
+        Utils.centerText(s"Player 1: ${scores(Player.Player1)} pts  |  Player 2: ${scores(Player.Player2)} pts")
+      )
+      .append("\n\n")
+    transitionBlock.append(Utils.centerText("[ Press ENTER or Q to return to Main Menu ]")).append("\n")
+    transitionBlock.append(s"$separator\n")
+
+    Utils.renderCenteredBlock(transitionBlock.toString())
+    print(viewBuilder.toString())
+
