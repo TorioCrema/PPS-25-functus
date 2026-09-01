@@ -8,6 +8,8 @@ import view.utils.{GameState, InputMode, ViewAction}
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
+import view.utils.{GameState, InputMode, ViewAction}
+
 class GameStateTest extends AnyFunSpec with Matchers:
 
   // Mock / Sample Data for testing
