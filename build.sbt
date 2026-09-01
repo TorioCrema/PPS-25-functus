@@ -1,3 +1,5 @@
+import sbt.Test
+
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "3.8.4"
@@ -11,8 +13,11 @@ lazy val root = (project in file("."))
     libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0",
     libraryDependencies += "org.jline" % "jline" % "4.3.1",
 
+    Test / parallelExecution := false,
+
     // Specifica il Main da eseguire all'avvio del .jar
     assembly / mainClass := Some("org.pps.functus.Main"),
     // Nome del file jar generato
     assembly / assemblyJarName := "Functus.jar"
+
   )

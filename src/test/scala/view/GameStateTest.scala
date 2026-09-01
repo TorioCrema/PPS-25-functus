@@ -6,6 +6,8 @@ import org.scalatest.matchers.should.Matchers
 import model.deck.card.CardImpl
 import model.deck.card.Suit.{Cups, Swords}
 
+import view.utils.{GameState, InputMode, ViewAction}
+
 class GameStateTest extends AnyFunSpec with Matchers:
 
   // Mock / Sample Data for testing

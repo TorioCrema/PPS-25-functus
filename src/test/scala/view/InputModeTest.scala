@@ -1,7 +1,8 @@
 package org.pps.functus
 package view
 
-import view.InputMode.EndGame
+import view.utils.InputMode
+import view.utils.InputMode.EndGame
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 

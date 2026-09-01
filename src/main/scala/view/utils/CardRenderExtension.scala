@@ -1,9 +1,8 @@
 package org.pps.functus
-package view
-
-import model.deck.card.{Card, Suit}
+package view.utils
 
 import model.deck.card.Suit.{Cups, Pentacles, Swords, Wands}
+import model.deck.card.{Card, Suit}
 
 /** Represents the border highlight mode for a card */
 enum BorderStyle:
