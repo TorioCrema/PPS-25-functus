@@ -1,5 +1,7 @@
 package org.pps.functus
-package view
+package view.utils
+
+import view.utils.Key
 
 import view.utils.Key
 import org.scalatest.funspec.AnyFunSpec

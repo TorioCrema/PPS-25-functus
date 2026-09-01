@@ -37,7 +37,7 @@ class CLIMenuTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
     val output = Utils.viewBuilder.toString()
 
     val selectedItem = menu.menuItem(selectedIndex)
-    val expectedSelectedLine = s" -> ${selectedIndex + 1}. ${selectedItem.label}"
+    val expectedSelectedLine = s" ->  ${selectedItem.label}"
 
     output should include(expectedSelectedLine)
   }
@@ -51,7 +51,7 @@ class CLIMenuTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
 
     menu.menuItem.zipWithIndex.foreach { case (item, index) =>
       if index != selectedIndex then
-        val expectedUnselectedLine = s"    ${index + 1}. ${item.label}"
+        val expectedUnselectedLine = s"    ${item.label}"
         output should include(expectedUnselectedLine)
     }
   }
@@ -74,4 +74,53 @@ class CLIMenuTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
 
     noException should be thrownBy menu.render(firstIdx)
     noException should be thrownBy menu.render(lastIdx)
+  }
+
+  "CLIMenu" should "contain all TargetScoreOption enum values in scoreOption" in {
+    val menu = new CLIMenu()
+    menu.scoreOption should contain theSameElementsInOrderAs view.utils.TargetScoreOption.values.toList
+  }
+
+  "CLIMenu.renderTargetScoreMenu" should "append formatted target score menu output to viewBuilder" in {
+    val menu = new CLIMenu()
+
+    noException should be thrownBy menu.renderTargetScoreMenu(selectedScoreIndex = 0)
+
+    val output = Utils.viewBuilder.toString()
+    output should not be empty
+    output should include("SELECT MATCH TARGET SCORE")
+    output should include("(Press Q to return to main menu)")
+  }
+
+  it should "highlight the active target score selection with an arrow indicator" in {
+    val menu = new CLIMenu()
+    val selectedIndex = 1
+
+    menu.renderTargetScoreMenu(selectedIndex)
+    val output = Utils.viewBuilder.toString()
+
+    val selectedOption = menu.scoreOption(selectedIndex)
+    output should include(s" ->  ${selectedOption.label}")
+  }
+
+  it should "format non-selected target score options with padding instead of an arrow" in {
+    val menu = new CLIMenu()
+    val selectedIndex = 0
+
+    menu.renderTargetScoreMenu(selectedIndex)
+    val output = Utils.viewBuilder.toString()
+
+    menu.scoreOption.zipWithIndex.foreach { case (option, index) =>
+      if index != selectedIndex then
+        output should include(s"     ${option.label}")
+    }
+  }
+
+  it should "handle edge case selection indices in renderTargetScoreMenu" in {
+    val menu = new CLIMenu()
+    val firstIdx = 0
+    val lastIdx = menu.scoreOption.length - 1
+
+    noException should be thrownBy menu.renderTargetScoreMenu(firstIdx)
+    noException should be thrownBy menu.renderTargetScoreMenu(lastIdx)
   }

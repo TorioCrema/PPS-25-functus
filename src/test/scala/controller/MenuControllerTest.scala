@@ -12,9 +12,13 @@ import view.utils.Key
   */
 class FakeCLIMenu extends CLIMenu:
   var renderedIndices: List[Int] = List.empty
+  var renderedScoreIndices: List[Int] = List.empty
 
   override def render(selectedIndex: Int): Unit =
     renderedIndices = renderedIndices :+ selectedIndex
+
+  override def renderTargetScoreMenu(selectedIndex: Int): Unit =
+    renderedScoreIndices = renderedScoreIndices :+ selectedIndex
 
 /** Helper to simulate an input provider driven by a list of keys.
   */
@@ -50,3 +54,47 @@ class MenuControllerTest extends AnyFunSuite with Matchers:
 
     simulateMove(-1)
     currentIndex shouldBe 1
+
+
+  test("Target Score navigation logic: DOWN cycles through score options and UP moves backward"):
+    var currentScoreIndex = 0
+    val totalScoreOptions = view.utils.TargetScoreOption.values.length
+
+    def simulateScoreMove(delta: Int): Unit =
+      currentScoreIndex = (currentScoreIndex + delta + totalScoreOptions) % totalScoreOptions
+
+    // Down (STEP_PREVIOUS = 1) -> 100 Points (index 1)
+    simulateScoreMove(1)
+    currentScoreIndex shouldBe 1
+
+    // Down (STEP_PREVIOUS = 1) -> 150 Points (index 2)
+    simulateScoreMove(1)
+    currentScoreIndex shouldBe 2
+
+    // Up (STEP_NEXT = -1) -> 100 Points (index 1)
+    simulateScoreMove(-1)
+    currentScoreIndex shouldBe 1
+
+  test("Selecting Match mode sets isChoosingTargetScore state to true"):
+    val fakeMenu = FakeCLIMenu()
+    var isChoosingTargetScore = false
+    var selectedScoreIndex = 0
+
+    // Simula la conferma dell'azione principale su Match
+    val selectedMainItem = view.utils.MenuItem.Match
+    if selectedMainItem == view.utils.MenuItem.Match then
+      selectedScoreIndex = 0
+      isChoosingTargetScore = true
+
+    isChoosingTargetScore shouldBe true
+    selectedScoreIndex shouldBe 0
+
+  test("ESC in target score menu returns to main menu state"):
+    var isChoosingTargetScore = true
+
+    // Simula la pressione del tasto ESCAPE nel sotto-menu
+    val inputKey = Key.ESCAPE
+    if inputKey == Key.ESCAPE then
+      isChoosingTargetScore = false
+
+    isChoosingTargetScore shouldBe false

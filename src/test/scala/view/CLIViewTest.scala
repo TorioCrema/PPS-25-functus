@@ -175,3 +175,50 @@ class CLIViewTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
     output should include("CARD IN HAND:")
     output should include("[ No card drawn ]")
   }
+  
+  "CLIView.renderMatchStatus" should "render current match scores and target score correctly" in {
+    val view = new CLIView()
+    val scores = Map(Player1 -> 15, Player2 -> 22)
+    val maxScore = 50
+  
+    view.renderMatchStatus(scores, maxScore)
+  
+    val output = Utils.viewBuilder.toString()
+    output should include("MATCH IN PROGRESS")
+    output should include("TARGET SCORE TO REACH: 50")
+    output should include("CURRENT SCORES:")
+    output should include("Player 1: 15 pts  |  Player 2: 22 pts")
+    output should include("[ Press ENTER to start the next Game ]")
+  }
+  
+  "CLIView.renderMatchEnd" should "render the winner and final scores when match is over" in {
+    val view = new CLIView()
+    val scores = Map(Player1 -> 52, Player2 -> 30)
+    val winner = Some(Player2)
+    val maxScore = 50
+  
+    view.renderMatchEnd(scores, winner, maxScore)
+  
+    val output = Utils.viewBuilder.toString()
+    output should include("MATCH OVER!")
+    output should include("🏆 WINNER OF THE MATCH IS Player2! 🏆")
+    output should include("FINAL SCORES (Target: 50):")
+    output should include("Player 1: 52 pts  |  Player 2: 30 pts")
+    output should include("[ Press ENTER or Q to return to Main Menu ]")
+  }
+  
+  it should "render a draw message when match ends with no winner" in {
+    val view = new CLIView()
+    val scores = Map(Player1 -> 55, Player2 -> 55)
+    val winner = None
+    val maxScore = 50
+  
+    view.renderMatchEnd(scores, winner, maxScore)
+  
+    val output = Utils.viewBuilder.toString()
+    output should include("MATCH OVER!")
+    output should include("THE MATCH ENDED IN A DRAW!")
+    output should include("FINAL SCORES (Target: 50):")
+    output should include("Player 1: 55 pts  |  Player 2: 55 pts")
+    output should include("[ Press ENTER or Q to return to Main Menu ]")
+  }

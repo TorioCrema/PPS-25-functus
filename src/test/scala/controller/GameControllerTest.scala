@@ -10,25 +10,25 @@ import model.playable.turn.Action
 import view.CLIView
 import view.utils.{GameState, InputMode, ViewAction}
 
-class GameControllerTest extends AnyFlatSpec with Matchers {
+import model.playable.Playable
+
+class GameControllerTest extends AnyFlatSpec with Matchers:
 
   // Lightweight mock CLIView for capturing state updates
-  class TestCLIView extends CLIView{
+  class TestCLIView extends CLIView:
     var lastState: Option[GameState] = None
-    override def render(state: GameState): Unit = {
+    override def render(state: GameState): Unit =
       lastState = Some(state)
-    }
-  }
 
   // Helper method to instantiate controller with default populating factory
-  def createControllerFixture(game: Game = Game(BoardFactory.BoardWithPopulatedFields())): (GameController, TestCLIView) = {
-    val view = new TestCLIView()
-    val controller = new GameController(view, game)
-    (controller, view)
-  }
+  def createControllerFixture[P <: Playable[P]](
+      game: P = Game(BoardFactory.BoardWithPopulatedFields())
+  ): GameController[P] =
+    val controller = new GameController(game)
+    controller
 
   "GameController initialization" should "correctly sync initial GameState into ActionMenu mode" in {
-    val (controller, view) = createControllerFixture()
+    val controller = createControllerFixture()
 
     // Initial state check implicitly exposed via public scoring & initial sync logic
     controller.playerScore() should contain key Player1
@@ -36,7 +36,7 @@ class GameControllerTest extends AnyFlatSpec with Matchers {
   }
 
   "Score calculation" should "accurately calculate player scores based on game model" in {
-    val (controller, _) = createControllerFixture()
+    val controller = createControllerFixture()
     val scores = controller.playerScore()
 
     scores should contain key Player1
@@ -46,14 +46,14 @@ class GameControllerTest extends AnyFlatSpec with Matchers {
   }
 
   "getWinner" should "return the player with the lower score when game ends" in {
-    val (controller, _) = createControllerFixture()
+    val controller = createControllerFixture()
 
     // Low score wins in cactus rule setup
     val scores = controller.playerScore()
     val p1 = scores(Player1)
     val p2 = scores(Player2)
 
-    val expectedWinner = if (p1 > p2) Some(Player2) else if (p2 > p1) Some(Player1) else None
+    val expectedWinner = if p1 > p2 then Some(Player2) else if p2 > p1 then Some(Player1) else None
     controller.getWinner should be(expectedWinner)
   }
 
@@ -96,7 +96,7 @@ class GameControllerTest extends AnyFlatSpec with Matchers {
   }
 
   "Action Mapping (prepareActions)" should "correctly group placeholder actions into unified UI options" in {
-    val (controller, _) = createControllerFixture()
+    val controller = createControllerFixture()
 
     // Testing macro action grouping logic for board targeting actions
     val observeActions = List(Action.ObservePlayer(-1), Action.EndTurn)
@@ -105,7 +105,7 @@ class GameControllerTest extends AnyFlatSpec with Matchers {
     // ObservePlayer(-1) gets mapped to ViewAction("use_effect_player", "Use card effect (Peek at your card)")
     observeActions.exists {
       case Action.ObservePlayer(_) => true
-      case _ => false
+      case _                       => false
     } should be(true)
   }
 
@@ -119,7 +119,7 @@ class GameControllerTest extends AnyFlatSpec with Matchers {
     val replaceOnly = List(Action.ChooseReplace(0), Action.ChooseReplace(1))
     val isPlayerBoardTarget = replaceOnly.nonEmpty && replaceOnly.forall {
       case Action.ChooseReplace(_) | Action.ChooseDiscard(_) => true
-      case _ => false
+      case _                                                 => false
     }
     isPlayerBoardTarget should be(true)
   }
@@ -128,7 +128,7 @@ class GameControllerTest extends AnyFlatSpec with Matchers {
     val initialInputMode = InputMode.ActionMenu
     val selectedMacroAction = Action.ObservePlayer(-1)
 
-    val nextInputMode = selectedMacroAction match {
+    val nextInputMode = selectedMacroAction match
       case Action.ObservePlayer(-1) | Action.ChooseReplace(-1) | Action.ChooseDiscard(-1) =>
         InputMode.SelectCardOnBoard
       case Action.ObserveOpponent(-1) | Action.GiveBack(-1) =>
@@ -137,7 +137,6 @@ class GameControllerTest extends AnyFlatSpec with Matchers {
         InputMode.SelectAdversaryCardOnBoard
       case _ =>
         initialInputMode
-    }
 
     nextInputMode should be(InputMode.SelectCardOnBoard)
   }
@@ -148,9 +147,7 @@ class GameControllerTest extends AnyFlatSpec with Matchers {
 
     // First confirmation step in SelectAdversaryCardOnBoard
     val isSwapPhase = true
-    if (isSwapPhase) {
-      pendingOpponentSwapIdx = Some(selectedOpponentCardIdx)
-    }
+    if isSwapPhase then pendingOpponentSwapIdx = Some(selectedOpponentCardIdx)
 
     pendingOpponentSwapIdx should be(Some(2))
 
@@ -166,10 +163,32 @@ class GameControllerTest extends AnyFlatSpec with Matchers {
     val isEndgame = true
 
     // Player and Adversary cards should be fully revealed (Some(Card)) when game enters EndGame
-    val adversaryCards = if (isEndgame) board.getField(Player2).cardsList.map(Some(_)) else List.fill(4)(None)
-    val playerCards = if (isEndgame) board.getField(Player1).cardsList.map(Some(_)) else List.fill(4)(None)
+    val adversaryCards = if isEndgame then board.getField(Player2).cardsList.map(Some(_)) else List.fill(4)(None)
+    val playerCards = if isEndgame then board.getField(Player1).cardsList.map(Some(_)) else List.fill(4)(None)
 
     adversaryCards.forall(_.isDefined) should be(true)
     playerCards.forall(_.isDefined) should be(true)
   }
-}
+
+  "GameController with Match model" should "correctly extract currentGame and manage match lifecycle" in {
+    val targetScore = 100
+    val matchModel = model.playable.game.Match(targetScore)
+    val controller = new GameController(matchModel)
+
+    // Verify playable and game extraction
+    controller.getPlayable shouldBe matchModel
+    controller.getGame shouldBe matchModel.game
+
+    // Verify initial score setup
+    val scores = controller.playerScore()
+    scores should contain key Player1
+    scores should contain key Player2
+  }
+
+  "GameController polymorphic accessors" should "return correct references for Game instance" in {
+    val game = Game(BoardFactory.BoardWithPopulatedFields())
+    val controller = new GameController(game)
+
+    controller.getPlayable shouldBe game
+    controller.getGame shouldBe game
+  }

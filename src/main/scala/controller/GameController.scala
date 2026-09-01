@@ -1,20 +1,25 @@
 package org.pps.functus
 package controller
 
-import model.board.{BoardFactory, Player}
-import view.{CLIMenu, CLIView}
+import model.board.Player
+import view.CLIView
 import model.playable.turn.{Action, Turn}
-import model.playable.game.{Game, GamePhase}
+import model.playable.game.{Game, GamePhase, Match}
 import view.utils.InputMode.*
 import model.board.Player.*
-
 import view.utils.{GameState, InputMode, Key, Utils, ViewAction}
+import model.playable.Playable
 
-class GameController(
-    private val view: CLIView,
-    private var game: Game = Game(BoardFactory.BoardWithPopulatedFields())
+class GameController[P <: Playable[P]](
+    private var playable: P
 ):
 
+  private def currentGame: Game = playable match
+    case m: Match => m.game
+    case g: Game  => g
+
+  private var game: Game = currentGame
+  private val view: CLIView = CLIView()
   private var turn: Turn = game.currentTurn
   private var observedPlayers: Set[Player] = Set.empty
 
@@ -27,6 +32,7 @@ class GameController(
   private val STEP_NEXT = -1
   private val STEP_PREVIOUS = 1
   private var running = true
+
   /** Starts the main game loop, initializing the view and processing user input.
     */
   def start(): Unit =
@@ -160,7 +166,8 @@ class GameController(
     *   the domain [[Action]] to be performed
     */
   private def executeAction(action: Action): Unit =
-    game = game.act(action)
+    playable = playable.act(action)
+    game = currentGame
     turn = game.currentTurn
     checkTurnEndAndSync(action)
 
@@ -342,3 +349,7 @@ class GameController(
 
   def playerScore(): Map[Player, Int] =
     game.playerScore
+
+  def getGame: Game = game
+
+  def getPlayable: P = playable
