@@ -51,6 +51,7 @@ enum Action:
   /** Swaps cards between the two player fields. */
   case Swap(playerIndex: Int, opponentIndex: Int)
 
+  /** Returns the list of available actions after the current one. */
   def next: List[Action] = this match
     case Observe                                                        => List(Confirm)
     case Confirm | Cactus                                               => List(EndTurn)
