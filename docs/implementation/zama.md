@@ -9,6 +9,7 @@ Il mio contributo al progetto è focalizzato nelle seguenti aree:
 - **Effects**: implementazione degli effetti delle carte.
 - **Match**: implementazione di un match.
 - **Opponent**: implementazione dell'avversario virtuale.
+- **Showcase**: implementazione della generazione di turni dediti a mostrare le meccaniche di gioco
 - **Testing**: scrittura dei test per tutti i sistemi implementati
 
 ## Actions
@@ -17,6 +18,8 @@ Una `Action` rappresenta una possibile azione che un giocatore puo' eseguire dur
 Nel contesto del turno, esse rappresentano transizioni di stato, infatti è possibile considerare un turno
 come una macchina a stati finiti le cui transizioni sono le azioni disponibili in ogni stato.
 Ogni `Action` possiede un metodo `next` che restituisce le azioni disponibili dopo l'azione corrente.
+Il tipo `Action` è implementato attraverso una `enum`. Alcune azioni, come `ChooseDiscard`, o `Swap`,
+possiedono dei campi utilizzati per indicare le carte in esse coinvolte.
 
 ## Turn
 
@@ -95,6 +98,7 @@ Elementi rilevanti di Scala in questa implementazione sono:
     val (activated, turn) = (summon[Option[Card]].get, summon[Option[Turn]].get)
     val getFieldLength: Player => Int = turn.board.getField(_).length
     val replaceActions = (for i <- 0 until getFieldLength(turn.player) yield ChooseReplace(i)).toList
+    ...
   ```
 
 ## Match
@@ -192,6 +196,37 @@ Elementi rilevanti di Scala in questa implementazione sono:
   object Opponent:
   def apply(): Opponent = new Opponent()
   ```
+  
+## Showcase
+
+Gli `Showcase` permettono di generare entità `Turn` le cui `Board` sono popolate in modo tale da poter utilizzare
+immediatamente una specifica meccanica di gioco. Essi sono:
+- `SixShowcase`: dimostrazione dell'effetto speciale delle carte con valore sei, ovvero la possibilità di osservare una carta sul campo dell'avversario
+- `SevenShowcase`: dimostrazione dell'effetto speciale delle carte con valore sette, ovvero la possibilità di osservare una carta sul proprio campo
+- `JackShowcase`: dimostrazione dell'effetto speciale delle carte con valore otto (fante), ovvero la possibilta' di
+scambiare una carta sul proprio campo con una carta sul campo dell'avversario
+- `KingDrawShowcase`: dimostrazione della possibilità di pescare un re dalla cima della pila degli scarti a inizio turno
+- `SuccessfulDiscard`: dimostrazione dell'uso della meccanica di scarto in caso di successo
+- `FailedDiscardShowcase`: dimostrazione dell'uso della meccanica di scarto in caso di insuccesso
+
+L'implementazione è realizzata tramite i trait `Showcase` e `ShowcaseBoard`, entrambi implementati dalla classe astratta
+`AbstractShowcase` che genera il turno desiderato utilizzando la board fornita dall'interfaccia `ShowcaseBoard`.
+Ogni implementazione di `Showcase` estende `AbstractShowcase` e `ShowcaseBoard` tramite mixin, ad esempio:
+```scala 3
+private trait ShowcaseBoard:
+  def board: Board
+
+private trait SixEffect extends ShowcaseBoard:
+  override def board: Board = boardForSixEffect
+  
+trait Showcase:
+  def turn: Turn
+
+abstract class AbstractShowcase extends Showcase, ShowcaseBoard:
+  def turn: Turn = SimpleTurn(board, Player1)
+  
+object SixShowcase extends AbstractShowcase with SixEffect
+```
 
 ## Testing
 
