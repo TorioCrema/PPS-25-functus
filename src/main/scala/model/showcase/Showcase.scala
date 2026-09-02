@@ -36,7 +36,7 @@ trait Showcase:
   def turn: Turn
 
 abstract class AbstractShowcase extends Showcase, ShowcaseBoard:
-  def turn: Turn = SimpleTurn(board, Player1)
+  override def turn: Turn = SimpleTurn(board, Player1)
 
 /** [[Showcase]] for the effect of the six card.
   */
