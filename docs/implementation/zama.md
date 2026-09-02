@@ -192,3 +192,10 @@ Elementi rilevanti di Scala in questa implementazione sono:
   object Opponent:
   def apply(): Opponent = new Opponent()
   ```
+
+## Testing
+
+I test sono stati realizzati interamente tramite l'approccio TDD, cercando di raggiungere il valore piu' alto possibile
+di copertura del codice.
+
+---
