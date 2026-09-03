@@ -7,57 +7,56 @@ import model.playable.turn.Turns.SimpleTurn
 import model.board.Player.Player1
 import model.showcase.Configurations.*
 
-private trait ShowcaseBoard:
-  def board: Board
+trait ShowcaseBoard:
+  def apply(): Board
 
-private trait SixEffect extends ShowcaseBoard:
-  override def board: Board = boardForSixEffect
+trait SixEffect extends ShowcaseBoard:
+  override def apply(): Board = boardForSixEffect
 
-private trait SevenEffect extends ShowcaseBoard:
-  override def board: Board = boardForSevenEffect
+trait SevenEffect extends ShowcaseBoard:
+  override def apply(): Board = boardForSevenEffect
 
-private trait JackEffect extends ShowcaseBoard:
-  override def board: Board = boardForJackEffect
+trait JackEffect extends ShowcaseBoard:
+  override def apply(): Board = boardForJackEffect
 
-private trait KingDraw extends ShowcaseBoard:
-  override def board: Board = boardForKingDraw
+trait KingDraw extends ShowcaseBoard:
+  override def apply(): Board = boardForKingDraw
 
-private trait SuccessfulDiscard extends ShowcaseBoard:
-  override def board: Board = boardForSuccessfulDiscard
+trait SuccessfulDiscard extends ShowcaseBoard:
+  override def apply(): Board = boardForSuccessfulDiscard
 
-private trait FailedDiscard extends ShowcaseBoard:
-  override def board: Board = boardForFailedDiscard
+trait FailedDiscard extends ShowcaseBoard:
+  override def apply(): Board = boardForFailedDiscard
 
 /** Trait that generates [[Turn]]s used to showcase certain mechanics of the game.
   */
 trait Showcase:
+  board: ShowcaseBoard =>
+
   /** Returns the [[Turn]] of the [[Showcase]].
     */
-  def turn: Turn
-
-abstract class AbstractShowcase extends Showcase, ShowcaseBoard:
-  override def turn: Turn = SimpleTurn(board, Player1)
+  def turn: Turn = SimpleTurn(board(), Player1)
 
 /** [[Showcase]] for the effect of the six card.
   */
-object SixShowcase extends AbstractShowcase with SixEffect
+object SixShowcase extends Showcase with SixEffect
 
 /** [[Showcase]] for the effect of the seven card.
   */
-object SevenShowcase extends AbstractShowcase with SevenEffect
+object SevenShowcase extends Showcase with SevenEffect
 
 /** [[Showcase]] for the effect of the jack card.
   */
-object JackShowcase extends AbstractShowcase with JackEffect
+object JackShowcase extends Showcase with JackEffect
 
 /** [[Showcase]] for the game mechanic of drawing the king card from the discard pile.
   */
-object KingDrawShowcase extends AbstractShowcase with KingDraw
+object KingDrawShowcase extends Showcase with KingDraw
 
 /** [[Showcase]] for the successful discard game mechanic.
   */
-object SuccessfulDiscardShowcase extends AbstractShowcase with SuccessfulDiscard
+object SuccessfulDiscardShowcase extends Showcase with SuccessfulDiscard
 
 /** [[Showcase]] for the failed discard game mechanic.
   */
-object FailedDiscardShowcase extends AbstractShowcase with FailedDiscard
+object FailedDiscardShowcase extends Showcase with FailedDiscard
