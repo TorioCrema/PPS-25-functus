@@ -209,24 +209,27 @@ scambiare una carta sul proprio campo con una carta sul campo dell'avversario
 - `SuccessfulDiscard`: dimostrazione dell'uso della meccanica di scarto in caso di successo
 - `FailedDiscardShowcase`: dimostrazione dell'uso della meccanica di scarto in caso di insuccesso
 
-L'implementazione è realizzata tramite i trait `Showcase` e `ShowcaseBoard`, entrambi implementati dalla classe astratta
-`AbstractShowcase` che genera il turno desiderato utilizzando la board fornita dall'interfaccia `ShowcaseBoard`.
-Ogni implementazione di `Showcase` estende `AbstractShowcase` e `ShowcaseBoard` tramite mixin, ad esempio:
+L'implementazione è realizzata tramite i trait `Showcase` e `ShowcaseBoard`.
+`ShowcaseBoard` fornisce la `Board` utilizzata da `Showcase` per generare il turno tramite il metodo `apply`:
 ```scala 3
-private trait ShowcaseBoard:
-  def board: Board
+trait ShowcaseBoard:
+  def apply(): Board
 
-private trait SixEffect extends ShowcaseBoard:
-  override def board: Board = boardForSixEffect
-  
+trait SixEffect extends ShowcaseBoard:
+  override def apply(): Board = boardForSixEffect
+```
+Le istanze di `Showcase` vengono create tramite mix-in con istanze di `ShowcaseBoard`:
+```scala 3
 trait Showcase:
-  def turn: Turn
-
-abstract class AbstractShowcase extends Showcase, ShowcaseBoard:
-  def turn: Turn = SimpleTurn(board, Player1)
+  board: ShowCaseBoard =>
+  def turn: Turn = SimpleTurn(board(), Player1)
   
 object SixShowcase extends AbstractShowcase with SixEffect
 ```
+
+Elementi rilevanti di Scala in questa implementazione sono:
+
+- Utilizzo della notazione self-type nel trait `Showcase` e relative implementazioni tramite mix-in
 
 ## Testing
 
