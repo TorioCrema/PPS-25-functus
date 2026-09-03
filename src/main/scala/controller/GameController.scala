@@ -27,6 +27,7 @@ class GameController[P <: Playable[P]](
   private var observedPlayers: Set[Player] = Set.empty
 
   private var currentModelActions: List[Action] = Nil
+  private var actionHistory: List[Action] = Nil
   private var state: GameState = syncState(InputMode.ActionMenu)
   private var pendingOpponentSwapIdx: Option[Int] = None
   private var selectedMacroAction: Option[Action] = None
@@ -42,7 +43,7 @@ class GameController[P <: Playable[P]](
     */
   def start(): Unit =
     while running do
-      if isVsBot && turn.player == Player2 && state.inputMode != InputMode.WaitingRoom && running && !game.isOver then botTurn()
+      if isVsBot && turn.player == Player2 && running && state != WaitingRoom && !game.isOver then botTurn()
       else
         view.render(state)
         Utils.readInput() match
@@ -116,8 +117,8 @@ class GameController[P <: Playable[P]](
 
       pendingOpponentSwapIdx match
         case Some(oppIdx) =>
-          val swapAction = turn.actions.collectFirst { case Action.Swap(pIdx, oIdx) =>
-            Action.Swap(pIdx, oIdx)
+          val swapAction = turn.actions.collectFirst { case Action.Swap(`cardIndex`, `oppIdx`) =>
+            Action.Swap(cardIndex, oppIdx)
           }
           pendingOpponentSwapIdx = None
           selectedMacroAction = None
@@ -160,6 +161,7 @@ class GameController[P <: Playable[P]](
 
     case InputMode.WaitingRoom =>
       pendingOpponentSwapIdx = None
+      actionHistory = Nil
       state = syncState(determineNextInputMode())
 
     case EndGame => running = false
@@ -174,6 +176,9 @@ class GameController[P <: Playable[P]](
     */
   private def executeAction(action: Action): Unit =
     if isVsBot && turn.player == Player1 then opponentBot.react(action, turn)
+
+    if !isMandatoryOrRoutine(action) then actionHistory = actionHistory :+ action
+
     playable = playable.act(action)
     game = currentGame
     turn = game.currentTurn
@@ -189,10 +194,18 @@ class GameController[P <: Playable[P]](
     *   the latest [[Action]] executed within the turn
     */
   private def checkTurnEndAndSync(action: Action): Unit =
+
     if action.equals(Action.EndTurn) then
       if game.phase.equals(GamePhase.Over) then state = syncState(InputMode.EndGame)
-      else if isVsBot && turn.player == Player2 then state = syncState(determineNextInputMode())
-      else state = syncState(InputMode.WaitingRoom)
+      else if isVsBot then
+        // If Player 2 (Bot) just ended its turn, show the WaitingRoom to Player 1
+        if turn.player == Player1 then state = syncState(InputMode.WaitingRoom)
+        else
+          state = syncState(determineNextInputMode())
+          actionHistory = Nil
+      else
+        // Local 2-Player mode: Always show WaitingRoom between turns
+        state = syncState(InputMode.WaitingRoom)
     else state = syncState(determineNextInputMode(), selectedCardOnBoard = state.selectedCardOnBoard)
 
   /** Determines the appropriate [[InputMode]] for the upcoming turn state based on the available model actions.
@@ -241,6 +254,10 @@ class GameController[P <: Playable[P]](
     val (modelActions, viewActions) = prepareActions(turn.actions)
     currentModelActions = modelActions
     val isEndgame = inputMode.equals(EndGame)
+
+    val historyLabel = if actionHistory.nonEmpty then actionHistory.map(mapSingleAction(_).label).mkString(", ")
+    else ""
+
     GameState(
       adversaryCard = if isEndgame then board.getField(turn.player.other).cardsList.map(Some(_))
       else List.fill(board.getField(turn.player.other).cardsList.size)(None),
@@ -255,7 +272,9 @@ class GameController[P <: Playable[P]](
       selectedCardOnBoard = selectedCardOnBoard,
       winner = if isEndgame then getWinner else None,
       playerScore = if isEndgame then getPlayerScore else 0,
-      adversaryScore = if isEndgame then getAdversaryScore else 0
+      adversaryScore = if isEndgame then getAdversaryScore else 0,
+      actionHistory = historyLabel,
+      isVsBot = isVsBot
     )
 
   /** Grouping logic for board-selection actions: If actions like [[Action.ChooseReplace]], [[Action.ChooseDiscard]],
@@ -330,14 +349,15 @@ class GameController[P <: Playable[P]](
       else ViewAction("activate", "Swap drawn card with a board card")
     case Action.EndTurn            => ViewAction("end_turn", "End turn")
     case Action.Cactus             => ViewAction("cactus", "Call Cactus!")
-    case Action.ChooseDiscard(i)   => ViewAction(s"discard_$i", s"Discard card")
-    case Action.ChooseReplace(i)   => ViewAction(s"replace_$i", s"Replace card ")
-    case Action.Discard(i)         => ViewAction(s"discard_$i", s"Discard card ")
-    case Action.ObserveOpponent(i) => ViewAction(s"obs_opp_$i", s"Peek at opponent card")
-    case Action.GiveBack(i)        => ViewAction(s"give_back_$i", s"Return card to opponent")
-    case Action.ObservePlayer(i)   => ViewAction(s"obs_player_$i", s"Peek at your card")
-    case Action.ReturnToField(i)   => ViewAction(s"return_$i", s"Return card to your field")
-    case Action.Swap(pIdx, oIdx)   => ViewAction(s"swap_${pIdx}_$oIdx", s"Swap your card with opponent's")
+    case Action.ChooseDiscard(i)   => ViewAction(s"discard_$i", s"Discard card in position ${i + 1}")
+    case Action.ChooseReplace(i)   => ViewAction(s"replace_$i", s"Replace card in position ${i + 1}")
+    case Action.Discard(i)         => ViewAction(s"discard_$i", s"Discard card in position ${i + 1}")
+    case Action.ObserveOpponent(i) => ViewAction(s"obs_opp_$i", s"Peek at opponent card in position ${i + 1}")
+    case Action.GiveBack(i)        => ViewAction(s"give_back_$i", s"Return card to opponent in position ${i + 1}")
+    case Action.ObservePlayer(i)   => ViewAction(s"obs_player_$i", s"Peek at your card in position ${i + 1}")
+    case Action.ReturnToField(i)   => ViewAction(s"return_$i", s"Return card to your field in position ${i + 1}")
+    case Action.Swap(pIdx, oIdx)   =>
+      ViewAction(s"swap_${pIdx}_$oIdx", s"Swap your card in position $pIdx with opponent's card in position $oIdx")
 
   def getWinner: Option[Player] =
     val scores = game.playerScore
@@ -369,3 +389,6 @@ class GameController[P <: Playable[P]](
       val (nextTurn, chosenAction) = opponentBot.play(turn)
       executeAction(chosenAction)
 
+  private def isMandatoryOrRoutine(action: Action): Boolean = action match
+    case Action.Draw | Action.EndTurn | Action.Confirm | Action.Observe | Action.Activate | Action.ChooseDiscard => true
+    case _ => false

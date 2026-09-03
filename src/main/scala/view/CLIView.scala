@@ -6,7 +6,6 @@ import view.utils.{GameState, InputMode, Utils}
 import view.utils.Utils.{ANSI_GREEN_BOLD, ANSI_RESET, SEPARATOR_CHAR, terminalWidth, viewBuilder}
 import model.board.Player
 
-
 class CLIView:
 
   /** * render on the terminal the board in this order Header adversary field draw and discard pile player field hand
@@ -114,7 +113,7 @@ class CLIView:
 
     viewBuilder.append(transitionBlock)
 
-  private def drawWaitingRoom(using viewBuilder: StringBuilder, separator: String): Unit =
+  private def drawWaitingRoom(using viewBuilder: StringBuilder, gameState: GameState, separator: String): Unit =
 
     Utils.viewBuilder.clear()
     Utils.clearScreen()
@@ -122,9 +121,16 @@ class CLIView:
 
     val transitionBlock = StringBuilder()
     transitionBlock.append(s"$separator\n")
-    transitionBlock.append(Utils.centerText("PLAYER SWAP")).append("\n\n")
-    transitionBlock.append(Utils.centerText("Make sure the other player isn't watching!")).append("\n\n")
-    transitionBlock.append(Utils.centerText("[ Press ENTER to begin the turn ]")).append("\n")
+    if gameState.isVsBot then
+      transitionBlock.append(Utils.centerText("PLAYER'S TURN")).append("\n\n")
+      transitionBlock.append(Utils.centerText("Last action performed by the Bot")).append("\n\n")
+      transitionBlock.append(Utils.centerText(s"${gameState.actionHistory} \n\n"))
+      transitionBlock.append(Utils.centerText("[ Press ENTER to begin the turn ]")).append("\n")
+    else
+      transitionBlock.append(Utils.centerText("PLAYER SWAP")).append("\n\n")
+      transitionBlock.append(Utils.centerText("Make sure the other player isn't watching!")).append("\n\n")
+      transitionBlock.append(Utils.centerText(s"Last action performed: ${gameState.actionHistory} \n\n"))
+      transitionBlock.append(Utils.centerText("[ Press ENTER to begin the turn ]")).append("\n")
     transitionBlock.append(s"$separator\n")
     Utils.renderCenteredBlock(transitionBlock.toString())
 
@@ -163,11 +169,12 @@ class CLIView:
 
     viewBuilder.append(s"\n (Press 'Q' to return to main menu)\n")
 
-  /***
-   * show score between games of a match
-   * @param scores the actual score of each player
-   * @param maxScore the score to be reached to end the match
-   */
+  /** * show score between games of a match
+    * @param scores
+    *   the actual score of each player
+    * @param maxScore
+    *   the score to be reached to end the match
+    */
   def renderMatchStatus(scores: Map[Player, Int], maxScore: Int): Unit =
     given separator: String = SEPARATOR_CHAR * terminalWidth
 
@@ -191,12 +198,14 @@ class CLIView:
     Utils.renderCenteredBlock(transitionBlock.toString())
     print(viewBuilder.toString())
 
-  /***
-   * Render End of Match message Displaying the winner
-   * @param scores final score of each player
-   * @param winner the winner of the match if it's a tie the winner is [Option.None]
-   * @param maxScore the score to be reached to end the match
-   */
+  /** * Render End of Match message Displaying the winner
+    * @param scores
+    *   final score of each player
+    * @param winner
+    *   the winner of the match if it's a tie the winner is [Option.None]
+    * @param maxScore
+    *   the score to be reached to end the match
+    */
   def renderMatchEnd(scores: Map[Player, Int], winner: Option[Player], maxScore: Int): Unit =
     given separator: String = SEPARATOR_CHAR * terminalWidth
 
@@ -224,4 +233,3 @@ class CLIView:
 
     Utils.renderCenteredBlock(transitionBlock.toString())
     print(viewBuilder.toString())
-
