@@ -91,11 +91,7 @@ class BoardTest extends AnyFlatSpec with Matchers:
       deck from king | aceOfSwords | twoOfCups
     ).discard(king)
 
-    val (returnedKing, newBoard) = board
-      .kingTopDiscardStack()
-      .getOrElse(
-        throw IllegalStateException("Expected a king on top of discard pile")
-      )
+    val (returnedKing, newBoard) = board.kingTopDiscardStack()
     returnedKing should be(king)
     newBoard.discardPile should not contain king
 
@@ -105,19 +101,15 @@ class BoardTest extends AnyFlatSpec with Matchers:
       List(FieldImpl(), FieldImpl()),
       DeckImpl(Vector.empty)
     ).discard(aceOfSwords).discard(king)
-    val (_, newBoard) = board
-      .kingTopDiscardStack()
-      .getOrElse(
-        throw IllegalStateException("Expected a king on top of discard pile")
-      )
+    val (_, newBoard) = board.kingTopDiscardStack()
     newBoard.discardPile should contain(aceOfSwords)
 
-  it should "return Left when top of discard pile is not a king" in:
+  it should "throw IllegalStateException when top of discard pile is not a king" in:
     val board = CustomBoard(
       List(FieldImpl(), FieldImpl()),
       DeckImpl(Vector.empty)
     ).discard(threeOfSwords)
-    board.kingTopDiscardStack() shouldBe a[Left[?,?]]
+    an[IllegalStateException] should be thrownBy board.kingTopDiscardStack()
 
   it should "place a card in a player field" in:
     val newBoard = emptyFieldBoard.placeCardInField(threeOfSwords, Player1)
