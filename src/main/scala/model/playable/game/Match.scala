@@ -1,7 +1,7 @@
 package org.pps.functus
 package model.playable.game
 
-import model.board.{Board, Player}
+import model.board.{Board, BoardFactory, Player}
 import model.board.Player.*
 import model.deck.sugar.BoardDSL.{board as newBoard, *}
 import model.playable.Playable
@@ -62,5 +62,5 @@ object Match:
     * @return
     *   a new [[Match]]
     */
-  def apply(maxScore: Int, board: Board = newBoard from default): Match =
+  def apply(maxScore: Int, board: Board = BoardFactory.BoardWithPopulatedFields()): Match =
     Match(maxScore, Game(board), Map((Player1, 0), (Player2, 0)))

@@ -43,5 +43,7 @@ case class GameState(
     selectedCardOnBoard: Int = 0,
     winner: Option[Player] = None,
     playerScore: Int = 0,
-    adversaryScore: Int = 0
+    adversaryScore: Int = 0,
+    actionHistory: String = "",
+    isVsBot: Boolean = false
 )
