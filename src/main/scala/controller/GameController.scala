@@ -10,8 +10,11 @@ import model.board.Player.*
 import view.utils.{GameState, InputMode, Key, Utils, ViewAction}
 import model.playable.Playable
 
+import model.opponent.Opponent
+
 class GameController[P <: Playable[P]](
-    private var playable: P
+    private var playable: P,
+    private val isVsBot: Boolean = false
 ):
 
   private def currentGame: Game = playable match
@@ -33,17 +36,21 @@ class GameController[P <: Playable[P]](
   private val STEP_PREVIOUS = 1
   private var running = true
 
+  private val opponentBot: Opponent = Opponent()
+
   /** Starts the main game loop, initializing the view and processing user input.
     */
   def start(): Unit =
     while running do
-      view.render(state)
-      Utils.readInput() match
-        case Key.UP | Key.LEFT    => moveSelection(delta = STEP_NEXT)
-        case Key.DOWN | Key.RIGHT => moveSelection(delta = STEP_PREVIOUS)
-        case Key.ENTER            => confirmAction()
-        case Key.ESCAPE           => running = false
-        case _                    => ()
+      if isVsBot && turn.player == Player2 && state.inputMode != InputMode.WaitingRoom && running && !game.isOver then botTurn()
+      else
+        view.render(state)
+        Utils.readInput() match
+          case Key.UP | Key.LEFT    => moveSelection(delta = STEP_NEXT)
+          case Key.DOWN | Key.RIGHT => moveSelection(delta = STEP_PREVIOUS)
+          case Key.ENTER            => confirmAction()
+          case Key.ESCAPE           => running = false
+          case _                    => ()
 
   /** Handles the user's arrow input (e.g., pressing UP, DOWN) based on the current [[InputMode]].
     *
@@ -166,6 +173,7 @@ class GameController[P <: Playable[P]](
     *   the domain [[Action]] to be performed
     */
   private def executeAction(action: Action): Unit =
+    if isVsBot && turn.player == Player1 then opponentBot.react(action, turn)
     playable = playable.act(action)
     game = currentGame
     turn = game.currentTurn
@@ -183,6 +191,7 @@ class GameController[P <: Playable[P]](
   private def checkTurnEndAndSync(action: Action): Unit =
     if action.equals(Action.EndTurn) then
       if game.phase.equals(GamePhase.Over) then state = syncState(InputMode.EndGame)
+      else if isVsBot && turn.player == Player2 then state = syncState(determineNextInputMode())
       else state = syncState(InputMode.WaitingRoom)
     else state = syncState(determineNextInputMode(), selectedCardOnBoard = state.selectedCardOnBoard)
 
@@ -353,3 +362,10 @@ class GameController[P <: Playable[P]](
   def getGame: Game = game
 
   def getPlayable: P = playable
+
+  /** Executes actions on behalf of the bot until its turn ends */
+  private def botTurn(): Unit =
+    if !game.isOver then
+      val (nextTurn, chosenAction) = opponentBot.play(turn)
+      executeAction(chosenAction)
+

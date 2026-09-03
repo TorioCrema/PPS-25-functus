@@ -117,6 +117,7 @@ class Opponent:
     else
       turn.actions match
         case `Draw` :: `DrawKing` :: Nil  => DrawKing
+        case `Draw` :: _ => Draw
         case `Cactus` :: `EndTurn` :: Nil => checkCactus(turn)
         case action :: Nil                => action
         case _ => throw new NotImplementedError("No choice of action implemented for given actions.")

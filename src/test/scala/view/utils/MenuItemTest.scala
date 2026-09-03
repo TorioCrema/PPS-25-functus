@@ -15,16 +15,19 @@ class MenuItemTest extends AnyFunSpec with Matchers:
       it("should contain all defined enum cases") {
         MenuItem.values should contain theSameElementsAs Array(
           MenuItem.SingleGame,
-          MenuItem.Match
+          MenuItem.SinglePlayerGame,
+          MenuItem.Match,
+          MenuItem.SinglePlayerMatch
+
         )
       }
 
       it("should associate the correct label to SingleGame") {
-        MenuItem.SingleGame.label shouldBe "Play a single game"
+        MenuItem.SingleGame.label shouldBe "Play a single game ( 2 Player )"
       }
 
       it("should associate the correct label to Match") {
-        MenuItem.Match.label shouldBe "Play a Match with score limit"
+        MenuItem.Match.label shouldBe "Play a Match with score limit ( 2 Player )"
       }
     }
 
@@ -43,7 +46,9 @@ class MenuItemTest extends AnyFunSpec with Matchers:
 
       it("should correctly find cases using ordinal positioning") {
         MenuItem.fromOrdinal(0) shouldBe MenuItem.SingleGame
-        MenuItem.fromOrdinal(1) shouldBe MenuItem.Match
+        MenuItem.fromOrdinal(1) shouldBe MenuItem.SinglePlayerGame
+        MenuItem.fromOrdinal(2) shouldBe MenuItem.Match
+        MenuItem.fromOrdinal(3) shouldBe MenuItem.SinglePlayerMatch
       }
     }
 

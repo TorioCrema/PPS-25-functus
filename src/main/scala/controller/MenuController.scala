@@ -4,9 +4,12 @@ package controller
 import view.CLIMenu
 import view.utils.{Key, MenuItem, TargetScoreOption, Utils}
 
-import MenuItem.{Match as MenuMatch, SingleGame}
+import MenuItem.{SingleGame, SinglePlayerGame, SinglePlayerMatch, Match as MenuMatch}
 import model.deck.sugar.BoardDSL.{board, default}
 import model.playable.game.{Game, Match}
+
+import model.board.{BoardFactory, BoardImpl}
+
 import scala.language.implicitConversions
 
 class MenuController(private val menu: CLIMenu):
@@ -19,6 +22,7 @@ class MenuController(private val menu: CLIMenu):
   private var selectedModeIndex = 0
   private var selectedScoreIndex = 0
   private var isChoosingTargetScore = false
+  private var matchVsBot = false
 
   def start(): Unit =
     var isExitChosen = false
@@ -50,12 +54,17 @@ class MenuController(private val menu: CLIMenu):
 
   private def confirmMainAction(): Unit = menuItems(selectedModeIndex) match
     case SingleGame =>
-      GameController(Game(board from default)).start()
+      GameController(Game(BoardFactory.BoardWithPopulatedFields()), isVsBot = false).start()
     case MenuMatch =>
+      selectedScoreIndex = 0
+      isChoosingTargetScore = true
+    case SinglePlayerGame => GameController(Game(BoardFactory.BoardWithPopulatedFields()), isVsBot = true).start()
+    case SinglePlayerMatch =>
+      matchVsBot = true
       selectedScoreIndex = 0
       isChoosingTargetScore = true
 
   private def confirmScoreSelection(): Unit =
     val chosenTargetScore = targetScores(selectedScoreIndex).score
     isChoosingTargetScore = false
-    MatchController(Match(chosenTargetScore)).start()
+    MatchController(Match(chosenTargetScore), isVsBot = matchVsBot).start()
