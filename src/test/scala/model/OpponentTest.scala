@@ -27,8 +27,8 @@ class OpponentTest extends AnyFlatSpec with Matchers:
   private val firstTurn = FirstTurn(longBoard, Player1)
   private val observeAndDiscardBoard = board from default withCustom playerOne(opponentField) withCustom
     playerTwo(adversaryFieldForDiscard) withCustom customDeck(
-    deck from ((six of Wands) | (six of Pentacles) | (four of Pentacles))
-  )
+      deck from ((six of Wands) | (six of Pentacles) | (four of Pentacles))
+    )
 
   private def playFirstTurn(board: Board, opponent: Opponent): Turn =
     var turn = opponent.play(FirstTurn(board, Player1))._1
@@ -158,7 +158,7 @@ class OpponentTest extends AnyFlatSpec with Matchers:
     val opponent = Opponent()
     val swapBoard = shortBoard withCustom CustomDeck(deck from single(jack of Pentacles))
     val turn = SimpleTurn(swapBoard, Player2).actAll(Draw :: Activate :: Nil)
-    opponent.react(Swap(0,0), turn)
+    opponent.react(Swap(0, 0), turn)
     opponent.getKnownCard(0) should be(None)
     opponent.getKnownAdversaryCard(0) should be(None)
 
@@ -213,3 +213,15 @@ class OpponentTest extends AnyFlatSpec with Matchers:
     chosenAction should be(Swap(0, 0))
     opponent.getKnownCard(0) should be(Some(afterSwap.board.players(Player1).getCard(0)._1))
     opponent.getKnownAdversaryCard(0) should be(Some(afterSwap.board.players(Player2).getCard(0)._1))
+
+  it should "remember where the player puts the king it has drawn" in:
+    val boardWithDrawableKing = firstTurn.board.discard(king of Cups)
+    var turn = SimpleTurn(boardWithDrawableKing, Player2)
+    val opponent = Opponent()
+    opponent.react(DrawKing, turn)
+    turn = turn.actAll(DrawKing :: Activate :: Nil)
+    opponent.react(ChooseReplace(0), turn)
+    opponent.getKnownAdversaryCard(0) should be(Some(king of Cups))
+
+  it should "throw an IllegalArgumentException when reacting to an action that isn't available" in:
+    an[IllegalArgumentException] should be thrownBy Opponent().react(Draw, firstTurn)
