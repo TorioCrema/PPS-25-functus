@@ -213,3 +213,12 @@ class OpponentTest extends AnyFlatSpec with Matchers:
     chosenAction should be(Swap(0, 0))
     opponent.getKnownCard(0) should be(Some(afterSwap.board.players(Player1).getCard(0)._1))
     opponent.getKnownAdversaryCard(0) should be(Some(afterSwap.board.players(Player2).getCard(0)._1))
+
+  it should "remember where the player puts the king it has drawn" in:
+    val boardWithDrawableKing = firstTurn.board.discard(king of Cups)
+    var turn = SimpleTurn(boardWithDrawableKing, Player2)
+    val opponent = Opponent()
+    opponent.react(DrawKing, turn)
+    turn = turn.actAll(DrawKing :: Activate :: Nil)
+    opponent.react(ChooseReplace(0), turn)
+    opponent.getKnownAdversaryCard(0) should be(Some(king of Cups))
