@@ -6,10 +6,12 @@ import view.utils.{Key, MenuItem, ShowCaseOption, TargetScoreOption, Utils}
 
 import MenuItem.*
 import MenuItem.Match as MenuMatch
-import model.playable.game.{Game, Match}
+import model.playable.game.{Game, GamePhase, Match}
 import model.board.BoardFactory
-
 import view.utils.ShowCaseOption.*
+import model.showcase.{FailedDiscardShowcase, JackShowcase, KingDrawShowcase, SevenShowcase, SixShowcase, SuccessfulDiscardShowcase}
+
+import model.board.Player.Player2
 
 import scala.language.implicitConversions
 
@@ -59,10 +61,12 @@ class MenuController(private val menu: CLIMenu):
     override def render(selectedIndex: Int): Unit = menu.renderShowCaseMenu(selectedIndex)
 
     override def onConfirm(selectedIndex: Int): Unit = showCaseItems(selectedIndex) match
-      case DrawSix => ()
-      case DrawSeven => ()
-      case DrawEight => ()
-      case DrawKing => ()
+      case DrawSix => GameController(Game(GamePhase.LastTurn,SixShowcase.turn,Some(Player2)), isVsBot = true).start()
+      case DrawSeven => GameController(Game(GamePhase.LastTurn,SevenShowcase.turn,Some(Player2)), isVsBot = true).start()
+      case DrawEight => GameController(Game(GamePhase.LastTurn,JackShowcase.turn,Some(Player2)), isVsBot = true).start()
+      case DrawKing => GameController(Game(GamePhase.LastTurn,KingDrawShowcase.turn,Some(Player2)), isVsBot = true).start()
+      case SuccessfulDiscard => GameController(Game(GamePhase.LastTurn, SuccessfulDiscardShowcase.turn, Some(Player2)), isVsBot = true).start()
+      case FailDiscard => GameController(Game(GamePhase.LastTurn, FailedDiscardShowcase.turn, Some(Player2)), isVsBot = true).start()
 
 
   private var currentMenu: Menu = MainMenu
@@ -83,7 +87,7 @@ class MenuController(private val menu: CLIMenu):
    * Continuously renders the active [[MenuState]] and listens for keyboard input.
    * Directional key presses ([[view.utils.Key.UP]], [[view.utils.Key.DOWN]],
    * [[view.utils.Key.LEFT]], [[view.utils.Key.RIGHT]]) update option selection
-   * cyclicly within the current menu bounds
+   * cyclically within the current menu bounds
    *
    * Action resolution is delegated to the active menu state:
    *  - [[view.utils.Key.ENTER]] confirms selection by triggering `currentMenu.onConfirm`.

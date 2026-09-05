@@ -23,3 +23,5 @@ enum ShowCaseOption(val label: String) extends SelectableMenuItem:
   case DrawSeven extends ShowCaseOption("Draw a seven")
   case DrawEight extends ShowCaseOption("Draw a eight")
   case DrawKing extends ShowCaseOption("King in discard pile")
+  case SuccessfulDiscard extends  ShowCaseOption("Discard the RIGHT card from the board")
+  case FailDiscard extends  ShowCaseOption("Discard the WRONG card from the board")

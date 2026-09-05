@@ -126,7 +126,9 @@ class MenuItemTest extends AnyFunSpec with Matchers:
           ShowCaseOption.DrawSix,
           ShowCaseOption.DrawSeven,
           ShowCaseOption.DrawEight,
-          ShowCaseOption.DrawKing
+          ShowCaseOption.DrawKing,
+          ShowCaseOption.SuccessfulDiscard,
+          ShowCaseOption.FailDiscard
         )
       }
 
