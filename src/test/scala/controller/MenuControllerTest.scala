@@ -14,7 +14,7 @@ class FakeCLIMenu extends CLIMenu:
   var renderedIndices: List[Int] = List.empty
   var renderedScoreIndices: List[Int] = List.empty
 
-  override def render(selectedIndex: Int): Unit =
+  override def renderMainMenu(selectedIndex: Int): Unit =
     renderedIndices = renderedIndices :+ selectedIndex
 
   override def renderTargetScoreMenu(selectedIndex: Int): Unit =

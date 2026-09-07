@@ -9,7 +9,7 @@ import scala.util.Try
 
 object Utils:
 
-  val terminal: Terminal = TerminalBuilder.builder().system(true).build()
+  private val terminal: Terminal = TerminalBuilder.builder().system(true).build()
   private val bindingReader = new BindingReader(terminal.reader())
   private val keyMap = new KeyMap[Key]()
 
@@ -19,6 +19,7 @@ object Utils:
   val SEPARATOR_CHAR = "_"
 
   given viewBuilder: StringBuilder = StringBuilder()
+  given separator: String = SEPARATOR_CHAR * terminalWidth
 
   private val HEADER_ART = List(
     "    /$$$$$$$$                              /$$                            ",

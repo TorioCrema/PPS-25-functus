@@ -9,7 +9,8 @@ import model.playable.turn.Action.*
 class Opponent:
   private var knownCards: Map[Int, Card] = Map()
   private var adversaryCards: Map[Int, Card] = Map()
-  private val cactusThreshold = 5
+  private val cactusThreshold: Int = 5
+  private var kingDrawnByAdversary: Option[Card] = None
 
   /** Returns [[Option]] of the card within the [[Opponent]] field if known, [[None]] otherwise.
     *
@@ -55,13 +56,13 @@ class Opponent:
     case chosenAction => (turn.act(chosenAction), chosenAction)
 
   private def getChosenAction(turn: Turn): Action =
-    val bestActions = turn.actions
+    val favourableActions = turn.actions
       .filter(isDiscardable(_, turn))
       .appendedAll(turn.actions.filter(unknownObservePlayer))
       .appendedAll(turn.actions.filter(unknownObserveOpponent))
       .appendedAll(turn.actions.filter(favourableSwap))
       .appendedAll(turn.actions.filter(unknownReplace(turn)))
-    if bestActions.nonEmpty then bestActions.head
+    if favourableActions.nonEmpty then favourableActions.head
     else if canReplace(turn.actions) then ChooseReplace(knownCards.maxBy((index, card) => card.value)._1)
     else
       turn.actions match
@@ -71,20 +72,26 @@ class Opponent:
         case action :: Nil                => action
         case _ => throw new NotImplementedError("No choice of action implemented for given actions.")
 
-  /** Reacts an action performed by the player based on the [[Opponent]]'s current knowledge.
+  /** Reacts an action performed by the adversary based on the [[Opponent]]'s current knowledge.
     * @param action
     *   the player's [[Action]]
     * @param turn
     *   the [[Turn]] the [[Action]] is being performed on
     */
-  def react(action: Action, turn: Turn): Unit = action match
-    case ChooseDiscard(index)
-        if knows(adversaryCards)(index)
-          && turn.board.getTopDiscardStack.value == getKnownAdversaryCard(index).get.value =>
-      forgetAndUpdate(index)
-    case ChooseReplace(index) if knows(adversaryCards)(index) => adversaryCards = adversaryCards.removed(index)
-    case Swap(adversaryIndex, ownIndex)                       => swapReaction(adversaryIndex, ownIndex)
-    case _                                                    => ()
+  def react(action: Action, turn: Turn): Unit =
+    require(turn.actions.contains(action))
+    action match
+      case ChooseDiscard(index)
+          if knows(adversaryCards)(index)
+            && turn.board.getTopDiscardStack.value == getKnownAdversaryCard(index).get.value =>
+        forgetAndUpdate(index)
+      case ChooseReplace(index) if kingDrawnByAdversary.isDefined =>
+        adversaryCards = adversaryCards.updated(index, kingDrawnByAdversary.get)
+        kingDrawnByAdversary = None
+      case ChooseReplace(index) if knows(adversaryCards)(index) => adversaryCards = adversaryCards.removed(index)
+      case Swap(adversaryIndex, ownIndex)                       => swapReaction(adversaryIndex, ownIndex)
+      case DrawKing => kingDrawnByAdversary = Some(turn.board.getTopDiscardStack)
+      case _        => ()
 
   private def forgetAndUpdate(index: Int): Unit =
     adversaryCards = adversaryCards.removed(index)
