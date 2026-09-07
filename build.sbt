@@ -11,7 +11,7 @@ lazy val root = (project in file("."))
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.20" % Test,
     libraryDependencies += "org.scalatestplus" %% "mockito-5-10" % "3.2.18.0" % Test,
     libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0",
-    libraryDependencies += "org.jline" % "jline" % "4.3.1",
+    libraryDependencies += "org.jline" % "jline" % "4.4.2",
 
     Test / parallelExecution := false,
 
