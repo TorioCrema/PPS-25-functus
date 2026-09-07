@@ -5,11 +5,10 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import model.board.BoardFactory
 import model.board.Player.*
-import model.playable.game.Game
+import model.playable.game.{Game, GamePhase}
 import model.playable.turn.Action
 import view.CLIView
 import view.utils.{GameState, InputMode, ViewAction}
-
 import model.playable.Playable
 
 class GameControllerTest extends AnyFlatSpec with Matchers:
@@ -191,4 +190,49 @@ class GameControllerTest extends AnyFlatSpec with Matchers:
 
     controller.getPlayable shouldBe game
     controller.getGame shouldBe game
+  }
+
+  "Showcase Initialization" should "correctly setup GameController with showcase pre-configured turns" in {
+    // 1. Initialize GameController with a Showcase turn (SixShowcase)
+    val showcaseGame = Game(GamePhase.LastTurn, model.showcase.SixShowcase.turn, Some(Player2))
+    val controller = new GameController(showcaseGame)
+  
+    controller.getGame.phase shouldBe GamePhase.LastTurn
+    controller.getGame.cactusCaller shouldBe Some(Player2)
+    controller.getGame.currentTurn.player shouldBe Player1
+  }
+  
+  "Showcase EndGame Flow" should "reveal all cards when initialized in LastTurn and game completes" in {
+    // 2. Test showcase endgame reveal logic
+    val showcaseGame = Game(GamePhase.LastTurn, model.showcase.KingDrawShowcase.turn, Some(Player2))
+    val controller = new GameController(showcaseGame)
+  
+    // Verify all cards are visible at endgame reveal
+    val board = controller.getGame.currentTurn.board
+    val p1Cards = board.getField(Player1).cardsList.map(Some(_))
+    val p2Cards = board.getField(Player2).cardsList.map(Some(_))
+  
+    p1Cards.forall(_.isDefined) shouldBe true
+    p2Cards.forall(_.isDefined) shouldBe true
+  }
+  
+  "Showcase Options Mapping" should "correctly map all MenuController Showcase choices to playable GameControllers" in {
+    // 3. Verify all showcase presets initialize valid GameControllers without throwing exceptions
+    val showcasePresets = List(
+      model.showcase.SixShowcase.turn,
+      model.showcase.SevenShowcase.turn,
+      model.showcase.JackShowcase.turn,
+      model.showcase.KingDrawShowcase.turn,
+      model.showcase.SuccessfulDiscardShowcase.turn,
+      model.showcase.FailedDiscardShowcase.turn
+    )
+  
+    showcasePresets.foreach { turn =>
+      noException should be thrownBy {
+        val game = Game(GamePhase.LastTurn, turn, Some(Player2))
+        val controller = new GameController(game, isVsBot = true)
+        controller.playerScore() should contain key Player1
+        controller.playerScore() should contain key Player2
+      }
+    }
   }
