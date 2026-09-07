@@ -357,7 +357,7 @@ class GameController[P <: Playable[P]](
     case Action.ObservePlayer(i)   => ViewAction(s"obs_player_$i", s"Peek at your card in position ${i + 1}")
     case Action.ReturnToField(i)   => ViewAction(s"return_$i", s"Return card to your field in position ${i + 1}")
     case Action.Swap(pIdx, oIdx)   =>
-      ViewAction(s"swap_${pIdx}_$oIdx", s"Swap your card in position $pIdx with opponent's card in position $oIdx")
+      ViewAction(s"swap_${pIdx}_$oIdx", s"Swap your card in position ${pIdx+1} with opponent's card in position ${oIdx+1}")
 
   def getWinner: Option[Player] =
     val scores = game.playerScore

@@ -221,4 +221,5 @@ class CLIViewTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
     output should include("FINAL SCORES (Target: 50):")
     output should include("Player 1: 55 pts  |  Player 2: 55 pts")
     output should include("[ Press ENTER or Q to return to Main Menu ]")
+    Utils.clearScreen()
   }
