@@ -9,7 +9,8 @@ import model.playable.turn.Action.*
 class Opponent:
   private var knownCards: Map[Int, Card] = Map()
   private var adversaryCards: Map[Int, Card] = Map()
-  private val cactusThreshold = 5
+  private val cactusThreshold: Int = 5
+  private var kingDrawnByAdversary: Option[Card] = None
 
   /** Selects the appropriate action from the available ones and applies it to the current turn.
     * @param turn
@@ -35,20 +36,43 @@ class Opponent:
       (turn.act(ChooseReplace(index)), ChooseReplace(index))
     case chosenAction => (turn.act(chosenAction), chosenAction)
 
+  private def getChosenAction(turn: Turn): Action =
+    val favourableActions = turn.actions
+      .filter(isDiscardable(_, turn))
+      .appendedAll(turn.actions.filter(unknownObservePlayer))
+      .appendedAll(turn.actions.filter(unknownObserveOpponent))
+      .appendedAll(turn.actions.filter(favourableSwap))
+      .appendedAll(turn.actions.filter(unknownReplace(turn)))
+    if favourableActions.nonEmpty then favourableActions.head
+    else if canReplace(turn.actions) then ChooseReplace(knownCards.maxBy((index, card) => card.value)._1)
+    else
+      turn.actions match
+        case `Draw` :: `DrawKing` :: Nil  => DrawKing
+        case `Draw` :: _                  => Draw
+        case `Cactus` :: `EndTurn` :: Nil => checkCactus(turn)
+        case action :: Nil                => action
+        case _ => throw new NotImplementedError("No choice of action implemented for given actions.")
+
   /** Reacts an action performed by the adversary based on the [[Opponent]]'s current knowledge.
     * @param action
     *   the adversary's [[Action]]
     * @param turn
     *   the [[Turn]] the [[Action]] is being performed on
     */
-  def react(action: Action, turn: Turn): Unit = action match
-    case ChooseDiscard(index)
-        if knows(adversaryCards)(index)
-          && turn.board.getTopDiscardStack.value == getKnownAdversaryCard(index).get.value =>
-      forgetAndUpdate(index)
-    case ChooseReplace(index) if knows(adversaryCards)(index) => adversaryCards = adversaryCards.removed(index)
-    case Swap(adversaryIndex, ownIndex)                       => swapReaction(adversaryIndex, ownIndex)
-    case _                                                    => ()
+  def react(action: Action, turn: Turn): Unit =
+    require(turn.actions.contains(action))
+    action match
+      case ChooseDiscard(index)
+          if knows(adversaryCards)(index)
+            && turn.board.getTopDiscardStack.value == getKnownAdversaryCard(index).get.value =>
+        forgetAndUpdate(index)
+      case ChooseReplace(index) if kingDrawnByAdversary.isDefined =>
+        adversaryCards = adversaryCards.updated(index, kingDrawnByAdversary.get)
+        kingDrawnByAdversary = None
+      case ChooseReplace(index) if knows(adversaryCards)(index) => adversaryCards = adversaryCards.removed(index)
+      case Swap(adversaryIndex, ownIndex)                       => swapReaction(adversaryIndex, ownIndex)
+      case DrawKing => kingDrawnByAdversary = Some(turn.board.getTopDiscardStack)
+      case _        => ()
 
   /** Returns [[Option]] of the card within the [[Opponent]] field if known, [[None]] otherwise.
     * @param index
@@ -61,19 +85,6 @@ class Opponent:
     *   the index of the card in the field.
     */
   def getKnownAdversaryCard(index: Int): Option[Card] = getKnownCardFrom(adversaryCards)(index)
-
-  /** Removes the card at the given index from known cards.
-    * @param index
-    *   the index of the card to forget.
-    */
-  private def forgetOwn(index: Int): Unit = if knows(knownCards)(index) then knownCards = knownCards.removed(index)
-
-  /** Removes the card at the given index from known adversary cards.
-    * @param index
-    *   the index of the card to forget.
-    */
-  private def forgetAdversary(index: Int): Unit =
-    if knows(adversaryCards)(index) then adversaryCards = adversaryCards.removed(index)
 
   private def forgetAndUpdate(index: Int): Unit =
     adversaryCards = adversaryCards.removed(index)
@@ -104,23 +115,6 @@ class Opponent:
       case ObservePlayer(index)   => knownCards = knownCards.updated(index, drawn.hand.head)
       case _                      => throw new IllegalArgumentException(s"Action not allowed: $action")
     (drawn, action)
-
-  private def getChosenAction(turn: Turn): Action =
-    val actions = turn.actions
-      .filter(isDiscardable(_, turn))
-      .appendedAll(turn.actions.filter(unknownObservePlayer))
-      .appendedAll(turn.actions.filter(unknownObserveOpponent))
-      .appendedAll(turn.actions.filter(favourableSwap))
-      .appendedAll(turn.actions.filter(unknownReplace(turn)))
-    if actions.nonEmpty then actions.head
-    else if canReplace(turn.actions) then ChooseReplace(knownCards.maxBy((index, card) => card.value)._1)
-    else
-      turn.actions match
-        case `Draw` :: `DrawKing` :: Nil  => DrawKing
-        case `Draw` :: _ => Draw
-        case `Cactus` :: `EndTurn` :: Nil => checkCactus(turn)
-        case action :: Nil                => action
-        case _ => throw new NotImplementedError("No choice of action implemented for given actions.")
 
   private def isDiscardable(action: Action, turn: Turn): Boolean = action match
     case ChooseDiscard(index) if knows(knownCards)(index) =>
