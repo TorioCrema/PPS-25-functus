@@ -14,7 +14,7 @@ object Effects:
       * @return
       *   the resulting [[Turn]]
       */
-    def effect(on: Turn): Turn =
+    def effect(on: Turn): List[Action] =
       val getFieldLength: Player => Int = on.board.getField(_).length
       val replaceActions = (for i <- 0 until getFieldLength(on.player) yield ChooseReplace(i)).toList
 
@@ -22,13 +22,13 @@ object Effects:
         replaceActions.appendedAll(for i <- 0 until fieldLength yield action(i))
 
       card.value match
-        case `six`   => on.copy(actions = actionsFromFieldLength(getFieldLength(on.player.other))(ObserveOpponent(_)))
-        case `seven` => on.copy(actions = actionsFromFieldLength(getFieldLength(on.player))(ObservePlayer(_)))
+        case `six`   => actionsFromFieldLength(getFieldLength(on.player.other))(ObserveOpponent(_))
+        case `seven` => actionsFromFieldLength(getFieldLength(on.player))(ObservePlayer(_))
         case `jack`  =>
           val swapActions =
             for
               playerIndex <- 0 until getFieldLength(on.player)
               opponentIndex <- 0 until getFieldLength(on.player)
             yield Swap(playerIndex, opponentIndex)
-          on.copy(actions = replaceActions.appendedAll(swapActions))
-        case _ => on.copy(actions = replaceActions)
+          replaceActions.appendedAll(swapActions)
+        case _ => replaceActions
