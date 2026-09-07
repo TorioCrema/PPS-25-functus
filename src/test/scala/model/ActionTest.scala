@@ -1,9 +1,9 @@
 package org.pps.functus
 package model
 
-import model.deck.DeckFactory
 import model.playable.turn.Action.*
 import model.playable.turn.{Action, Turn}
+import model.deck.sugar.DeckDSL.deck
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -11,7 +11,7 @@ class ActionTest extends AnyFlatSpec with Matchers:
   given Option[Turn] = None
 
   private def testForAllIndices(toTest: Int => Action)(expected: Int => List[Action]): Unit =
-    for i <- DeckFactory().cards.indices
+    for i <- deck().cards.indices
     do toTest(i).nextActions should be(expected(i))
 
   "Observe action" should "have Confirm as next action" in:
