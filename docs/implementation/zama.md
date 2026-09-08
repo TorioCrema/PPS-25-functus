@@ -17,39 +17,56 @@ Il mio contributo al progetto è focalizzato nelle seguenti aree:
 Una `Action` rappresenta una possibile azione che un giocatore puo' eseguire durante il proprio turno.
 Nel contesto del turno, esse rappresentano transizioni di stato, infatti è possibile considerare un turno
 come una macchina a stati finiti le cui transizioni sono le azioni disponibili in ogni stato.
-Ogni `Action` possiede un metodo `next` che restituisce le azioni disponibili dopo l'azione corrente.
-Il tipo `Action` è implementato attraverso una `enum`. Alcune azioni, come `ChooseDiscard`, o `Swap`,
+Ogni `Action` possiede i seguenti metodi:
+- `nextActions(using Option[Turn])`: restituisce le azioni disponibili dopo l'azione corrente.
+- `nextTurn(currentTurn: Turn)`: esegue l'azione sul turno fornito come argomento e restituisce il turno aggiornato
+
+Il tipo `Action` è implementato attraverso una `enum`.  Alcune azioni, come `ChooseDiscard`, o `Swap`,
 possiedono dei campi utilizzati per indicare le carte in esse coinvolte.
+
+Aspetti rilevanti di Scala all'interno di questa implementazione sono:
+
+- Pattern matching per l'implementazione dei metodi `nextActions` e `execute`:
+```scala 3
+private def execute(currentTurn: Turn): Turn =
+    this match
+      case Observe                => currentTurn.drawnFromField(0).drawnFromField(0)
+      case Confirm                => currentTurn.returnObservedCards
+      case Draw                   => currentTurn.drawFromDeck
+      case DrawKing               => currentTurn.drawFromPile
+      ...
+```
+- Contextual programming per fornire il contesto opzionale del turno corrente al metodo `nextActions`:
+```scala 3
+def nextActions(using Option[Turn]): List[Action] = this match
+    case Observe          => List(Confirm)
+    case Confirm | Cactus => List(EndTurn)
+    case Draw | DrawKing  => List(Activate)
+    case Activate         =>
+      require(summon[Option[Turn]].nonEmpty)
+      val currentTurn = summon[Option[Turn]].get
+      currentTurn.hand.head.effect(currentTurn)
+    ...
+```
 
 ## Turn
 
 Come detto in precedenza, un turno è interpretabile come una macchina a stati finiti.
-I suoi stati possibli sono formati dal prodotto cartesiano di: giocatore, board, mano del giocatore, azioni
+I suoi stati possibili sono formati dal prodotto cartesiano di: giocatore, board, mano del giocatore, azioni
 disponibili e un valore che indica se durante il turno è stato chiamato Cactus.
 Da questa osservazione deriva l'implementazione tramite `case class` di nome `Turn` con campi di tipi corrispondenti
 agli elementi sopraelencati. Questa classe estende `Playable[Turn]` e possiede i due metodi pubblici: `act` e `isOver`.
 Esistono tre "tipi" di turno possibili, a seconda della fase della partita in cui essi vengono giocati, questi sono: il
 primo turno di ogni giocatore, l'ultimo turno della partita, e i turni semplici ottenuti per esclusione. Questi "tipi" si
 differenziano per le azioni disponibili alla loro creazione e, nel caso dell'ultimo turno, dall'assenza dell'azione `Cactus`.
-Il companion object `Turns` contiene i factory method per ogni tipologia di turno.
+Il companion object `Turns` contiene i factory method per ogni tipologia di turno, e i metodi utilizzati per alterare
+lo stato corrente del turno.
 
-- `act(action: Action): Turn` esegue l'azione passata come argomento sullo stato corrente del turno
-    e restituisce un nuovo turno il cui stato è quello risultante dalle modifiche ottenute dall'esecuzione
-    dell'azione, e le sue azioni disponibili sono quelle fornite da `action.next`. Per evitare che l'azione
-    `Cactus` sia disponibile durante l'ultimo turno della partita (`Game`), essa viene rimossa qualora la flag
-    `cactus` del turno sia `true`.
-    Nel caso in cui l'azione passata come argomento non appartenga alle azioni disponibli nell'attuale stato
-    del turno, viene lanciata una `IllegalArgumentException`. Tramite un match case viene individuato il tipo
-    dell'azione ed essa viene eseguita modificando i campi dell'istanza di `Turn` su cui è stato chiamato il metodo,
-    ad esempio per l'azione `Observe` che raccoglie le prime due carte dal campo del giocatore e le inserisce nella sua mano:
-    ```scala 3
-    action match
-      case Observe =>
-        List
-          .fill(observableCards)(0)
-          .foldLeft(this)((turn, index) => turn.drawnFromField(index))
-          .withActions(action.next)
-    ```
+- `act(action: Action): Turn` esegue l'azione passata come argomento sullo stato corrente del turno attraverso il
+    metodo `nextTurn` dell'azione e restituisce il nuovo stato.
+    Nel caso in cui l'azione passata come argomento non appartenga alle azioni disponibili nell'attuale stato
+    del turno, viene lanciata una `IllegalArgumentException`.
+    
 - `isOver: Boolean` restituisce `true` qualora il turno sia completato, ovvero quando non sono disponibili azioni.
 
 Elementi rilevanti di Scala all'interno di questa implementazione sono:
@@ -64,18 +81,32 @@ Elementi rilevanti di Scala all'interno di questa implementazione sono:
     object LastTurn:
       def apply(...): Turn = ...
   ```
+- Companion object con extension methods per la manipolazione della `case class` del turno:
+  ```scala 3
+  object Turns:
+
+  extension (turn: Turn)
+    def drawnFromField(index: Int): Turn =
+      val (drawn, newBoard) = turn.board.drawPlayerCard(turn.player, index)
+      turn.copy(turn.hand.appended(drawn), newBoard)
+    
+    def filterActions(newActions: List[Action]): Turn =
+      val filteredActions =
+        if turn.cactus then for action <- newActions if action != Cactus yield action
+        else newActions
+    
+    ...
+  ```
   
 ## Effects
 
 Quando pescate, le carte sei, sette, e fante permettono di effettuare azioni aggiuntive rispetto
-al resto delle carte nel mazzo. La generazione di queste azioni è ottenuta tramite il metodo `effect`
-dell'object `Effects`. Questo metodo prende in ingresso il contesto in cui l'effetto viene eseguito,
-ovvero la carta attivata e il turno in cui essa viene attivata e, tramite un match case, individua il valore della carta
-attivata e le azioni che ottenute dalla sua attivazione nel contesto del turno attuale:
+al resto delle carte nel mazzo. La generazione di queste azioni è ottenuta tramite extension method `effect`
+di `Card` implementato nell'object `Effects`. Questo metodo individua il tipo di effetto tramite pattern matching
+sulla carta attivata e genera le azioni corrispondenti all'effetto in base alle informazioni contenute
+nello stato del turno corrente passato come argomento:
 ```scala 3
-def actionsFromFieldLength(fieldLength: Int)(action: Int => Action) =
-      replaceActions.appendedAll(for i <- 0 until fieldLength yield action(i))
-
+...
 activated.value match
   case `six`   => actionsFromFieldLength(getFieldLength(turn.player.other))(ObserveOpponent(_)) 
   case `seven` => actionsFromFieldLength(getFieldLength(turn.player))(ObservePlayer(_))
@@ -87,24 +118,23 @@ activated.value match
       yield Swap(playerIndex, opponentIndex)
     replaceActions.appendedAll(swapActions)
   case _ => replaceActions
+...
 ```
 
 Elementi rilevanti di Scala in questa implementazione sono:
 
-- Contextual programming tramite i parametri `using` del metodo `effect`:
+- Implementazione del metodo `effect` tramite extension method:
   ```scala 3
-  def effect(using Option[Card], Option[Turn]): List[Action] =
-    require(summon[Option[Card]].isDefined && summon[Option[Turn]].isDefined)
-    val (activated, turn) = (summon[Option[Card]].get, summon[Option[Turn]].get)
-    val getFieldLength: Player => Int = turn.board.getField(_).length
-    val replaceActions = (for i <- 0 until getFieldLength(turn.player) yield ChooseReplace(i)).toList
-    ...
+  object Effects:
+  extension (card: Card)
+    def effect(on: Turn): List[Action] = ...
   ```
+- Pattern matching per l'individuazione del effetto desiderato
 
 ## Match
 
 Un `Match` rappresenta un insieme di partite (`Game`) consecutive il cui punteggio finale viene accumulato
-fino al superamento del punteggio limite. È implemenetato dalla `case class` `Match`, le cui possibili istanze
+fino al superamento del punteggio limite. È implementato dalla `case class` `Match`, le cui possibili istanze
 sono date dal prodotto cartesiano del punteggio massimo, il `Game` in corso, e gli attuali punteggi cumulativi dei
 giocatori. La classe estende il trait `Playable[Match]`, fornendo i metodi `act` e `isOver`:
 
@@ -190,11 +220,6 @@ Elementi rilevanti di Scala in questa implementazione sono:
     case ObservePlayer(index) if !knows(knownCards)(index) => true
     case _                                                 => false
   }
-  ```
-- Companion object per creare una nuova istanza di `Opponent` senza usare `new`:
-  ```scala 3
-  object Opponent:
-  def apply(): Opponent = new Opponent()
   ```
   
 ## Showcase
