@@ -86,7 +86,6 @@ enum Action:
       case Confirm                => currentTurn.returnObservedCards
       case Draw                   => currentTurn.drawFromDeck
       case DrawKing               => currentTurn.drawFromPile
-      case Activate               => currentTurn
       case ObserveOpponent(index) => currentTurn.discardWithoutPenalty.drawFromPlayer(index, currentTurn.player.other)
       case ObservePlayer(index)   => currentTurn.discardWithoutPenalty.drawFromPlayer(index, currentTurn.player)
       case GiveBack(index)        => currentTurn.placeHandInField(currentTurn.player.other, index)
@@ -96,4 +95,4 @@ enum Action:
       case Discard(index)         => currentTurn.discardHand(index)
       case Swap(playerIndex, opponentIndex) => currentTurn.swapWithOpponent(playerIndex, opponentIndex)
       case Cactus                           => currentTurn.callCactus
-      case EndTurn                          => currentTurn
+      case _                                => currentTurn
