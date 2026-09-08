@@ -4,7 +4,6 @@ package model.playable.turn
 import model.deck.card.Card
 import model.board.{Board, Player}
 import Action.*
-import Effects.effect
 import model.playable.Playable
 
 /** Turn class that allows to play a turn from start to finish via the [[act]] method.
