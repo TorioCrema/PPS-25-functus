@@ -4,6 +4,10 @@ La struttura architetturale è stata individuata partendo dai requisiti funziona
 durante la fase di analisi.
 Si è cercato di realizzare un sistema estendibile, mantenibile, modulare, con nette separazioni di responsabilità.
 
+## Struttura
+
+![Struttura del progetto](struttura.drawio.png)
+
 ## MVC
 
 L'architettura è stata realizzata aderendo al pattern MVC (Model-View-Controller), che consente di

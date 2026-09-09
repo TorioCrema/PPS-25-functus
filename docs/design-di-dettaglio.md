@@ -14,16 +14,21 @@ rispettivamente un singolo turno, una partita composta da piu' turni, e un match
 piu' partite. Queste entità implementano l'interfaccia `Playable` tramite la quale è possibile
 avanzare le fasi del gioco fornendo una delle azioni (`Action`) indicate dall'entità stessa.
 
+![](Model.drawio.png)
 
-### Creazione del tavolo (`Board`)
+### Creazione del tavolo (`Board`, `Field`, `Deck`, `Card`)
 
 La creazione delle entità `Board` avviene
 tramite **Factory Methods** contenuti nell'oggetto `BoardFactory`.
 Per facilitare e sintetizzare il loro utilizzo, soprattutto a scopo di testing,
 è stato realizzato un DSL, che permette di popolare una `Board` indicando
-quali carte inserire nei sui vari elementi. Il DSL comprende funzionalita per
-la creazione dei sottoelemnti della `Board`, come le singole carte (`Card`), i campi
+quali carte inserire nei sui vari elementi. Il DSL comprende funzionalità per
+la creazione dei sotto-elemnti della `Board`, come le singole carte (`Card`), i campi
 dei giocatori (`Field`), il mazzo (`Deck`), e la pila degli scarti.
+
+![DSL per la creazione di `Board`](BoardDSL.drawio.png)
+
+![DSL per la creazione di `Field`](FieldDSL.drawio.png)
 
 ### Playable
 
@@ -33,3 +38,5 @@ L'entità `Game` rappresenta un'intera partita composta da piu' turni, mentre `M
 una o piu' partite ed è composta da uno o piu' `Game`.
 Attraverso l'interfaccia `Playable` è possibile avanzare nelle varie fasi del gioco scegliendo
 una tra le azioni (`Action`) disponibili.
+
+
