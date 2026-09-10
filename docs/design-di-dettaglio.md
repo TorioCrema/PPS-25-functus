@@ -30,14 +30,19 @@ dei giocatori (`Field`), il mazzo (`Deck`), e la pila degli scarti.
 
 ![DSL per la creazione di `Field`](FieldDSL.drawio.png)
 
+![DSL per la creazione di `Card`](CardDSL.drawio.png)
+
 ### Playable
 
 L'interfaccia `Playable` rappresenta le entità che racchiudono le funzionalità delle dinamiche
-di gioco. L'entità base è `Turn` che rappresenta un singolo turno di un singolo giocatore.
+di gioco.
+Attraverso di essa è possibile avanzare nelle varie fasi del gioco, cioè alterare lo stato
+delle entità `Playable`, scegliendo una tra le azioni (`Action`) disponibili.
+
+L'entità base è `Turn` che rappresenta un singolo turno di un singolo giocatore, e
+aggrega al suo interno il giocatore, la sua mano, e il tavolo (`Board`).
 L'entità `Game` rappresenta un'intera partita composta da piu' turni, mentre `Match` rappresenta
 una o piu' partite ed è composta da uno o piu' `Game`.
-Attraverso l'interfaccia `Playable` è possibile avanzare nelle varie fasi del gioco scegliendo
-una tra le azioni (`Action`) disponibili.
 
 `Game` gestisce il progresso di una partita alternando i giocatori a ogni turno, generando
 la giusta tipologia di `Turn` in base alla fase di gioco (`GamePhase`) in cui il turno avviene,
@@ -46,8 +51,23 @@ e calcolando il punteggio finale della partita.
 `Match` gestisce il progresso di piu' partite durante un match con punteggio limite, accumulando
 i punteggi delle partite.
 
+## Controller
+
+![Controller e View](Controller.drawio.png)
+
 L'interfaccia `Playable` è utilizzata da `GameController`, che gestisce l'interazione con l'utente permettendo
 a quest'ultimo di selezionare l'azione desiderata durante il suo turno.
+`MatchController` aggiunge la possibilità di giocare piu partite tramite composizione con `GameController`.
+L'istanza del controller adeguato è creata da `MenuController` basandosi sull'input dell'utente.
 
-![](Controller.drawio.png)
+## View
 
+`CLIMenu` gestisce la rappresentazione degli elementi del menu principale, essi
+sono istanze dell'interfaccia `SelectableMenuItem`.
+
+![CLIMenu](CLIMenu.png)
+
+`CLIView` gestisce la rappresentazione del gioco, ottenendo lo stato della partita da `GameController` attraverso
+l'entità `GameState`.
+
+![CLIView](CLIView.drawio.png)

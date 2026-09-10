@@ -22,13 +22,13 @@ Nel contesto di questo progetto queste sezioni si occupano di:
   - `Match`: gestisce la modalità di gioco con punteggio massimo, permettendo di giocare piu' `Game` consecutivi
   - `Opponent`: gestisce la logica dell'avversario virtuale
 - View: gestisce la rappresentazione dai dati all'utente e ne raccoglie l'input. È composto da:
-  - `CLIMenu`
-  - `CLIView`
+  - `CLIMenu`: gestisce la rappresentazione grafica del menu iniziale dell'applicazione
+  - `CLIView`: gestisce la rappresentazione grafica degli elementi del gioco
 - Controller: gestisce la coordinazione tra View e Model. Ottiene gli input dell'utente dalla
   View e fornisce le scelte dell'utente al Model. È composto da:
-  - `GameController`
-  - `MatchController`
-  - `MenuController`
+  - `GameController`: gestisce le interazioni con l'utente durante lo svolgimento di una partita
+  - `MatchController`: gestisce le interazioni con l'utente durante lo svolgimento di un match
+  - `MenuController`: gestisce le interazioni con l'utente durante la navigazione del menu principale
 
 Questa struttura acconsente di raggiungere gli obiettivi di manutenibilità, modularità, ed estensibilità,
 in quanto ogni sezione ha responsabilità ben separate dalle altre e puo' essere modificata in maniera
