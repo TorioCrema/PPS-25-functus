@@ -52,7 +52,7 @@ class CLIView:
       if gameState.inputMode == InputMode.SelectAdversaryCardOnBoard then Some(gameState.selectedCardOnBoard)
       else None
 
-    val adversaryLines = gameState.adversaryCard.toAsciiRows(
+    val adversaryLines = gameState.adversaryCard.drawCardRows(
       terminalWidth = terminalWidth,
       selectedIdx = selectedAdversaryIndex
     )
@@ -66,8 +66,8 @@ class CLIView:
   ) =
     // Central Zone: Deck and Discard Pile
     val deckLines =
-      None.toAsciiLines(label = Some(s"░░░░$ANSI_GREEN_BOLD${gameState.remainingCardInDeck}$ANSI_RESET░░░░░"))
-    val discardLines = gameState.lastDiscardedCard.toAsciiLines(
+      None.drawSingleCard(label = Some(s"░░░░$ANSI_GREEN_BOLD${gameState.remainingCardInDeck}$ANSI_RESET░░░░░"))
+    val discardLines = gameState.lastDiscardedCard.drawSingleCard(
       label = if gameState.lastDiscardedCard.isEmpty then Some("EMPTY") else None
     )
     val centerLines = List(deckLines, discardLines).joinHorizontally(
@@ -82,7 +82,7 @@ class CLIView:
       if gameState.inputMode == InputMode.SelectCardOnBoard then Some(gameState.selectedCardOnBoard)
       else None
 
-    val playerLines = gameState.playerCard.toAsciiRows(
+    val playerLines = gameState.playerCard.drawCardRows(
       terminalWidth = terminalWidth,
       selectedIdx = selectedIdx
     )
@@ -141,7 +141,7 @@ class CLIView:
   ) = // Hand Zone
     viewBuilder.append(Utils.centerText("CARD IN HAND:")).append("\n")
     val handLines = if gameState.cardsInHand.flatten.isEmpty then List("[ No card drawn ]")
-    else gameState.cardsInHand.toAsciiRows(terminalWidth = terminalWidth)
+    else gameState.cardsInHand.drawCardRows(terminalWidth = terminalWidth)
 
     handLines.foreach(line => viewBuilder.append(Utils.centerText(line)).append("\n"))
 
