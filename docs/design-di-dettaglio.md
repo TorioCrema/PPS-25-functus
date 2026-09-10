@@ -39,4 +39,15 @@ una o piu' partite ed è composta da uno o piu' `Game`.
 Attraverso l'interfaccia `Playable` è possibile avanzare nelle varie fasi del gioco scegliendo
 una tra le azioni (`Action`) disponibili.
 
+`Game` gestisce il progresso di una partita alternando i giocatori a ogni turno, generando
+la giusta tipologia di `Turn` in base alla fase di gioco (`GamePhase`) in cui il turno avviene,
+e calcolando il punteggio finale della partita.
+
+`Match` gestisce il progresso di piu' partite durante un match con punteggio limite, accumulando
+i punteggi delle partite.
+
+L'interfaccia `Playable` è utilizzata da `GameController`, che gestisce l'interazione con l'utente permettendo
+a quest'ultimo di selezionare l'azione desiderata durante il suo turno.
+
+![](Controller.drawio.png)
 
