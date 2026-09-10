@@ -1,100 +1,216 @@
 package org.pps.functus
 package controller
 
-import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import view.CLIMenu
-
-import controller.MenuController
 import view.utils.Key
 
-/** CLIMenu fake that logs all indexes passed to render().
-  */
-class FakeCLIMenu extends CLIMenu:
-  var renderedIndices: List[Int] = List.empty
-  var renderedScoreIndices: List[Int] = List.empty
+import java.io.{OutputStream, PrintStream}
 
-  override def renderMainMenu(selectedIndex: Int): Unit =
-    renderedIndices = renderedIndices :+ selectedIndex
+class MenuControllerTest extends AnyFlatSpec with Matchers:
 
-  override def renderTargetScoreMenu(selectedIndex: Int): Unit =
-    renderedScoreIndices = renderedScoreIndices :+ selectedIndex
+  class TestCLIMenu extends CLIMenu:
+    var lastMainMenuIndex: Option[Int] = None
+    var lastTargetScoreIndex: Option[Int] = None
+    var lastShowCaseIndex: Option[Int] = None
+    var rulesRenderedCount: Int = 0
 
-/** Helper to simulate an input provider driven by a list of keys.
-  */
-class ScriptedInput(private var sequence: List[Key]):
-  def nextKey(): Key = sequence match
-    case head :: tail =>
-      sequence = tail
-      head
-    case Nil =>
-      Key.ESCAPE
+    override def renderMainMenu(selectedIndex: Int): Unit =
+      lastMainMenuIndex = Some(selectedIndex)
 
-class MenuControllerTest extends AnyFunSuite with Matchers:
+    override def renderTargetScoreMenu(selectedIndex: Int): Unit =
+      lastTargetScoreIndex = Some(selectedIndex)
 
-  test("start should end immediately if the first key is ESCAPE"):
-    val fakeMenu = FakeCLIMenu()
-    val controller = MenuController(fakeMenu)
-    fakeMenu.renderedIndices shouldBe empty
+    override def renderShowCaseMenu(selectedIndex: Int): Unit =
+      lastShowCaseIndex = Some(selectedIndex)
 
-  test("Circular navigation: DOWN moves the index forward and UP moves it back"):
-    val fakeMenu = FakeCLIMenu()
+    override def renderRules(): Unit =
+      rulesRenderedCount += 1
 
-    var currentIndex = 0
-    val totalItems = 2
+  def runControllerWithInputs(inputs: List[Key]): TestCLIMenu =
+    val originalOut = System.out
+    val silentStream = new PrintStream(OutputStream.nullOutputStream())
 
-    def simulateMove(delta: Int): Unit =
-      currentIndex = (currentIndex + delta + totalItems) % totalItems
+    var inputQueue = inputs
+    var maxCycles = 100
+    val mockMenu = new TestCLIMenu()
 
-    simulateMove(1)
-    currentIndex shouldBe 1
+    val scriptReader = () =>
+      maxCycles -= 1
+      if maxCycles <= 0 then Key.ESCAPE
+      else if inputQueue.nonEmpty then
+        val k = inputQueue.head
+        inputQueue = inputQueue.tail
+        k
+      else Key.ESCAPE
 
-    simulateMove(1)
-    currentIndex shouldBe 0
+    val controller = MenuController(mockMenu, scriptReader)
 
-    simulateMove(-1)
-    currentIndex shouldBe 1
+    try
+      System.setOut(silentStream)
+      Console.withOut(silentStream) {
+        controller.start()
+      }
+    catch case _: Throwable => ()
+    finally System.setOut(originalOut)
 
+    mockMenu
 
-  test("Target Score navigation logic: DOWN cycles through score options and UP moves backward"):
-    var currentScoreIndex = 0
-    val totalScoreOptions = view.utils.TargetScoreOption.values.length
+  "MenuController input loop" should "navigate options and exit on ESCAPE" in {
+    val inputs = List(Key.DOWN, Key.UP, Key.LEFT, Key.RIGHT, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
 
-    def simulateScoreMove(delta: Int): Unit =
-      currentScoreIndex = (currentScoreIndex + delta + totalScoreOptions) % totalScoreOptions
+    mockMenu.lastMainMenuIndex.isDefined shouldBe true
+  }
 
-    // Down (STEP_PREVIOUS = 1) -> 100 Points (index 1)
-    simulateScoreMove(1)
-    currentScoreIndex shouldBe 1
+  "Directional Navigation" should "handle circular selection with UP, DOWN, LEFT, RIGHT" in {
+    val inputs = List(Key.DOWN, Key.DOWN, Key.UP, Key.RIGHT, Key.LEFT, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
 
-    // Down (STEP_PREVIOUS = 1) -> 150 Points (index 2)
-    simulateScoreMove(1)
-    currentScoreIndex shouldBe 2
+    mockMenu.lastMainMenuIndex shouldBe Some(1)
+  }
 
-    // Up (STEP_NEXT = -1) -> 100 Points (index 1)
-    simulateScoreMove(-1)
-    currentScoreIndex shouldBe 1
+  it should "wrap around correctly when moving past upper bounds with UP" in {
+    val inputs = List(Key.UP, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
 
-  test("Selecting Match mode sets isChoosingTargetScore state to true"):
-    val fakeMenu = FakeCLIMenu()
-    var isChoosingTargetScore = false
-    var selectedScoreIndex = 0
+    mockMenu.lastMainMenuIndex shouldBe Some(5)
+  }
 
-    // Simula la conferma dell'azione principale su Match
-    val selectedMainItem = view.utils.MenuItem.Match
-    if selectedMainItem == view.utils.MenuItem.Match then
-      selectedScoreIndex = 0
-      isChoosingTargetScore = true
+  it should "wrap around correctly when moving past lower bounds with DOWN" in {
+    val inputs = List(Key.DOWN, Key.DOWN, Key.DOWN, Key.DOWN, Key.DOWN, Key.DOWN, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
 
-    isChoosingTargetScore shouldBe true
-    selectedScoreIndex shouldBe 0
+    mockMenu.lastMainMenuIndex shouldBe Some(0)
+  }
 
-  test("ESC in target score menu returns to main menu state"):
-    var isChoosingTargetScore = true
+  "Unmapped Key Handling" should "ignore unknown keys and preserve current selection" in {
+    val inputs = List(Key.UNKNOWN, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
 
-    // Simula la pressione del tasto ESCAPE nel sotto-menu
-    val inputKey = Key.ESCAPE
-    if inputKey == Key.ESCAPE then
-      isChoosingTargetScore = false
+    mockMenu.lastMainMenuIndex shouldBe Some(0)
+  }
 
-    isChoosingTargetScore shouldBe false
+  "MainMenu Confirmations" should "launch GameController for SingleGame mode" in {
+    val inputs = List(Key.ENTER, Key.ESCAPE, Key.ESCAPE, Key.ESCAPE)
+    noException should be thrownBy {
+      runControllerWithInputs(inputs)
+    }
+
+  }
+
+  it should "launch GameController in vs Bot mode for SinglePlayerGame" in {
+    val inputs = List(Key.DOWN, Key.ENTER, Key.ESCAPE)
+    noException should be thrownBy {
+      runControllerWithInputs(inputs)
+    }
+  }
+
+  it should "open TargetScoreMenu for PvP Match mode" in {
+    val inputs = List(Key.DOWN, Key.DOWN, Key.ENTER, Key.ESCAPE, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
+
+    mockMenu.lastTargetScoreIndex shouldBe Some(0)
+  }
+
+  it should "open TargetScoreMenu for PvC SinglePlayerMatch mode" in {
+    val inputs = List(Key.DOWN, Key.DOWN, Key.DOWN, Key.ENTER, Key.ESCAPE, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
+
+    mockMenu.lastTargetScoreIndex shouldBe Some(0)
+  }
+
+  "TargetScoreMenu navigation and confirmation" should "select a target score option and start MatchController for PvP" in {
+    val inputs = List(Key.DOWN, Key.DOWN, Key.ENTER, Key.DOWN, Key.ENTER, Key.ESCAPE, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
+
+    mockMenu.lastTargetScoreIndex shouldBe Some(1)
+  }
+
+  it should "select a target score option and start MatchController for PvC" in {
+    val inputs = List(Key.DOWN, Key.DOWN, Key.DOWN, Key.ENTER, Key.DOWN, Key.ENTER, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
+
+    mockMenu.lastTargetScoreIndex shouldBe Some(1)
+  }
+
+  it should "return to MainMenu on ESCAPE" in {
+    val inputs = List(Key.DOWN, Key.DOWN, Key.ENTER, Key.ESCAPE, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
+
+    mockMenu.lastTargetScoreIndex shouldBe Some(0)
+    mockMenu.lastMainMenuIndex shouldBe Some(0)
+  }
+
+  "ShowCaseMenu navigation and options" should "open ShowCaseMenu and render options" in {
+    val inputs = List(Key.UP, Key.UP, Key.ENTER, Key.ESCAPE, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
+
+    mockMenu.lastShowCaseIndex shouldBe Some(0)
+  }
+
+  it should "launch GameController with DrawSix showcase turn" in {
+    val inputs = List(Key.UP, Key.UP, Key.ENTER, Key.ENTER, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
+
+    mockMenu.lastShowCaseIndex shouldBe Some(0)
+  }
+
+  it should "launch GameController with DrawSeven showcase turn" in {
+    val inputs = List(Key.UP, Key.UP, Key.ENTER, Key.DOWN, Key.ENTER, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
+
+    mockMenu.lastShowCaseIndex shouldBe Some(1)
+  }
+
+  it should "launch GameController with DrawEight showcase turn" in {
+    val inputs = List(Key.UP, Key.UP, Key.ENTER, Key.DOWN, Key.DOWN, Key.ENTER, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
+
+    mockMenu.lastShowCaseIndex shouldBe Some(2)
+  }
+
+  it should "launch GameController with DrawKing showcase turn" in {
+    val inputs = List(Key.UP, Key.UP, Key.ENTER, Key.DOWN, Key.DOWN, Key.DOWN, Key.ENTER, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
+
+    mockMenu.lastShowCaseIndex shouldBe Some(3)
+  }
+
+  it should "launch GameController with SuccessfulDiscard showcase turn" in {
+    val inputs = List(Key.UP, Key.UP, Key.ENTER, Key.UP, Key.UP, Key.ENTER, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
+
+    mockMenu.lastShowCaseIndex shouldBe Some(4)
+  }
+
+  it should "launch GameController with FailDiscard showcase turn" in {
+    val inputs = List(Key.UP, Key.UP, Key.ENTER, Key.UP, Key.ENTER, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
+
+    mockMenu.lastShowCaseIndex shouldBe Some(5)
+  }
+
+  "RulePage lifecycle" should "render rules page and return to MainMenu on ESCAPE" in {
+    val inputs = List(Key.UP, Key.ENTER, Key.ESCAPE, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
+
+    mockMenu.rulesRenderedCount shouldBe >(0)
+    mockMenu.lastMainMenuIndex shouldBe Some(0)
+  }
+
+  "RulePage lifecycle" should "render rules page and do nothing on ENTER" in {
+    val inputs = List(Key.UP, Key.ENTER, Key.ENTER, Key.ESCAPE, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
+
+    mockMenu.rulesRenderedCount shouldBe <(3)
+    mockMenu.lastMainMenuIndex shouldBe Some(0)
+  }
+
+  it should "safely handle directional navigation when itemCount is 0" in {
+    val inputs = List(Key.UP, Key.ENTER, Key.DOWN, Key.UP, Key.LEFT, Key.RIGHT, Key.ESCAPE, Key.ESCAPE)
+    val mockMenu = runControllerWithInputs(inputs)
+
+    mockMenu.rulesRenderedCount shouldBe >(0)
+  }

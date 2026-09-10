@@ -10,7 +10,8 @@ import view.utils.{Key, Utils}
 
 class MatchController(
     private var matchRecord: Match = Match(50),
-    private val isVsBot: Boolean = false
+    private val isVsBot: Boolean = false,
+    val readInput: () => Key = () => Utils.readInput()
 ):
 
   private val view: CLIView = CLIView()
@@ -18,7 +19,7 @@ class MatchController(
   def start(): Unit =
     while !matchRecord.isOver do
 
-      val gameController = GameController(matchRecord, isVsBot = isVsBot)
+      val gameController = GameController(matchRecord, isVsBot = isVsBot, inputReader = readInput)
       gameController.start()
 
       matchRecord = gameController.getPlayable
@@ -42,6 +43,6 @@ class MatchController(
   private def waitForEnter(): Unit =
     var pressedEnter = false
     while !pressedEnter do
-      Utils.readInput() match
+      readInput() match
         case Key.ENTER | Key.ESCAPE => pressedEnter = true
         case _                      => ()

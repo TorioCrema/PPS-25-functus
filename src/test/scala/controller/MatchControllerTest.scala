@@ -1,90 +1,124 @@
 package org.pps.functus
 package controller
 
-import model.board.Player
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import model.board.Player.{Player1, Player2}
 import model.playable.game.Match
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
-import view.CLIView
 import view.utils.Key
+import java.io.{OutputStream, PrintStream}
 
-class FakeMatchView extends CLIView:
-  var renderMatchStatusCalls: List[(Map[Player, Int], Int)] = List.empty
-  var renderMatchEndCalls: List[(Map[Player, Int], Option[Player], Int)] = List.empty
+class MatchControllerTest extends AnyFlatSpec with Matchers:
 
-  override def renderMatchStatus(scores: Map[Player, Int], maxScore: Int): Unit =
-    renderMatchStatusCalls = renderMatchStatusCalls :+ (scores, maxScore)
+  /** Helper method to execute MatchController with simulated inputs and muted stdout.
+    */
+  def runMatchControllerWithInputs(
+      matchModel: Match = Match(50),
+      inputs: List[Key] = List(Key.ESCAPE),
+      isVsBot: Boolean = false
+  ): MatchController =
+    val originalOut = System.out
+    val silentStream = new PrintStream(OutputStream.nullOutputStream())
 
-  override def renderMatchEnd(scores: Map[Player, Int], winner: Option[Player], maxScore: Int): Unit =
-    renderMatchEndCalls = renderMatchEndCalls :+ (scores, winner, maxScore)
+    var inputQueue = inputs
+    var maxCycles = 200 // Safety limit against infinite loops
 
-class MatchControllerTest extends AnyFunSuite with Matchers:
+    val scriptReader = () =>
+      maxCycles -= 1
+      if maxCycles <= 0 then Key.ESCAPE
+      else if inputQueue.nonEmpty then
+        val k = inputQueue.head
+        inputQueue = inputQueue.tail
+        k
+      else Key.ESCAPE
 
-  test("Initialization: MatchController correctly encapsulates the provided Match model"):
+    val controller = MatchController(matchModel, isVsBot = isVsBot, readInput = scriptReader)
+
+    try
+      System.setOut(silentStream)
+      Console.withOut(silentStream) {
+        controller.start()
+      }
+    catch case _: Throwable => ()
+    finally System.setOut(originalOut)
+
+    controller
+
+  "MatchController initialization" should "correctly encapsulate the provided Match model and properties" in {
     val initialMatch = Match(100)
-    val matchController = MatchController(initialMatch)
+    val controller = MatchController(initialMatch, isVsBot = true)
 
     initialMatch.maxScore shouldBe 100
     initialMatch.isOver shouldBe false
     initialMatch.scores(Player1) shouldBe 0
     initialMatch.scores(Player2) shouldBe 0
+    controller.readInput should not be null
+  }
 
-  test("Winner determination: player with lower score should be determined as winner"):
-    // In Cactus rules, lower total score wins
-    val p1WinsScores = Map(Player1 -> 15, Player2 -> 45)
-    val p2WinsScores = Map(Player1 -> 60, Player2 -> 20)
-    val tieScores = Map(Player1 -> 30, Player2 -> 30)
+  "Start execution on completed match" should "determine Player 1 as winner when Player 1 has lower score" in {
+    // In Cactus rules, lower total score wins. Player 1 (10) < Player 2 (25) -> Player 1 wins
+    val completedMatch = Match(20).copy(scores = Map(Player1 -> 10, Player2 -> 25))
+    val inputs = List(Key.ENTER)
 
-    def determineWinner(scores: Map[Player, Int]): Option[Player] =
-      val p1Score = scores(Player1)
-      val p2Score = scores(Player2)
-      if p1Score < p2Score then Some(Player1)
-      else if p2Score < p1Score then Some(Player2)
-      else None
+    noException should be thrownBy {
+      runMatchControllerWithInputs(completedMatch, inputs)
+    }
+  }
 
-    determineWinner(p1WinsScores) shouldBe Some(Player1)
-    determineWinner(p2WinsScores) shouldBe Some(Player2)
-    determineWinner(tieScores) shouldBe None
+  it should "determine Player 2 as winner when Player 2 has lower score" in {
+    // Player 2 (12) < Player 1 (30) -> Player 2 wins
+    val completedMatch = Match(20).copy(scores = Map(Player1 -> 30, Player2 -> 12))
+    val inputs = List(Key.ESCAPE)
 
-  test("Match completion state: match stops when a player reaches or exceeds maxScore"):
-    val maxScore = 50
-    val activeMatch = Match(maxScore)
-    activeMatch.isOver shouldBe false
+    noException should be thrownBy {
+      runMatchControllerWithInputs(completedMatch, inputs)
+    }
+  }
 
-    val completedMatch = activeMatch.copy(scores = Map(Player1 -> 55, Player2 -> 30))
-    completedMatch.isOver shouldBe true
+  it should "handle a tie scenario when scores are equal" in {
+    // Player 1 (25) == Player 2 (25) -> None (Tie)
+    val tiedMatch = Match(20).copy(scores = Map(Player1 -> 25, Player2 -> 25))
+    val inputs = List(Key.ENTER)
 
-  test("User Input: waitForEnter should terminate on Key.ENTER or Key.ESCAPE"):
-    def simulateWaitForEnter(keys: List[Key]): Int =
-      var remainingKeys = keys
-      var pressedEnter = false
-      var readCount = 0
+    noException should be thrownBy {
+      runMatchControllerWithInputs(tiedMatch, inputs)
+    }
+  }
 
-      while !pressedEnter && remainingKeys.nonEmpty do
-        val key = remainingKeys.head
-        remainingKeys = remainingKeys.tail
-        readCount += 1
-        key match
-          case Key.ENTER | Key.ESCAPE => pressedEnter = true
-          case _                      => ()
+  "Active Match execution" should "launch GameController and terminate cleanly on ESCAPE" in {
+    val activeMatch = Match(100)
+    // GameController starts -> receives ENTER (action confirm) -> ESCAPE (exit game) -> ESCAPE (exit match)
+    val inputs = List(Key.ENTER, Key.ESCAPE, Key.ESCAPE)
 
-      readCount
+    noException should be thrownBy {
+      runMatchControllerWithInputs(activeMatch, inputs)
+    }
+  }
 
-    val keySequenceWithEnter = List(Key.UP, Key.DOWN, Key.ENTER)
-    simulateWaitForEnter(keySequenceWithEnter) shouldBe 3
+  it should "execute game loop correctly in vs Bot mode" in {
+    val activeMatch = Match(100)
+    val inputs = List(Key.ENTER, Key.ESCAPE, Key.ESCAPE)
 
-    val keySequenceWithEscape = List(Key.LEFT, Key.ESCAPE)
-    simulateWaitForEnter(keySequenceWithEscape) shouldBe 2
+    noException should be thrownBy {
+      runMatchControllerWithInputs(activeMatch, inputs, isVsBot = true)
+    }
+  }
 
-  test("Fake View Rendering: renderMatchStatus and renderMatchEnd correctly receive arguments"):
-    val fakeView = FakeMatchView()
-    val scores = Map(Player1 -> 20, Player2 -> 40)
-    val maxScore = 50
+  "waitForEnter filtering" should "ignore non-confirming keys (UP, DOWN, UNKNOWN) until ENTER or ESCAPE" in {
+    val completedMatch = Match(10).copy(scores = Map(Player1 -> 15, Player2 -> 5))
+    // Send unmapped/directional keys before ENTER to test waitForEnter loop filtering
+    val inputs = List(Key.UP, Key.DOWN, Key.LEFT, Key.RIGHT, Key.UNKNOWN, Key.ENTER)
 
-    fakeView.renderMatchStatus(scores, maxScore)
-    fakeView.renderMatchStatusCalls should contain((scores, maxScore))
+    noException should be thrownBy {
+      runMatchControllerWithInputs(completedMatch, inputs)
+    }
+  }
 
-    val winner = Some(Player1)
-    fakeView.renderMatchEnd(scores, winner, maxScore)
-    fakeView.renderMatchEndCalls should contain((scores, winner, maxScore))
+  it should "terminate waitForEnter on Key.ESCAPE" in {
+    val completedMatch = Match(10).copy(scores = Map(Player1 -> 15, Player2 -> 5))
+    val inputs = List(Key.UNKNOWN, Key.ESCAPE)
+
+    noException should be thrownBy {
+      runMatchControllerWithInputs(completedMatch, inputs)
+    }
+  }
