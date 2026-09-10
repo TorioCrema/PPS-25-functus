@@ -13,11 +13,18 @@ lazy val root = (project in file("."))
     libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0",
     libraryDependencies += "org.jline" % "jline" % "4.4.2",
 
+    // disable parallel execution for view testing,
+    // otherwise the standard output is mixed and the tests will fail
     Test / parallelExecution := false,
+    // run test on the same JVM for coverage report
+    Test / fork := true,
 
-    // Specifica il Main da eseguire all'avvio del .jar
+    //excluding main from coverage test
+    coverageExcludedPackages := "org\\.pps\\.functus\\.Main",
+
+    // specify the Main to be executed at launch of the .jar file
     assembly / mainClass := Some("org.pps.functus.Main"),
-    // Nome del file jar generato
+    // Name of the generated .jar file
     assembly / assemblyJarName := "Functus.jar"
 
   )

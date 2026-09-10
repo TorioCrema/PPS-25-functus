@@ -14,7 +14,9 @@ import model.opponent.Opponent
 
 class GameController[P <: Playable[P]](
     private var playable: P,
-    private val isVsBot: Boolean = false
+    private val isVsBot: Boolean = false,
+    private val view: CLIView = CLIView(),
+    private val inputReader: () => Key = () => Utils.readInput()
 ):
 
   private def currentGame: Game = playable match
@@ -22,7 +24,6 @@ class GameController[P <: Playable[P]](
     case g: Game  => g
 
   private var game: Game = currentGame
-  private val view: CLIView = CLIView()
   private var turn: Turn = game.currentTurn
   private var observedPlayers: Set[Player] = Set.empty
 
@@ -46,7 +47,7 @@ class GameController[P <: Playable[P]](
       if isVsBot && turn.player == Player2 && running && state != WaitingRoom && !game.isOver then botTurn()
       else
         view.render(state)
-        Utils.readInput() match
+        inputReader() match
           case Key.UP | Key.LEFT    => moveSelection(delta = STEP_NEXT)
           case Key.DOWN | Key.RIGHT => moveSelection(delta = STEP_PREVIOUS)
           case Key.ENTER            => confirmAction()
@@ -97,14 +98,14 @@ class GameController[P <: Playable[P]](
         selectedMacroAction = Some(chosenAction)
 
         chosenAction match
-          case Action.ObservePlayer(TO_BE_SELECTED) | Action.ChooseReplace(TO_BE_SELECTED) |
-              Action.ChooseDiscard(TO_BE_SELECTED) =>
+          case Action.ObservePlayer(_) | Action.ChooseReplace(_) |
+              Action.ChooseDiscard(_) =>
             state = syncState(InputMode.SelectCardOnBoard)
 
-          case Action.ObserveOpponent(TO_BE_SELECTED) | Action.GiveBack(TO_BE_SELECTED) =>
+          case Action.ObserveOpponent(_) | Action.GiveBack(_) =>
             state = syncState(InputMode.SelectAdversaryCardOnBoard)
 
-          case Action.Swap(TO_BE_SELECTED, TO_BE_SELECTED) =>
+          case Action.Swap(_, _) =>
             pendingOpponentSwapIdx = None
             state = syncState(InputMode.SelectAdversaryCardOnBoard)
 
@@ -126,13 +127,13 @@ class GameController[P <: Playable[P]](
 
         case None =>
           val targetAction = selectedMacroAction match
-            case Some(Action.ObservePlayer(TO_BE_SELECTED)) =>
+            case Some(Action.ObservePlayer(_)) =>
               turn.actions.collectFirst { case Action.ObservePlayer(_) => Action.ObservePlayer(cardIndex) }
 
-            case Some(Action.ChooseReplace(TO_BE_SELECTED)) =>
+            case Some(Action.ChooseReplace(_)) =>
               turn.actions.collectFirst { case Action.ChooseReplace(_) => Action.ChooseReplace(cardIndex) }
 
-            case Some(Action.ChooseDiscard(TO_BE_SELECTED)) =>
+            case Some(Action.ChooseDiscard(_)) =>
               turn.actions.collectFirst { case Action.ChooseDiscard(_) => Action.ChooseDiscard(cardIndex) }
 
             case _ =>
@@ -357,7 +358,10 @@ class GameController[P <: Playable[P]](
     case Action.ObservePlayer(i)   => ViewAction(s"obs_player_$i", s"Peek at your card in position ${i + 1}")
     case Action.ReturnToField(i)   => ViewAction(s"return_$i", s"Return card to your field in position ${i + 1}")
     case Action.Swap(pIdx, oIdx)   =>
-      ViewAction(s"swap_${pIdx}_$oIdx", s"Swap your card in position ${pIdx+1} with opponent's card in position ${oIdx+1}")
+      ViewAction(
+        s"swap_${pIdx}_$oIdx",
+        s"Swap your card in position ${pIdx + 1} with opponent's card in position ${oIdx + 1}"
+      )
 
   def getWinner: Option[Player] =
     val scores = game.playerScore
@@ -390,5 +394,5 @@ class GameController[P <: Playable[P]](
       executeAction(chosenAction)
 
   private def isMandatoryOrRoutine(action: Action): Boolean = action match
-    case Action.Draw | Action.EndTurn | Action.Confirm | Action.Observe | Action.Activate | Action.ChooseDiscard => true
+    case Action.Draw | Action.EndTurn | Action.Confirm  | Action.Activate | Action.ChooseDiscard => true
     case _ => false
