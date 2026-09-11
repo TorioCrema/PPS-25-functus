@@ -1,8 +1,8 @@
 package org.pps.functus
 package view
 
-import org.pps.functus.utils.{MenuItem, SelectableMenuItem, ShowCaseOption, TargetScoreOption, Utils}
-import org.pps.functus.utils.Utils.{SEPARATOR_CHAR, separator, terminalWidth, viewBuilder}
+import utils.{MenuItem, SelectableMenuItem, ShowCaseOption, TargetScoreOption, Utils}
+import utils.Utils.{SEPARATOR_CHAR, separator, terminalWidth, viewBuilder}
 
 class CLIMenu:
 

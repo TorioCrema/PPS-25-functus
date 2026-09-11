@@ -4,7 +4,7 @@ package controller
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import view.CLIMenu
-import org.pps.functus.utils.Key
+import utils.Key
 
 import java.io.{OutputStream, PrintStream}
 

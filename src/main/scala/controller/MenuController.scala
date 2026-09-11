@@ -3,15 +3,15 @@ package controller
 
 import view.CLIMenu
 
-import org.pps.functus.utils.MenuItem.*
-import org.pps.functus.utils.MenuItem.Match as MenuMatch
+import utils.MenuItem.*
+import utils.MenuItem.Match as MenuMatch
 import model.playable.game.{Game, GamePhase, Match}
 import model.board.BoardFactory
-import org.pps.functus.utils.ShowCaseOption.*
+import utils.ShowCaseOption.*
 import model.showcase.{FailedDiscardShowcase, JackShowcase, KingDrawShowcase, SevenShowcase, SixShowcase, SuccessfulDiscardShowcase}
 import model.board.Player.Player2
 
-import org.pps.functus.utils.{Key, MenuItem, ShowCaseOption, TargetScoreOption, Utils}
+import utils.{Key, MenuItem, ShowCaseOption, TargetScoreOption, Utils}
 
 import scala.language.implicitConversions
 
