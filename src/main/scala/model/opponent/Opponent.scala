@@ -12,6 +12,25 @@ class Opponent:
   private val cactusThreshold: Int = 5
   private var kingDrawnByAdversary: Option[Card] = None
 
+  /** Returns [[Option]] of the card within the [[Opponent]] field if known, [[None]] otherwise.
+    *
+    * @param index
+    *   the index of the card in the field.
+    */
+  def getKnownCard(index: Int): Option[Card] = getKnownCardFrom(knownCards)(index)
+
+  /** Returns [[Option]] of the card within the adversary's field if known, [[None]] otherwise.
+    *
+    * @param index
+    *   the index of the card in the field.
+    */
+  def getKnownAdversaryCard(index: Int): Option[Card] = getKnownCardFrom(adversaryCards)(index)
+
+  private def getKnownCardFrom(cardMap: Map[Int, Card])(index: Int): Option[Card] =
+    if knows(cardMap)(index) then Some(cardMap(index)) else None
+
+  private def knows(knownMap: Map[Int, Card])(index: Int): Boolean = knownMap.contains(index)
+
   /** Selects the appropriate action from the available ones and applies it to the current turn.
     * @param turn
     *   the turn to play.
@@ -55,7 +74,7 @@ class Opponent:
 
   /** Reacts an action performed by the adversary based on the [[Opponent]]'s current knowledge.
     * @param action
-    *   the adversary's [[Action]]
+    *   the player's [[Action]]
     * @param turn
     *   the [[Turn]] the [[Action]] is being performed on
     */
@@ -73,18 +92,6 @@ class Opponent:
       case Swap(adversaryIndex, ownIndex)                       => swapReaction(adversaryIndex, ownIndex)
       case DrawKing => kingDrawnByAdversary = Some(turn.board.getTopDiscardStack)
       case _        => ()
-
-  /** Returns [[Option]] of the card within the [[Opponent]] field if known, [[None]] otherwise.
-    * @param index
-    *   the index of the card in the field.
-    */
-  def getKnownCard(index: Int): Option[Card] = getKnownCardFrom(knownCards)(index)
-
-  /** Returns [[Option]] of the card within the adversary's field if known, [[None]] otherwise.
-    * @param index
-    *   the index of the card in the field.
-    */
-  def getKnownAdversaryCard(index: Int): Option[Card] = getKnownCardFrom(adversaryCards)(index)
 
   private def forgetAndUpdate(index: Int): Unit =
     adversaryCards = adversaryCards.removed(index)
@@ -155,8 +162,3 @@ class Opponent:
 
   private def mapFromHand(hand: List[Card]): Map[Int, Card] =
     hand.zipWithIndex.foldLeft(Map())((map, pair) => map.updated(pair._2, pair._1))
-
-  private def getKnownCardFrom(cardMap: Map[Int, Card])(index: Int): Option[Card] =
-    if knows(cardMap)(index) then Some(cardMap(index)) else None
-
-  private def knows(knownMap: Map[Int, Card])(index: Int): Boolean = knownMap.contains(index)

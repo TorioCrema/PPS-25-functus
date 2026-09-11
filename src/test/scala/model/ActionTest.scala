@@ -1,34 +1,36 @@
 package org.pps.functus
 package model
 
-import model.deck.DeckFactory
 import model.playable.turn.Action.*
-import model.playable.turn.Action
+import model.playable.turn.{Action, Turn}
+import model.deck.sugar.DeckDSL.deck
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class ActionTest extends AnyFlatSpec with Matchers:
+  given Option[Turn] = None
+
   private def testForAllIndices(toTest: Int => Action)(expected: Int => List[Action]): Unit =
-    for i <- DeckFactory().cards.indices
-    do toTest(i).next should be(expected(i))
+    for i <- deck().cards.indices
+    do toTest(i).nextActions should be(expected(i))
 
   "Observe action" should "have Confirm as next action" in:
-    Observe.next should be(Confirm :: Nil)
+    Observe.nextActions should be(Confirm :: Nil)
 
   "Confirm action" should "have EndTurn as next action" in:
-    Confirm.next should be(EndTurn :: Nil)
+    Confirm.nextActions should be(EndTurn :: Nil)
 
   "Draw action" should "have Activate as next actions" in:
-    Draw.next should be(Activate :: Nil)
+    Draw.nextActions should be(Activate :: Nil)
 
   "Cactus action" should "have EndTurn as next action" in:
-    Cactus.next should be(EndTurn :: Nil)
+    Cactus.nextActions should be(EndTurn :: Nil)
 
   "EndTurn action" should "have no next actions" in:
-    EndTurn.next should be(Nil)
+    EndTurn.nextActions should be(Nil)
 
   "DrawKing" should "have Activate as next action" in:
-    DrawKing.next should be(Activate :: Nil)
+    DrawKing.nextActions should be(Activate :: Nil)
 
   "ChooseDiscard" should "have Discard has next action" in:
     testForAllIndices(ChooseDiscard(_))(Discard(_) :: Nil)
@@ -50,6 +52,9 @@ class ActionTest extends AnyFlatSpec with Matchers:
 
   "ReturnToField" should "have Cactus and EndTurn as next actions" in:
     testForAllIndices(ReturnToField(_))(_ => Cactus :: EndTurn :: Nil)
-    
+
   "Swap" should "have Cactus and EndTurn as next actions" in:
-    Swap(0, 0).next should be(Cactus :: EndTurn :: Nil)
+    Swap(0, 0).nextActions should be(Cactus :: EndTurn :: Nil)
+
+  "Activate" should "throw IllegArgumentException when requesting next action without the Turn context" in:
+    an[IllegalArgumentException] should be thrownBy Activate.nextActions

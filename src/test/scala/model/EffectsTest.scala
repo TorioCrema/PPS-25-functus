@@ -6,9 +6,11 @@ import model.deck.card.Suit.*
 import model.deck.sugar.FieldDSL.{*, given}
 import model.board.*
 import model.board.Player.*
-import model.deck.DeckImpl
 import model.playable.turn.Turns.SimpleTurn
 import model.playable.turn.Action.*
+import model.deck.sugar.BoardDSL.*
+import model.deck.sugar.DeckDSL.deck.*
+import model.deck.sugar.DeckDSL.deck
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -20,13 +22,19 @@ class EffectsTest extends AnyFlatSpec with Matchers:
   private val player1Field = threeOfCups and twoOfSwords
   private val player2Field = fiveOfWands and aceOfPentacles
   private val boardWithDrawableSix =
-    BoardImpl(deck = DeckImpl(Vector(six of Swords)), players = Map((Player1, player1Field), (Player2, player2Field)))
+    board from default withCustom customDeck(deck from single(six of Swords)) withCustom playerOne(
+      player1Field
+    ) withCustom playerTwo(player2Field)
   private val turnWithSixInHand = SimpleTurn(boardWithDrawableSix, Player1).act(Draw)
   private val boardWithDrawableSeven =
-    BoardImpl(deck = DeckImpl(Vector(seven of Swords)), players = Map((Player1, player1Field), (Player2, player2Field)))
+    board from default withCustom customDeck(deck from single(seven of Swords)) withCustom playerOne(
+      player1Field
+    ) withCustom playerTwo(player2Field)
   private val turnWithSevenInHand = SimpleTurn(boardWithDrawableSeven, Player1).act(Draw)
   private val boardWithDrawableJack =
-    BoardImpl(deck = DeckImpl(Vector(jack of Swords)), players = Map((Player1, player1Field), (Player2, player2Field)))
+    board from default withCustom customDeck(deck from single(jack of Swords)) withCustom playerOne(
+      player1Field
+    ) withCustom playerTwo(player2Field)
   private val turnWithJackInHand = SimpleTurn(boardWithDrawableJack, Player1).act(Draw)
 
   "Activating a six" should "allow to observe one of the opponent's cards or replace" in:
