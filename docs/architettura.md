@@ -33,3 +33,13 @@ Nel contesto di questo progetto queste sezioni si occupano di:
 Questa struttura acconsente di raggiungere gli obiettivi di manutenibilità, modularità, ed estensibilità,
 in quanto ogni sezione ha responsabilità ben separate dalle altre e puo' essere modificata in maniera
 indipendente da esse.
+
+---
+
+1. [Processo di sviluppo](processo.md)
+   1. [Sprint 1](process/sprint01.md)
+   2. [Sprint 2](process/sprint02.md)
+   3. [Sprint 3](process/sprint03.md)
+2. [Requisiti](requisiti.md)
+3. [Architettura](architettura.md)
+4. [Design di dettaglio (prossimo)](design-di-dettaglio.md)

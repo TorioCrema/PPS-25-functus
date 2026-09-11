@@ -42,6 +42,8 @@ Qualore un giocatore ottiene alla fine di una partita un punteggio totale uguale
 
 1. [Processo di sviluppo](docs/processo.md)
 2. [Requisiti](docs/requisiti.md)
+3. [Architettura](docs/architettura.md)
+4. [Design di dettaglio](docs/design-di-dettaglio.md)
 
 ## Sprints
 

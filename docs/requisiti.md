@@ -123,3 +123,13 @@ Da cui si rilevano i seguenti elementi principali:
 
 - **RI04 Collaborazione tra sviluppatori**
   - Gli sviluppatori collaborano tramite la piattaforma Github per la gestione del codice sorgente, della documentazione, e del versioning del codice
+
+---
+
+1. [Processo di sviluppo](processo.md)
+   1. [Sprint 1](process/sprint01.md)
+   2. [Sprint 2](process/sprint02.md)
+   3. [Sprint 3](process/sprint03.md)
+2. [Requisiti](requisiti.md)
+3. [Architettura (prossimo)](architettura.md)
+4. [Design di dettaglio](design-di-dettaglio.md)
