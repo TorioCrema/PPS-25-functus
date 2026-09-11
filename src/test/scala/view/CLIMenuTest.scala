@@ -3,17 +3,14 @@ package view
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import view.utils.{MenuItem, SelectableMenuItem, ShowCaseOption, TargetScoreOption, Utils}
+import utils.{MenuItem, SelectableMenuItem, ShowCaseOption, TargetScoreOption, Utils}
 
 import org.scalatest.BeforeAndAfterEach
 
 import java.io.{OutputStream, PrintStream}
 
-class CLIMenuTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
-
-  override def beforeEach(): Unit =
-    Utils.viewBuilder.clear()
-
+class CLIMenuTest extends AnyFlatSpec with Matchers with SilentTest:
+  
   "CLIMenu" should "contain all MenuItem enum values in order" in {
     val menu = new CLIMenu()
     menu.menuItem should contain theSameElementsInOrderAs MenuItem.values.toList

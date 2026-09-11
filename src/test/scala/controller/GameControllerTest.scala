@@ -8,13 +8,13 @@ import model.board.Player.*
 import model.playable.game.{Game, GamePhase}
 import model.playable.turn.Action
 import view.CLIView
-import view.utils.{GameState, InputMode, Key, ViewAction}
+import utils.{GameState, InputMode, Key, ViewAction}
 import model.playable.Playable
 import model.playable.game.GamePhase.Playing
 import model.showcase.KingDrawShowcase
-import view.utils.Key.{DOWN, ENTER}
+import utils.Key.{DOWN, ENTER}
 
-class GameControllerTest extends AnyFlatSpec with Matchers:
+class GameControllerTest extends AnyFlatSpec with Matchers with SilentTest:
 
   // Lightweight mock CLIView for capturing state updates
   class TestCLIView extends CLIView:

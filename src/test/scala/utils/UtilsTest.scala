@@ -1,12 +1,15 @@
 package org.pps.functus
-package view.utils
+package utils
+
+import utils.Utils
+import utils.Utils.terminalWidth
 
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.BeforeAndAfterEach
+import java.io.{OutputStream, PrintStream}
 
-import view.utils.Utils.terminalWidth
-
-class UtilsTest extends AnyFunSpec with Matchers:
+class UtilsTest extends AnyFunSpec with Matchers with SilentTest:
 
   describe("Utils") {
 

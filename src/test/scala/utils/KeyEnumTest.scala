@@ -1,9 +1,8 @@
 package org.pps.functus
-package view.utils
+package utils
 
-import view.utils.Key
+import utils.Key
 
-import view.utils.Key
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 

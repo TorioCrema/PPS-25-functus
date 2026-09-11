@@ -5,10 +5,10 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import model.board.Player.{Player1, Player2}
 import model.playable.game.Match
-import view.utils.Key
+import org.pps.functus.utils.Key
 import java.io.{OutputStream, PrintStream}
 
-class MatchControllerTest extends AnyFlatSpec with Matchers:
+class MatchControllerTest extends AnyFlatSpec with Matchers with SilentTest:
 
   /** Helper method to execute MatchController with simulated inputs and muted stdout.
     */

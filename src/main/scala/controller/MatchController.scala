@@ -6,7 +6,7 @@ import model.playable.game.Match
 import model.board.Player
 import model.board.Player.{Player1, Player2}
 import view.CLIView
-import view.utils.{Key, Utils}
+import org.pps.functus.utils.{Key, Utils}
 
 class MatchController(
     private var matchRecord: Match = Match(50),

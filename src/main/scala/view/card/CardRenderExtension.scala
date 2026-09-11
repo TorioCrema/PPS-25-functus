@@ -1,5 +1,5 @@
 package org.pps.functus
-package view.utils
+package view.card
 
 import model.deck.card.Suit.{Cups, Pentacles, Swords, Wands}
 import model.deck.card.{Card, Suit}

@@ -5,15 +5,12 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import model.board.Player.*
 import view.CLIView
-import view.utils.{GameState, InputMode, Utils, ViewAction}
+import utils.{GameState, InputMode, Utils, ViewAction}
 
 import org.scalatest.BeforeAndAfterEach
 
-class CLIViewTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
-
-  override def beforeEach(): Unit =
-    Utils.viewBuilder.clear()
-
+class CLIViewTest extends AnyFlatSpec with Matchers with SilentTest:
+  
   // Sample helper to construct a default base GameState
   def createBaseGameState(
       inputMode: InputMode = InputMode.ActionMenu,

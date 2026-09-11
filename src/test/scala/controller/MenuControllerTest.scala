@@ -4,11 +4,11 @@ package controller
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import view.CLIMenu
-import view.utils.Key
+import org.pps.functus.utils.Key
 
 import java.io.{OutputStream, PrintStream}
 
-class MenuControllerTest extends AnyFlatSpec with Matchers:
+class MenuControllerTest extends AnyFlatSpec with Matchers with SilentTest:
 
   class TestCLIMenu extends CLIMenu:
     var lastMainMenuIndex: Option[Int] = None

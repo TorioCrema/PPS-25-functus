@@ -1,10 +1,10 @@
 package org.pps.functus
 package view
 
-import view.utils.CardRenderExtensions.*
-import view.utils.{GameState, InputMode, Utils}
-import view.utils.Utils.{ANSI_GREEN_BOLD, ANSI_RESET, SEPARATOR_CHAR, terminalWidth, viewBuilder}
+import view.card.CardRenderExtensions.*
+import org.pps.functus.utils.Utils.{ANSI_GREEN_BOLD, ANSI_RESET, SEPARATOR_CHAR, terminalWidth, viewBuilder}
 import model.board.Player
+import org.pps.functus.utils.{GameState, InputMode, Utils}
 
 class CLIView:
 

@@ -2,23 +2,16 @@ package org.pps.functus
 package controller
 
 import view.CLIMenu
-import view.utils.{Key, MenuItem, ShowCaseOption, TargetScoreOption, Utils}
 
-import MenuItem.*
-import MenuItem.Match as MenuMatch
+import org.pps.functus.utils.MenuItem.*
+import org.pps.functus.utils.MenuItem.Match as MenuMatch
 import model.playable.game.{Game, GamePhase, Match}
 import model.board.BoardFactory
-import view.utils.ShowCaseOption.*
-import model.showcase.{
-  FailedDiscardShowcase,
-  JackShowcase,
-  KingDrawShowcase,
-  SevenShowcase,
-  SixShowcase,
-  SuccessfulDiscardShowcase
-}
-
+import org.pps.functus.utils.ShowCaseOption.*
+import model.showcase.{FailedDiscardShowcase, JackShowcase, KingDrawShowcase, SevenShowcase, SixShowcase, SuccessfulDiscardShowcase}
 import model.board.Player.Player2
+
+import org.pps.functus.utils.{Key, MenuItem, ShowCaseOption, TargetScoreOption, Utils}
 
 import scala.language.implicitConversions
 
@@ -104,12 +97,12 @@ class MenuController(private val menu: CLIMenu, private val readInput: () => Key
   /** Starts the main execution loop for menu navigation and user interaction.
     *
     * Continuously renders the active [[MenuState]] and listens for keyboard input. Directional key presses
-    * ([[view.utils.Key.UP]], [[view.utils.Key.DOWN]], [[view.utils.Key.LEFT]], [[view.utils.Key.RIGHT]]) update option
+    * ([[Key.UP]], [[Key.DOWN]], [[Key.LEFT]], [[Key.RIGHT]]) update option
     * selection cyclically within the current menu bounds
     *
     * Action resolution is delegated to the active menu state:
-    *   - [[view.utils.Key.ENTER]] confirms selection by triggering `currentMenu.onConfirm`.
-    *   - [[view.utils.Key.ESCAPE]] handles backward navigation or exit via `currentMenu.onBack`.
+    *   - [[Key.ENTER]] confirms selection by triggering `currentMenu.onConfirm`.
+    *   - [[Key.ESCAPE]] handles backward navigation or exit via `currentMenu.onBack`.
     */
   def start(): Unit =
     while !isExitChosen do
