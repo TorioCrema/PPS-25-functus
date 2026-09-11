@@ -3,14 +3,14 @@ package view
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import view.utils.{MenuItem, ShowCaseOption, TargetScoreOption, SelectableMenuItem, Utils}
+import utils.{MenuItem, SelectableMenuItem, ShowCaseOption, TargetScoreOption, Utils}
+
 import org.scalatest.BeforeAndAfterEach
 
-class CLIMenuTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
+import java.io.{OutputStream, PrintStream}
 
-  override def beforeEach(): Unit =
-    Utils.viewBuilder.clear()
-
+class CLIMenuTest extends AnyFlatSpec with Matchers with SilentTest:
+  
   "CLIMenu" should "contain all MenuItem enum values in order" in {
     val menu = new CLIMenu()
     menu.menuItem should contain theSameElementsInOrderAs MenuItem.values.toList
@@ -28,15 +28,15 @@ class CLIMenuTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
 
   "SelectableMenuItem enum implementations" should "correctly implement the label property" in {
     MenuItem.values.foreach { item =>
-      item shouldBe a [SelectableMenuItem]
+      item shouldBe a[SelectableMenuItem]
       item.label should not be empty
     }
     TargetScoreOption.values.foreach { option =>
-      option shouldBe a [SelectableMenuItem]
+      option shouldBe a[SelectableMenuItem]
       option.label should not be empty
     }
     ShowCaseOption.values.foreach { option =>
-      option shouldBe a [SelectableMenuItem]
+      option shouldBe a[SelectableMenuItem]
       option.label should not be empty
     }
   }
@@ -130,9 +130,40 @@ class CLIMenuTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
     val output = Utils.viewBuilder.toString()
 
     menu.showCaseOption.zipWithIndex.foreach { case (option, index) =>
-      if index != selectedIndex then
-        output should include(s"    ${option.label}")
+      if index != selectedIndex then output should include(s"    ${option.label}")
     }
+  }
+
+  "CLIMenu.renderRules" should "append formatted game rules text block with return footer" in {
+    val menu = new CLIMenu()
+    val silentStream = new PrintStream(OutputStream.nullOutputStream())
+
+    Console.withOut(silentStream) {
+      noException should be thrownBy menu.renderRules()
+    }
+
+    val output = Utils.viewBuilder.toString()
+    output should not be empty
+    output should include("GAME RULES")
+    output should include("Objective: Have the lowest cumulative score")
+    output should include("(Press 'Q' to return to main menu)")
+  }
+
+  it should "include all detailed game mechanics and instructions in the rules text" in {
+    val menu = new CLIMenu()
+    val silentStream = new PrintStream(OutputStream.nullOutputStream())
+
+    Console.withOut(silentStream) {
+      menu.renderRules()
+    }
+
+    val output = Utils.viewBuilder.toString()
+    output should include("Draw a card from the deck and replace one of your field cards")
+    output should include("6: Peek at 1 of your opponent's cards")
+    output should include("7: Peek at 1 of your own cards")
+    output should include("8: Blindly swap 1 of your cards")
+    output should include("Call 'Cactus' at turn end")
+    output should include("Target Score Rule: Hitting the exact match target score")
   }
 
   "CLIMenu layout bounds" should "handle boundary indices smoothly across all menu types" in {

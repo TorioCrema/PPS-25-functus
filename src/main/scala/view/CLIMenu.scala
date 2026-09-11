@@ -1,8 +1,8 @@
 package org.pps.functus
 package view
 
-import view.utils.{MenuItem, SelectableMenuItem, ShowCaseOption, TargetScoreOption, Utils}
-import view.utils.Utils.{viewBuilder, separator}
+import utils.{MenuItem, SelectableMenuItem, ShowCaseOption, TargetScoreOption, Utils}
+import utils.Utils.{SEPARATOR_CHAR, separator, terminalWidth, viewBuilder}
 
 class CLIMenu:
 
@@ -17,33 +17,36 @@ class CLIMenu:
 
   /** Renders the main menu displaying the available game modes.
     *
-    * Clears the terminal screen and draws the header before printing the list of [[view.utils.MenuItem]] options.
+    * Clears the terminal screen and draws the header before printing the list of [[MenuItem]] options.
     *
     * @param selectedModeIndex
     *   the index of the mode currently highlighted by the user
     */
   def renderMainMenu(selectedModeIndex: Int): Unit =
+    given separator: String = SEPARATOR_CHAR * terminalWidth
     printMenu(selectedModeIndex, MAIN_MENU_TITLE, menuItem, true)
 
   /** Renders the target score selection menu for match mode.
     *
-    * Clears the terminal screen and draws the header before printing the list of [[view.utils.TargetScoreOption]]
+    * Clears the terminal screen and draws the header before printing the list of [[TargetScoreOption]]
     * options.
     *
     * @param selectedScoreIndex
     *   the index of the target score option currently highlighted
     */
   def renderTargetScoreMenu(selectedScoreIndex: Int): Unit =
+    given separator: String = SEPARATOR_CHAR * terminalWidth
     printMenu(selectedScoreIndex, MATCH_SCORE_MENU_TITLE, scoreOption)
 
   /** Renders the showcase selection menu for testing card interactions.
     *
-    * Clears the terminal screen and draws the header before printing the list of [[view.utils.ShowCaseOption]] options.
+    * Clears the terminal screen and draws the header before printing the list of [[ShowCaseOption]] options.
     *
     * @param selectedIndex
     *   the index of the showcase option currently highlighted
     */
   def renderShowCaseMenu(selectedIndex: Int): Unit =
+    given separator: String = SEPARATOR_CHAR * terminalWidth
     printMenu(selectedIndex, SHOWCASE_MENU_TITLE, showCaseOption)
 
   /** Renders the game rules page with instructions and controls.

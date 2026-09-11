@@ -2,27 +2,20 @@ package org.pps.functus
 package controller
 
 import view.CLIMenu
-import view.utils.{Key, MenuItem, ShowCaseOption, TargetScoreOption, Utils}
 
-import MenuItem.*
-import MenuItem.Match as MenuMatch
+import utils.MenuItem.*
+import utils.MenuItem.Match as MenuMatch
 import model.playable.game.{Game, GamePhase, Match}
 import model.board.BoardFactory
-import view.utils.ShowCaseOption.*
-import model.showcase.{
-  FailedDiscardShowcase,
-  JackShowcase,
-  KingDrawShowcase,
-  SevenShowcase,
-  SixShowcase,
-  SuccessfulDiscardShowcase
-}
-
+import utils.ShowCaseOption.*
+import model.showcase.{FailedDiscardShowcase, JackShowcase, KingDrawShowcase, SevenShowcase, SixShowcase, SuccessfulDiscardShowcase}
 import model.board.Player.Player2
+
+import utils.{Key, MenuItem, ShowCaseOption, TargetScoreOption, Utils}
 
 import scala.language.implicitConversions
 
-class MenuController(private val menu: CLIMenu):
+class MenuController(private val menu: CLIMenu, private val readInput: () => Key = () => Utils.readInput()):
 
   private val STEP_NEXT = -1
   private val STEP_PREVIOUS = 1
@@ -39,9 +32,9 @@ class MenuController(private val menu: CLIMenu):
     override def render(selectedIndex: Int): Unit = menu.renderMainMenu(selectedIndex)
 
     override def onConfirm(selectedIndex: Int): Unit = menuItems(selectedIndex) match
-      case SingleGame        => GameController(Game(BoardFactory.BoardWithPopulatedFields()), isVsBot = false).start()
+      case SingleGame        => GameController(Game(BoardFactory.BoardWithPopulatedFields()), isVsBot = false, inputReader = readInput).start()
       case MenuMatch         => openTargetScoreMenu(isVsBot = false)
-      case SinglePlayerGame  => GameController(Game(BoardFactory.BoardWithPopulatedFields()), isVsBot = true).start()
+      case SinglePlayerGame  => GameController(Game(BoardFactory.BoardWithPopulatedFields()), isVsBot = true, inputReader = readInput).start()
       case SinglePlayerMatch => openTargetScoreMenu(isVsBot = true)
       case ShowCase          => openShowCaseMenu()
       case Rules             => openRulePage()
@@ -58,7 +51,7 @@ class MenuController(private val menu: CLIMenu):
     override def onConfirm(selectedIndex: Int): Unit =
       val chosenTargetScore = scoreItems(selectedIndex).score
       currentMenu = MainMenu
-      MatchController(Match(chosenTargetScore), isVsBot = isVsBot).start()
+      MatchController(Match(chosenTargetScore), isVsBot = isVsBot, readInput = readInput).start()
 
   private class ShowCaseMenu extends Menu:
     private val showCaseItems: List[ShowCaseOption] = ShowCaseOption.values.toList
@@ -68,17 +61,17 @@ class MenuController(private val menu: CLIMenu):
     override def render(selectedIndex: Int): Unit = menu.renderShowCaseMenu(selectedIndex)
 
     override def onConfirm(selectedIndex: Int): Unit = showCaseItems(selectedIndex) match
-      case DrawSix => GameController(Game(GamePhase.LastTurn, SixShowcase.turn, Some(Player2)), isVsBot = true).start()
+      case DrawSix => GameController(Game(GamePhase.LastTurn, SixShowcase.turn, Some(Player2)), isVsBot = true, inputReader = readInput).start()
       case DrawSeven =>
-        GameController(Game(GamePhase.LastTurn, SevenShowcase.turn, Some(Player2)), isVsBot = true).start()
+        GameController(Game(GamePhase.LastTurn, SevenShowcase.turn, Some(Player2)), isVsBot = true, inputReader = readInput).start()
       case DrawEight =>
-        GameController(Game(GamePhase.LastTurn, JackShowcase.turn, Some(Player2)), isVsBot = true).start()
+        GameController(Game(GamePhase.LastTurn, JackShowcase.turn, Some(Player2)), isVsBot = true, inputReader = readInput).start()
       case DrawKing =>
-        GameController(Game(GamePhase.LastTurn, KingDrawShowcase.turn, Some(Player2)), isVsBot = true).start()
+        GameController(Game(GamePhase.LastTurn, KingDrawShowcase.turn, Some(Player2)), isVsBot = true, inputReader = readInput).start()
       case SuccessfulDiscard =>
-        GameController(Game(GamePhase.LastTurn, SuccessfulDiscardShowcase.turn, Some(Player2)), isVsBot = true).start()
+        GameController(Game(GamePhase.LastTurn, SuccessfulDiscardShowcase.turn, Some(Player2)), isVsBot = true, inputReader = readInput).start()
       case FailDiscard =>
-        GameController(Game(GamePhase.LastTurn, FailedDiscardShowcase.turn, Some(Player2)), isVsBot = true).start()
+        GameController(Game(GamePhase.LastTurn, FailedDiscardShowcase.turn, Some(Player2)), isVsBot = true, inputReader = readInput).start()
 
   private class RulePage extends Menu:
     override def itemCount: Int = 0 // No selectable options
@@ -104,17 +97,17 @@ class MenuController(private val menu: CLIMenu):
   /** Starts the main execution loop for menu navigation and user interaction.
     *
     * Continuously renders the active [[MenuState]] and listens for keyboard input. Directional key presses
-    * ([[view.utils.Key.UP]], [[view.utils.Key.DOWN]], [[view.utils.Key.LEFT]], [[view.utils.Key.RIGHT]]) update option
+    * ([[Key.UP]], [[Key.DOWN]], [[Key.LEFT]], [[Key.RIGHT]]) update option
     * selection cyclically within the current menu bounds
     *
     * Action resolution is delegated to the active menu state:
-    *   - [[view.utils.Key.ENTER]] confirms selection by triggering `currentMenu.onConfirm`.
-    *   - [[view.utils.Key.ESCAPE]] handles backward navigation or exit via `currentMenu.onBack`.
+    *   - [[Key.ENTER]] confirms selection by triggering `currentMenu.onConfirm`.
+    *   - [[Key.ESCAPE]] handles backward navigation or exit via `currentMenu.onBack`.
     */
   def start(): Unit =
     while !isExitChosen do
       currentMenu.render(selectedIndex)
-      Utils.readInput() match
+      readInput() match
         case Key.UP | Key.LEFT    => moveSelection(delta = STEP_NEXT)
         case Key.DOWN | Key.RIGHT => moveSelection(delta = STEP_PREVIOUS)
         case Key.ENTER            => currentMenu.onConfirm(selectedIndex)

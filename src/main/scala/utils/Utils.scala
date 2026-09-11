@@ -1,5 +1,5 @@
 package org.pps.functus
-package view.utils
+package utils
 
 import org.jline.keymap.{BindingReader, KeyMap}
 import org.jline.terminal.{Terminal, TerminalBuilder}
