@@ -6,7 +6,7 @@ Si è cercato di realizzare un sistema estendibile, mantenibile, modulare, con n
 
 ## Struttura
 
-![Struttura del progetto](struttura.drawio.png)
+![Struttura del progetto](img/struttura.drawio.png)
 
 ## MVC
 
@@ -25,7 +25,7 @@ Nel contesto di questo progetto queste sezioni si occupano di:
   - `CLIMenu`: gestisce la rappresentazione grafica del menu iniziale dell'applicazione
   - `CLIView`: gestisce la rappresentazione grafica degli elementi del gioco
 - Controller: gestisce la coordinazione tra View e Model. Ottiene gli input dell'utente dalla
-  View e fornisce le scelte dell'utente al Model. È composto da:
+  View, fornisce l'azione scelta dall'utente al Model, e comunica il nuovo stato del Model alla View. È composto da:
   - `GameController`: gestisce le interazioni con l'utente durante lo svolgimento di una partita
   - `MatchController`: gestisce le interazioni con l'utente durante lo svolgimento di un match
   - `MenuController`: gestisce le interazioni con l'utente durante la navigazione del menu principale

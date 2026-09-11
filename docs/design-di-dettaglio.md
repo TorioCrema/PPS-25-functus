@@ -14,7 +14,7 @@ rispettivamente un singolo turno, una partita composta da piu' turni, e un match
 piu' partite. Queste entità implementano l'interfaccia `Playable` tramite la quale è possibile
 avanzare le fasi del gioco fornendo una delle azioni (`Action`) indicate dall'entità stessa.
 
-![](Model.drawio.png)
+![](img/Model.drawio.png)
 
 ### Creazione del tavolo (`Board`, `Field`, `Deck`, `Card`)
 
@@ -26,13 +26,15 @@ quali carte inserire nei sui vari elementi. Il DSL comprende funzionalità per
 la creazione dei sotto-elemnti della `Board`, come le singole carte (`Card`), i campi
 dei giocatori (`Field`), il mazzo (`Deck`), e la pila degli scarti.
 
-![DSL per la creazione di `Board`](BoardDSL.drawio.png)
+![DSL per la creazione di `Board`](img/BoardDSL.drawio.png)
 
-![DSL per la creazione di `Field`](FieldDSL.drawio.png)
+![DSL per la creazione di `Field`](img/FieldDSL.drawio.png)
 
-![DSL per la creazione di `Card`](CardDSL.drawio.png)
+![DSL per la creazione di `Card`](img/CardDSL.drawio.png)
 
 ### Playable
+
+![Playable](img/Playable.drawio.png)
 
 L'interfaccia `Playable` rappresenta le entità che racchiudono le funzionalità delle dinamiche
 di gioco.
@@ -51,23 +53,37 @@ e calcolando il punteggio finale della partita.
 `Match` gestisce il progresso di piu' partite durante un match con punteggio limite, accumulando
 i punteggi delle partite.
 
+### Opponent
+
+L'entità `Opponent` gestisce il comportamento dell'avversario virtuale, essa è utilizzata da
+`GameController` qualora l'utente selezioni l'opzione per giocatore singolo dal menu principale.
+Le sue funzionalità principali sono i metodi `play` e `react`, che rappresentano rispettivamente
+la capacità di selezionare autonomamente una tra le azioni disponibili in un turno in base
+all'attuale conoscenza del tavolo di gioco, e la capacità di alterare questa conoscenza
+in base alle azioni eseguite dall'utente durante il suo turno.
+
+![Opponent](img/Opponent.drawio.png)
+
 ## Controller
 
-![Controller e View](Controller.drawio.png)
+![Controller e View](img/Controller.drawio.png)
 
-L'interfaccia `Playable` è utilizzata da `GameController`, che gestisce l'interazione con l'utente permettendo
-a quest'ultimo di selezionare l'azione desiderata durante il suo turno.
+L'interfaccia `Playable` è utilizzata da `GameController`, che ottiene l'input dell'utente
+dall'entità `CLIView` e permette di selezionare l'azione desiderata durante il turno.
 `MatchController` aggiunge la possibilità di giocare piu partite tramite composizione con `GameController`.
-L'istanza del controller adeguato è creata da `MenuController` basandosi sull'input dell'utente.
+L'istanza del controller adeguato è creata da `MenuController` in base all'elemento selezionato dall'utente
+nel menu.
 
 ## View
 
 `CLIMenu` gestisce la rappresentazione degli elementi del menu principale, essi
 sono istanze dell'interfaccia `SelectableMenuItem`.
 
-![CLIMenu](CLIMenu.png)
+![CLIMenu](img/CLIMenu.png)
 
 `CLIView` gestisce la rappresentazione del gioco, ottenendo lo stato della partita da `GameController` attraverso
 l'entità `GameState`.
 
-![CLIView](CLIView.drawio.png)
+Entrambe le entità del modulo view permettono di rilevare l'input dell'utente.
+
+![CLIView](img/CLIView.drawio.png)
