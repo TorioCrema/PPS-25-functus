@@ -1,12 +1,13 @@
 package org.pps.functus
 
-import org.scalatest.TestSuite
+import org.scalatest.{Outcome, TestSuite}
+
 import java.io.{OutputStream, PrintStream}
 
 trait SilentTest extends TestSuite:
   private val silentStream = new PrintStream(OutputStream.nullOutputStream())
 
-  abstract override def withFixture(test: NoArgTest) =
+  abstract override def withFixture(test: NoArgTest): Outcome =
     val originalSystemOut = System.out
     System.setOut(silentStream)
     try
