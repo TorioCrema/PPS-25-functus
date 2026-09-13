@@ -28,7 +28,7 @@ object Effects:
           val swapActions =
             for
               playerIndex <- 0 until getFieldLength(on.player)
-              opponentIndex <- 0 until getFieldLength(on.player)
+              opponentIndex <- 0 until getFieldLength(on.player.other)
             yield Swap(playerIndex, opponentIndex)
           replaceActions.appendedAll(swapActions)
         case _ => replaceActions
