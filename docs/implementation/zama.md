@@ -10,6 +10,7 @@ Il mio contributo al progetto è focalizzato nelle seguenti aree:
 - **Match**: implementazione di un match.
 - **Opponent**: implementazione dell'avversario virtuale.
 - **Showcase**: implementazione della generazione di turni dediti a mostrare le meccaniche di gioco
+- **DSL**: implementazione di un DSL per la creazione delle carte e dei campi dei giocatori
 - **Testing**: scrittura dei test per tutti i sistemi implementati
 
 ## Actions
@@ -59,7 +60,7 @@ agli elementi sopraelencati. Questa classe estende `Playable[Turn]` e possiede i
 Esistono tre "tipi" di turno possibili, a seconda della fase della partita in cui essi vengono giocati, questi sono: il
 primo turno di ogni giocatore, l'ultimo turno della partita, e i turni semplici ottenuti per esclusione. Questi "tipi" si
 differenziano per le azioni disponibili alla loro creazione e, nel caso dell'ultimo turno, dall'assenza dell'azione `Cactus`.
-Il companion object `Turns` contiene i factory method per ogni tipologia di turno, e i metodi utilizzati per alterare
+Il companion object `Turns` contiene i factory methods per ogni tipologia di turno, e i metodi utilizzati per alterare
 lo stato corrente del turno.
 
 - `act(action: Action): Turn` esegue l'azione passata come argomento sullo stato corrente del turno attraverso il
@@ -114,7 +115,7 @@ activated.value match
     val swapActions =
       for
         playerIndex <- 0 until getFieldLength(turn.player)
-        opponentIndex <- 0 until getFieldLength(turn.player)
+        opponentIndex <- 0 until getFieldLength(turn.player.other)
       yield Swap(playerIndex, opponentIndex)
     replaceActions.appendedAll(swapActions)
   case _ => replaceActions
@@ -130,6 +131,7 @@ Elementi rilevanti di Scala in questa implementazione sono:
     def effect(on: Turn): List[Action] = ...
   ```
 - Pattern matching per l'individuazione del effetto desiderato
+- For comprehension per la generazione delle azioni `Swap`
 
 ## Match
 
@@ -138,7 +140,7 @@ fino al superamento del punteggio limite. È implementato dalla `case class` `Ma
 sono date dal prodotto cartesiano del punteggio massimo, il `Game` in corso, e gli attuali punteggi cumulativi dei
 giocatori. La classe estende il trait `Playable[Match]`, fornendo i metodi `act` e `isOver`:
 
-- `act(action: Action): Match` delega l'esecuzione dell'azione a `Game`, nel caso in cui esso sia terminato
+- `act(action: Action): Match` delega l'esecuzione dell'azione a `Game`, e nel caso in cui esso sia terminato
     aggiorna i punteggi dei giocatori.
 - `isOver: Boolean`: restituisce `true` qualora il `Match` sia completato, ovvero quando almeno uno dei punteggi
     cumulativi dei giocatori supera il punteggio limite impostato alla creazione del `Match`.
@@ -152,7 +154,7 @@ def nextGame: Match =
 
 Elementi rilevanti di Scala in questa implementazione sono:
 
-- Utilizzo di `export` per esporre accesso alle informazioni relative al `Game` in corso all'interno del `Match`:
+- Utilizzo di `export` per dare accesso alle informazioni relative al `Game` in corso all'interno del `Match`:
     ```scala 3
     export game.{act as _, isOver as isGameOver, *}
     ```
@@ -255,6 +257,53 @@ object SixShowcase extends AbstractShowcase with SixEffect
 Elementi rilevanti di Scala in questa implementazione sono:
 
 - Utilizzo della notazione self-type nel trait `Showcase` e relative implementazioni tramite mix-in
+
+## DSL
+
+Per agevolare la creazione delle entità `Card` e `Field`, soprattutto all'interno di classi
+di test, sono stati realizzati di object `CardDSL` e `FieldDSL`.
+
+`CardDSL` contiene le costanti utilizzate per indicare il valore delle carte in linguaggio
+naturale, e un extension method dei valori per creare una carta indicandone il valore e il seme:
+```scala 3
+object CardDSL:
+  val king = 0
+  val ace = 1
+  val two = 2
+  ...
+  extension (value: Int)
+    infix def of(suit: Suit): Card = CardImpl(value, Int)
+```
+Questa implementazione permette di creare una carta con la notazione `<valore> of <seme>`:
+```scala 3
+import CardDSL.*
+val card: Card = ace of Swords
+```
+
+`FieldDSL` permette di creare le entità `Field` concatenando le carte in esse contenute con
+l'operatore `and`, questa funzionalità è implementata attraverso il trait `FieldBuilderLike[T]`,
+che fornisce il metodo `and` per concatenare un oggetto di tipo `T` a una carta:
+```scala 3
+sealed trait FieldBuilderLike[T]:
+  infix def and(cardToAdd: Card): Field
+  
+object FieldDSL:
+  private class FieldBuilderFromCard(card: Card) extends FieldBuilderLike[Card]:
+    override infix def and(cardToAdd: Card): Field = FieldImpl(Vector(card, cardToAdd))
+
+  private class FieldBuilderFromField(field: Field) extends FieldBuilderLike[Field]:
+    override infix def and(cardToAdd: Card): Field = field.addCard(cardToAdd)
+```
+
+Un element rilevante di Scala in questa implementazione è la conversione implicita
+da `Card` alla classe `FieldBuilderFromCard`, o da `Field` a `FieldBuilderFromField`
+è ottenuta tramite le istruzioni `given` per le implementazioni di `Conversion`
+con i rispettivi tipi:
+```scala 3
+object FieldDSL:
+  given Conversion[Card, FieldBuilderLike[Card]] = FieldBuilderFromCard(_)
+  given Conversion[Field, FieldBuilderLike[Field]] = FieldBuilderFromField(_)
+```
 
 ## Testing
 
