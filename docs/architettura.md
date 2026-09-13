@@ -24,11 +24,11 @@ Nel contesto di questo progetto queste sezioni si occupano di:
 - View: gestisce la rappresentazione dai dati all'utente e ne raccoglie l'input. È composto da:
   - `CLIMenu`: gestisce la rappresentazione grafica del menu iniziale dell'applicazione
   - `CLIView`: gestisce la rappresentazione grafica degli elementi del gioco
-- Controller: gestisce la coordinazione tra View e Model. Ottiene gli input dell'utente dalla
-  View, fornisce l'azione scelta dall'utente al Model, e comunica il nuovo stato del Model alla View. È composto da:
-  - `GameController`: gestisce le interazioni con l'utente durante lo svolgimento di una partita
-  - `MatchController`: gestisce le interazioni con l'utente durante lo svolgimento di un match
-  - `MenuController`: gestisce le interazioni con l'utente durante la navigazione del menu principale
+- Controller: gestisce la coordinazione tra View e Model. Ottiene gli input dell'utente,
+  fornisce l'azione scelta dall'utente al Model, e comunica il nuovo stato del Model alla View. È composto da:
+    - `GameController`: gestisce le interazioni con l'utente durante lo svolgimento di una partita
+    - `MatchController`: gestisce le interazioni con l'utente durante lo svolgimento di un match
+    - `MenuController`: gestisce le interazioni con l'utente durante la navigazione del menu principale
 
 Questa struttura acconsente di raggiungere gli obiettivi di manutenibilità, modularità, ed estensibilità,
 in quanto ogni sezione ha responsabilità ben separate dalle altre e puo' essere modificata in maniera

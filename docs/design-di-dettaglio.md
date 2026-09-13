@@ -47,7 +47,7 @@ L'entità `Game` rappresenta un'intera partita composta da piu' turni, mentre `M
 una o piu' partite ed è composta da uno o piu' `Game`.
 
 `Game` gestisce il progresso di una partita alternando i giocatori a ogni turno, generando
-la giusta tipologia di `Turn` in base alla fase di gioco (`GamePhase`) in cui il turno avviene,
+turni adeguati alla fase di gioco (`GamePhase`) in cui il turno avviene,
 e calcolando il punteggio finale della partita.
 
 `Match` gestisce il progresso di piu' partite durante un match con punteggio limite, accumulando
@@ -68,8 +68,8 @@ in base alle azioni eseguite dall'utente durante il suo turno.
 
 ![Controller e View](img/Controller.drawio.png)
 
-L'interfaccia `Playable` è utilizzata da `GameController`, che ottiene l'input dell'utente
-dall'entità `CLIView` e permette di selezionare l'azione desiderata durante il turno.
+L'interfaccia `Playable` è utilizzata da `GameController`, che ottiene l'input dell'utente 
+e permette di selezionare l'azione desiderata durante il turno.
 `MatchController` aggiunge la possibilità di giocare piu partite tramite composizione con `GameController`.
 L'istanza del controller adeguato è creata da `MenuController` in base all'elemento selezionato dall'utente
 nel menu.
@@ -81,9 +81,7 @@ sono istanze dell'interfaccia `SelectableMenuItem`.
 
 ![CLIMenu](img/CLIMenu.png)
 
-`CLIView` gestisce la rappresentazione del gioco, ottenendo lo stato della partita da `GameController` attraverso
-l'entità `GameState`.
-
-Entrambe le entità del modulo view permettono di rilevare l'input dell'utente.
+`CLIView` gestisce la rappresentazione degli elementi del gioco durante lo svolgimento di
+una partita.
 
 ![CLIView](img/CLIView.drawio.png)
