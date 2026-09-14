@@ -37,9 +37,12 @@ indipendente da esse.
 ---
 
 1. [Processo di sviluppo](processo.md)
-   1. [Sprint 1](process/sprint01.md)
-   2. [Sprint 2](process/sprint02.md)
-   3. [Sprint 3](process/sprint03.md)
+    1. [Sprint 1](process/sprint01.md)
+    2. [Sprint 2](process/sprint02.md)
+    3. [Sprint 3](process/sprint03.md)
 2. [Requisiti](requisiti.md)
 3. [Architettura](architettura.md)
-4. [Design di dettaglio (prossimo)](design-di-dettaglio.md)
+4. [**Design di dettaglio (prossimo)**](design-di-dettaglio.md)
+5. [Implementazione](implementazione.md)
+6. [Testing](testing.md)
+7. [Retrospettiva](retrospettiva.md)

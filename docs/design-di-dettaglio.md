@@ -74,6 +74,8 @@ e permette di selezionare l'azione desiderata durante il turno.
 L'istanza del controller adeguato è creata da `MenuController` in base all'elemento selezionato dall'utente
 nel menu.
 
+![Diagramma di sequenza del game loop](img/SequenzaGameLoop.drawio.png)
+
 ## View
 
 `CLIMenu` gestisce la rappresentazione degli elementi del menu principale, essi
@@ -85,3 +87,16 @@ sono istanze dell'interfaccia `SelectableMenuItem`.
 una partita.
 
 ![CLIView](img/CLIView.drawio.png)
+
+---
+
+1. [Processo di sviluppo](processo.md)
+    1. [Sprint 1](process/sprint01.md)
+    2. [Sprint 2](process/sprint02.md)
+    3. [Sprint 3](process/sprint03.md)
+2. [Requisiti](requisiti.md)
+3. [Architettura](architettura.md)
+4. [Design di dettaglio](design-di-dettaglio.md)
+5. [**Implementazione (prossimo)**](implementazione.md)
+6. [Testing](testing.md)
+7. [Retrospettiva](retrospettiva.md)

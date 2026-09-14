@@ -8,7 +8,7 @@ Il gruppo ha seguito una metodologia _Agile_ per la gestione e sviluppo del sist
 
 I ruoli dei membri del team sono i seguenti:
 - **Product Owner**: responsabile della scrittura e mantenimento del _Product backlog_ e della verifica del sistema sviluppato, ruolo ricoperto da Simone Zama
-- **Committente**: esperto del dominio applicativo, verifica l'usabilita' e la qualita' del risultato finale, ruolo ricoperto da Luca Nicolae Ferar Tofan
+- **Committente**: esperto del dominio applicativo, verifica l'usabilità e la qualità del risultato finale, ruolo ricoperto da Luca Nicolae Ferar Tofan
 - **Sviluppatori**: l'intero team ha partecipato allo sviluppo del sistema:
   - Alex Casadei
   - Luca Nicolae Ferar Tofan
@@ -34,12 +34,34 @@ Durante la prima riunione, il team ha individuato la durata delle sprint che com
 In particolare la durata scelta è di una settimana o due per sprint, in base alla
 disponibilità dei membri.
 
+## Strumenti di test, build, e Continuous Integration
+
+Per la sua facilita' di utilizzo e familiarità da parte del team di sviluppo, è stata scelta la libreria `ScalaTest`
+per l'implementazione di test.
+
+Come build tool è stato scelto `sbt`.
+
+È stato selezionato il plugin `scalafmt` per assicurare uno stile di codice uniforme tra
+tutti i membri del team.
+
+È stato utilizzato GitHub come ambiente di sviluppo distribuito, e sono state utilizzate
+diverse GitHub Actions per implementare una semplice pipeline di Continuous Integration,
+queste actions sono:
+- Build e Test: compilazione del progetto e run delle classi di test, viene eseguita su ogni
+  pull request alla branch `main`.
+- Deployment su GitHub pages: compilazione degli elementi della relazione tramite `Jekyll`, e
+  deployment attraverso GitHub pages, viene eseguita su ogni pull request alla branch `main`, ma
+  il deployment è limitato ai commit aggiunti alla branch `main`.
+
 ---
 
 1. [Processo di sviluppo](processo.md)
-   1. [Sprint 1](process/sprint01.md)
-   2. [Sprint 2](process/sprint02.md)
-   3. [Sprint 3](process/sprint03.md)
-2. [Requisiti (prossimo)](requisiti.md)
+    1. [Sprint 1](process/sprint01.md)
+    2. [Sprint 2](process/sprint02.md)
+    3. [Sprint 3](process/sprint03.md)
+2. [**Requisiti (prossimo)**](requisiti.md)
 3. [Architettura](architettura.md)
 4. [Design di dettaglio](design-di-dettaglio.md)
+5. [Implementazione](implementazione.md)
+6. [Testing](testing.md)
+7. [Retrospettiva](retrospettiva.md)
