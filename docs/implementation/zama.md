@@ -56,13 +56,14 @@ Come detto in precedenza, un turno è interpretabile come una macchina a stati f
 I suoi stati possibili sono formati dal prodotto cartesiano di: giocatore, board, mano del giocatore, azioni
 disponibili e un valore che indica se durante il turno è stato chiamato Cactus.
 Da questa osservazione deriva l'implementazione tramite `case class` di nome `Turn` con campi di tipi corrispondenti
-agli elementi sopraelencati. Questa classe estende `Playable[Turn]` e possiede i due metodi pubblici: `act` e `isOver`.
+agli elementi sopraelencati. Questa classe estende `Playable[Turn]`.
 Esistono tre "tipi" di turno possibili, a seconda della fase della partita in cui essi vengono giocati, questi sono: il
 primo turno di ogni giocatore, l'ultimo turno della partita, e i turni semplici ottenuti per esclusione. Questi "tipi" si
 differenziano per le azioni disponibili alla loro creazione e, nel caso dell'ultimo turno, dall'assenza dell'azione `Cactus`.
 Il companion object `Turns` contiene i factory methods per ogni tipologia di turno, e i metodi utilizzati per alterare
 lo stato corrente del turno.
 
+Le funzionalità principali di `Turn` sono:
 - `act(action: Action): Turn` esegue l'azione passata come argomento sullo stato corrente del turno attraverso il
     metodo `nextTurn` dell'azione e restituisce il nuovo stato.
     Nel caso in cui l'azione passata come argomento non appartenga alle azioni disponibili nell'attuale stato
@@ -295,7 +296,7 @@ object FieldDSL:
     override infix def and(cardToAdd: Card): Field = field.addCard(cardToAdd)
 ```
 
-Un element rilevante di Scala in questa implementazione è la conversione implicita
+Un elemento rilevante di Scala in questa implementazione è la conversione implicita
 da `Card` alla classe `FieldBuilderFromCard`, o da `Field` a `FieldBuilderFromField`
 è ottenuta tramite le istruzioni `given` per le implementazioni di `Conversion`
 con i rispettivi tipi:
