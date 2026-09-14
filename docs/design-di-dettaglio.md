@@ -16,6 +16,12 @@ avanzare le fasi del gioco fornendo una delle azioni (`Action`) indicate dall'en
 
 ![](img/Model.drawio.png)
 
+## Board
+
+L'interfaccia `Board` fornisce diversi metodi che permettono di modificare il tavolo durante
+il turno. Questi metodi a loro volta sfruttano quelli forniti dalle interfacce `Field`, `Deck`, e
+`Card` di cui `Board` è composta.
+
 ### Creazione del tavolo (`Board`, `Field`, `Deck`, `Card`)
 
 La creazione delle entità `Board` avviene
@@ -23,7 +29,7 @@ tramite **Factory Methods** contenuti nell'oggetto `BoardFactory`.
 Per facilitare e sintetizzare il loro utilizzo, soprattutto a scopo di testing,
 è stato realizzato un DSL, che permette di popolare una `Board` indicando
 quali carte inserire nei sui vari elementi. Il DSL comprende funzionalità per
-la creazione dei sotto-elemnti della `Board`, come le singole carte (`Card`), i campi
+la creazione dei sotto-elementi della `Board`, come le singole carte (`Card`), i campi
 dei giocatori (`Field`), il mazzo (`Deck`), e la pila degli scarti.
 
 ![DSL per la creazione di `Board`](img/BoardDSL.drawio.png)
@@ -39,7 +45,8 @@ dei giocatori (`Field`), il mazzo (`Deck`), e la pila degli scarti.
 L'interfaccia `Playable` rappresenta le entità che racchiudono le funzionalità delle dinamiche
 di gioco.
 Attraverso di essa è possibile avanzare nelle varie fasi del gioco, cioè alterare lo stato
-delle entità `Playable`, scegliendo una tra le azioni (`Action`) disponibili.
+delle entità `Playable`, scegliendo una tra le azioni (`Action`) disponibili tramite il metodo
+`act`.
 
 L'entità base è `Turn` che rappresenta un singolo turno di un singolo giocatore, e
 aggrega al suo interno il giocatore, la sua mano, e il tavolo (`Board`).
@@ -66,13 +73,15 @@ in base alle azioni eseguite dall'utente durante il suo turno.
 
 ## Controller
 
-![Controller e View](img/Controller.drawio.png)
+![Controller](img/Controller.drawio.png)
 
 L'interfaccia `Playable` è utilizzata da `GameController`, che ottiene l'input dell'utente 
 e permette di selezionare l'azione desiderata durante il turno.
 `MatchController` aggiunge la possibilità di giocare piu partite tramite composizione con `GameController`.
 L'istanza del controller adeguato è creata da `MenuController` in base all'elemento selezionato dall'utente
 nel menu.
+
+Il loop principale eseguito durante una qualsiasi partita è il seguente:
 
 ![Diagramma di sequenza del game loop](img/SequenzaGameLoop.drawio.png)
 
