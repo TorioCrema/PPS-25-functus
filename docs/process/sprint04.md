@@ -2,7 +2,9 @@
 
 ## Obiettivo
 
-L'obiettivo di questa sprint è di aggiungere la possibilità di giocare un match.
+L'obiettivo di questa sprint è di aggiungere la possibilità di giocare un match, di aggiungere
+la possibilità di giocare turni singoli in cui vengono esposte le principali funzionalità del gioco, e
+se possibile di completare la funzionalità dell'avversario virtuale.
 
 ## Scadenza
 
@@ -22,6 +24,7 @@ La scadenza della sprint è il 31/08/26.
         <th>Stima sprint 1</th>
         <th>Stima sprint 2</th>
         <th>Stima sprint 3</th>
+        <th>Stima sprint 4</th>
     </thead>
     <tbody>
         <tr>
@@ -34,12 +37,14 @@ La scadenza della sprint è il 31/08/26.
         <td>0</td>
         <td>1</td>
         <td>0</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Analisi dell'architettura</td>
         <td>Alex, Luca, Simone</td>
         <td>5</td>
         <td>2</td>
+        <td>0</td>
         <td>0</td>
         <td>0</td>
         </tr>
@@ -50,11 +55,13 @@ La scadenza della sprint è il 31/08/26.
         <td>0</td>
         <td>0</td>
         <td>0</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Setup documentazione</td>
         <td>Alex, Luca, Simone</td>
         <td>2</td>
+        <td>0</td>
         <td>0</td>
         <td>0</td>
         <td>0</td>
@@ -69,12 +76,14 @@ La scadenza della sprint è il 31/08/26.
         <td>1</td>
         <td>0</td>
         <td>0</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Field</td>
         <td>Luca</td>
         <td>4</td>
         <td>1</td>
+        <td>0</td>
         <td>0</td>
         <td>0</td>
         </tr>
@@ -85,6 +94,7 @@ La scadenza della sprint è il 31/08/26.
         <td>8</td>
         <td>0</td>
         <td>0</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Card/Field/Board DSL</td>
@@ -93,11 +103,13 @@ La scadenza della sprint è il 31/08/26.
         <td>5</td>
         <td>5</td>
         <td>0</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Card View</td>
         <td>Simone</td>
         <td>4</td>
+        <td>0</td>
         <td>0</td>
         <td>0</td>
         <td>0</td>
@@ -109,6 +121,7 @@ La scadenza della sprint è il 31/08/26.
         <td>4</td>
         <td>2</td>
         <td>0</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Board View</td>
@@ -116,6 +129,7 @@ La scadenza della sprint è il 31/08/26.
         <td>4</td>
         <td>4</td>
         <td>2</td>
+        <td>0</td>
         <td>0</td>
         </tr>
         <tr>
@@ -128,6 +142,7 @@ La scadenza della sprint è il 31/08/26.
         <td>5</td>
         <td>2</td>
         <td>0</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Actions</td>
@@ -136,6 +151,7 @@ La scadenza della sprint è il 31/08/26.
         <td>5</td>
         <td>2</td>
         <td>0</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Input Utente</td>
@@ -143,6 +159,7 @@ La scadenza della sprint è il 31/08/26.
         <td>7</td>
         <td>7</td>
         <td>3</td>
+        <td>0</td>
         <td>0</td>
         </tr>
         <tr>
@@ -155,43 +172,50 @@ La scadenza della sprint è il 31/08/26.
         <td>0</td>
         <td>6</td>
         <td>5</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>Match</td>
-        <td></td>
+        <td>Simone</td>
         <td>0</td>
         <td>0</td>
         <td>0</td>
         <td>5</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>5</td>
         <td>Avversario</td>
         <td>Come utente voglio poter giocare un match contro un avversario virtuale</td>
         <td>Opponent</td>
-        <td>Simone</td>
+        <td>Simone, Alex</td>
         <td>0</td>
         <td>0</td>
         <td>5</td>
-        <td>5</td>
+        <td>7</td>
+        <td>0</td>
         </tr>
         <tr>
         <td>6</td>
         <td>Showcase</td>
         <td>Possibilità di giocare turni singoli, creati appositamente per mostrare specifiche funzionalità di gioco</td>
         <td>Board configurations</td>
-        <td>Luca</td>
+        <td>Luca, Simone</td>
         <td>0</td>
         <td>0</td>
         <td>0</td>
-        <td>2</td>
+        <td>5</td>
+        <td>0</td>
         </tr>
     </tbody>
 </table>
 
 ## Sprint review
 
-
+Il committente è soddisfatto del risultato ottenuto, che rappresenta il prodotto completo con la funzionalità aggiuntiva
+della modalità a giocatore singolo.
 
 ## Sprint retrospective
 
+È stato possibile completare la funzionalità opzionale e sono state eseguite diverse operazioni di refactoring agevolate
+dalla presenza dei test creati in precedenza.
