@@ -1,5 +1,5 @@
 package org.pps.functus
-package view.utils
+package utils
 
 /** * Describe the mode in which the game could be ActionMenu: the player can choose from the list of possible action
   * SelectCardOnBoard: the player can choose a card from his field

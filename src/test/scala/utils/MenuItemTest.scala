@@ -1,5 +1,7 @@
 package org.pps.functus
-package view.utils
+package utils
+
+import utils.{MenuItem, SelectableMenuItem, ShowCaseOption, TargetScoreOption}
 
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers

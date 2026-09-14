@@ -3,7 +3,7 @@ package org.pps.functus
 import view.CLIMenu
 import controller.MenuController
 
-import view.utils.Utils
+import utils.Utils
 
 object Main:
   def main(args: Array[String]): Unit =

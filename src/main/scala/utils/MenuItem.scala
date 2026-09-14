@@ -1,5 +1,5 @@
 package org.pps.functus
-package view.utils
+package utils
 
 trait SelectableMenuItem:
   def label: String

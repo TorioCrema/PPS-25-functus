@@ -5,15 +5,12 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import model.board.Player.*
 import view.CLIView
-import view.utils.{GameState, InputMode, Utils, ViewAction}
+import utils.{GameState, InputMode, Utils, ViewAction}
 
 import org.scalatest.BeforeAndAfterEach
 
-class CLIViewTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
-
-  override def beforeEach(): Unit =
-    Utils.viewBuilder.clear()
-
+class CLIViewTest extends AnyFlatSpec with Matchers with SilentTest:
+  
   // Sample helper to construct a default base GameState
   def createBaseGameState(
       inputMode: InputMode = InputMode.ActionMenu,
@@ -221,4 +218,5 @@ class CLIViewTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach:
     output should include("FINAL SCORES (Target: 50):")
     output should include("Player 1: 55 pts  |  Player 2: 55 pts")
     output should include("[ Press ENTER or Q to return to Main Menu ]")
+    Utils.clearScreen()
   }

@@ -1,5 +1,5 @@
 package org.pps.functus
-package view.utils
+package view.card
 
 import model.deck.card.Suit.{Cups, Pentacles, Swords, Wands}
 import model.deck.card.{Card, Suit}
@@ -34,7 +34,7 @@ object CardRenderExtensions:
       * @return
       *   A list of 7 strings, where each element represents one horizontal row of the rendered card box.
       */
-    def toAsciiLines(borderStyle: BorderStyle = BorderStyle.Normal, label: Option[String] = None): List[String] =
+    def drawSingleCard(borderStyle: BorderStyle = BorderStyle.Normal, label: Option[String] = None): List[String] =
       val bColor = borderStyle match
         case BorderStyle.Selected    => ANSI_CYAN_BOLD
         case BorderStyle.LastChanged => ANSI_YELLOW_BOLD
@@ -98,7 +98,7 @@ object CardRenderExtensions:
       * @return
       *   A list of strings representing the cards formatted across one or more multi-line ASCII rows
       */
-    def toAsciiRows(
+    def drawCardRows(
         terminalWidth: Int,
         selectedIdx: Option[Int] = None,
         lastChangedIdx: Option[Int] = None,
@@ -122,7 +122,7 @@ object CardRenderExtensions:
             else if lastChangedIdx.contains(originalIdx) then BorderStyle.LastChanged
             else BorderStyle.Normal
 
-          cardOpt.toAsciiLines(borderStyle = style)
+          cardOpt.drawSingleCard(borderStyle = style)
         }
 
         joinCardsHorizontally(cardBlocks, spacing = spacing) :+ ""
