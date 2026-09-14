@@ -7,7 +7,7 @@ import model.board.Player.*
 import model.deck.card.Suit.*
 import model.deck.sugar.CardDSL.{*, given}
 import model.deck.sugar.BoardDSL.*
-import model.deck.sugar.DeckDSL
+import model.deck.sugar.DeckDSL.deck
 import model.deck.sugar.DeckDSL.deck.*
 import model.deck.sugar.FieldDSL.{*, given}
 import model.board.Board
@@ -18,19 +18,17 @@ import model.playable.turn.Action.*
 class MatchTest extends AnyFlatSpec with Matchers:
   private val threshold = 10
 
-  private def deckForFirstPlayerWin = DeckDSL.deck from ((jack of Cups) | (knight of Cups))
-  private def deckForSecondPlayerWin = DeckDSL.deck from ((knight of Cups) | (jack of Cups))
-  private def deckForFirstPlayerScoreReset = DeckDSL.deck from ((ace of Wands) | (jack of Swords))
-  private def deckForSecondGame = DeckDSL.deck from ((ace of Wands) | (ace of Pentacles))
+  private def deckForFirstPlayerWin = deck from ((jack of Cups) | (knight of Cups))
+  private def deckForSecondPlayerWin = deck from ((knight of Cups) | (jack of Cups))
+  private def deckForFirstPlayerScoreReset = deck from ((ace of Wands) | (jack of Swords))
+  private def deckForSecondGame = deck from ((ace of Wands) | (ace of Pentacles))
 
   private def boardFromDeck(deck: Deck): Board =
     val p1Field = (1 of Cups) and (2 of Cups) and (3 of Cups) and (4 of Cups)
     val p2Field = (1 of Swords) and (2 of Swords) and (3 of Swords) and (4 of Swords)
-    (lockedBoard from default)
-      .withCustom(playerOne(p1Field))
-      .withCustom(playerTwo(p2Field))
-      .withCustom(discardPile((5 of Cups) | (6 of Cups)))
-      .withCustom(customDeck(deck))
+    lockedBoard from default withCustom playerOne(p1Field) withCustom playerTwo(p2Field) withCustom discardPile(
+      (5 of Cups) | (6 of Cups)
+    ) withCustom customDeck(deck)
 
   private def playFirstTurn(game: Match): Match =
     game.actAll(Observe :: Confirm :: EndTurn :: Nil)
@@ -46,11 +44,11 @@ class MatchTest extends AnyFlatSpec with Matchers:
   private def playSimpleTurnWithCactus(game: Match): Match =
     game.actAll(Draw :: Activate :: ChooseReplace(0) :: Cactus :: EndTurn :: Nil)
 
-  private def gameInPlaying(board: Board): Match = playBothFirstTurns(Match(threshold, board))
+  private def afterFirstTurns(board: Board): Match = playBothFirstTurns(Match(threshold, board))
 
-  private def gameInLastTurn(board: Board): Match = playSimpleTurnWithCactus(gameInPlaying(board))
+  private def afterCactus(board: Board): Match = playSimpleTurnWithCactus(afterFirstTurns(board))
 
-  private def gameOver(startBoard: Board): Match = playSimpleTurn(gameInLastTurn(startBoard))
+  private def afterLastTurn(startBoard: Board): Match = playSimpleTurn(afterCactus(startBoard))
 
   "Match" should "start with given threshold and player scores at 0" in:
     val startingMatch = Match(threshold, board from default)
@@ -64,7 +62,7 @@ class MatchTest extends AnyFlatSpec with Matchers:
     startingMatch.game.phase should be(GamePhase.FirstTurns)
 
   it should "accumulate player scores and start new game after a game ends" in:
-    val over = gameOver(boardFromDeck(deckForFirstPlayerWin))
+    val over = afterLastTurn(boardFromDeck(deckForFirstPlayerWin))
     over.game.isOver should be(true)
     over.isOver should be(true)
     over.scores(Player1) should be(
@@ -75,11 +73,11 @@ class MatchTest extends AnyFlatSpec with Matchers:
     )
 
   it should "cut a player's score in half if their score is equal to the threshold" in:
-    val over = gameOver(boardFromDeck(deckForFirstPlayerScoreReset))
+    val over = afterLastTurn(boardFromDeck(deckForFirstPlayerScoreReset))
     over.scores(Player1) should be(threshold / 2)
 
   it should "start a new game and maintain scores" in:
-    val firstGameOver = gameOver(boardFromDeck(deckForSecondGame))
+    val firstGameOver = afterLastTurn(boardFromDeck(deckForSecondGame))
     firstGameOver.game.isOver should be(true)
     firstGameOver.isOver should be(false)
     val secondGame = firstGameOver.nextGame

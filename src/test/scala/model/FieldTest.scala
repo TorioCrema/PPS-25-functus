@@ -38,12 +38,12 @@ class FieldTest extends AnyFlatSpec with Matchers:
 
   "A non-empty Field" should "return the correct card from getCard" in:
     val field: Field = threeOfSwords and twoOfCups
-    (take the 0 from field)._1 should be(threeOfSwords)
-    (take the 1 from field)._1 should be(twoOfCups)
+    field.getCard(0)._1 should be(threeOfSwords)
+    field.getCard(1)._1 should be(twoOfCups)
 
   it should "remove only the card at the given index after getCard" in:
     val field: Field = threeOfSwords and twoOfCups and aceOfSwords
-    val (card, updatedField) = take the 1 from field
+    val (card, updatedField) = field.getCard(1)
     card should be(twoOfCups)
     updatedField.cardsList should be(List(threeOfSwords, aceOfSwords))
 
@@ -89,11 +89,11 @@ class FieldTest extends AnyFlatSpec with Matchers:
 
   it should "throw IndexOutOfBoundsException when getting a card at an out-of-range index" in:
     val field: Field = threeOfSwords and twoOfCups
-    an[IndexOutOfBoundsException] should be thrownBy (take the outOfRangeIndex from field)
+    an[IndexOutOfBoundsException] should be thrownBy field.getCard(outOfRangeIndex)
 
   it should "throw IndexOutOfBoundsException when getting a card at a negative index" in:
     val field: Field = threeOfSwords and twoOfCups
-    an[IndexOutOfBoundsException] should be thrownBy (take the negativeIndex from field)
+    an[IndexOutOfBoundsException] should be thrownBy field.getCard(negativeIndex)
 
   it should "throw IndexOutOfBoundsException when addCardAtIndex at an out-of-range index" in:
     val field: Field = threeOfSwords and twoOfCups

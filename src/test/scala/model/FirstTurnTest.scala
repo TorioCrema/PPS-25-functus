@@ -1,9 +1,8 @@
 package org.pps.functus
 package model
 
-import model.board.BoardFactory.CustomBoard
 import model.board.Player.*
-import model.board.{BoardFactory, Player}
+import model.board.Player
 import model.field.Field
 import model.deck.card.Card
 import model.deck.card.Suit.*
@@ -11,6 +10,7 @@ import model.deck.sugar.CardDSL.*
 import model.deck.sugar.FieldDSL.{*, given}
 import model.playable.turn.Action.*
 import model.playable.turn.Turns.*
+import model.deck.sugar.BoardDSL.*
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -18,8 +18,8 @@ import org.scalatest.matchers.should.Matchers
 class FirstTurnTest extends AnyFlatSpec with Matchers:
   private val player1Field = (three of Cups) and (two of Swords) and (jack of Wands) and (seven of Cups)
   private val player2Field = (five of Wands) and (ace of Pentacles) and (six of Swords) and (four of Wands)
-  private val board = CustomBoard(List(player1Field, player2Field))
-  private val firstTurn = FirstTurn(board, Player1)
+  private val startingBoard = board from default withCustom playerOne(player1Field) withCustom playerTwo(player2Field)
+  private val firstTurn = FirstTurn(startingBoard, Player1)
 
   "FirstTurn" should "have Confirm as next action" in:
     firstTurn.actions should be(Observe :: Nil)
@@ -28,10 +28,10 @@ class FirstTurnTest extends AnyFlatSpec with Matchers:
     val observedCards = 2
     def getHand(field: Field): List[Card] = field.cardsList.slice(0, observedCards)
     val playerHands = Map((Player1, getHand(player1Field)), (Player2, getHand(player2Field)))
-    val playerFields = board.getField
+    val playerFields = startingBoard.getField
     for player <- Player.values
     do
-      val afterObserve = FirstTurn(board, player).act(Observe)
+      val afterObserve = FirstTurn(startingBoard, player).act(Observe)
       afterObserve.hand should be(playerHands(player))
       val expectedField = playerFields(player).cardsList.slice(observedCards, playerFields(player).length)
       afterObserve.board.getField(player).cardsList should be(expectedField)
@@ -42,9 +42,9 @@ class FirstTurnTest extends AnyFlatSpec with Matchers:
   it should "restore the board after executing the Confirm action" in:
     for player <- Player.values
     do
-      val afterConfirm = FirstTurn(board, player).actAll(Observe :: Confirm :: Nil)
-      afterConfirm.board.getField(player) should be(board.getField(player))
-      afterConfirm.board.getField(player.other) should be(board.getField(player.other))
+      val afterConfirm = FirstTurn(startingBoard, player).actAll(Observe :: Confirm :: Nil)
+      afterConfirm.board.getField(player) should be(startingBoard.getField(player))
+      afterConfirm.board.getField(player.other) should be(startingBoard.getField(player.other))
 
   it should "end after Confirm action" in:
     firstTurn.act(Observe).act(Confirm).actions should be(EndTurn :: Nil)

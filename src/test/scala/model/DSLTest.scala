@@ -37,8 +37,3 @@ class DSLTest extends AnyFlatSpec with Matchers:
     threeOfCups and sixOfPentacles and knightOfWands should be(
       FieldImpl(Vector(threeOfCups, sixOfPentacles, knightOfWands))
     )
-
-  "take the Int from field" should "return the taken card and the new field" in:
-    take the 0 from (threeOfCups and sixOfPentacles and knightOfWands) should be(
-      (threeOfCups, sixOfPentacles and knightOfWands)
-    )

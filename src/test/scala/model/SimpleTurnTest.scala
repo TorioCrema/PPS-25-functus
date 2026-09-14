@@ -1,15 +1,15 @@
 package org.pps.functus
 package model
 
-import model.deck.DeckImpl
 import model.deck.sugar.CardDSL.*
 import model.deck.sugar.FieldDSL.given
 import model.deck.card.Suit.*
 import model.playable.turn.Action.*
 import model.playable.turn.Turns.*
-import model.board.BoardImpl
 import model.board.Player.*
-
+import model.deck.sugar.BoardDSL.*
+import model.deck.sugar.DeckDSL.deck
+import model.deck.sugar.DeckDSL.deck.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -21,7 +21,9 @@ class SimpleTurnTest extends AnyFlatSpec with Matchers:
   private val player1Field = threeOfCups and twoOfSwords
   private val player2Field = fiveOfWands and aceOfPentacles
   private val startingBoard =
-    BoardImpl(deck = DeckImpl(Vector(two of Wands)), players = Map((Player1, player1Field), (Player2, player2Field)))
+    board from default withCustom customDeck(deck from single(two of Wands)) withCustom playerOne(
+      player1Field
+    ) withCustom playerTwo(player2Field)
   private val player = Player1
   private val simpleTurn = SimpleTurn(startingBoard, player)
   private val boardWithThreeInDiscard = startingBoard.discard(three of Pentacles)

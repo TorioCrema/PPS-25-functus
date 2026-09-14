@@ -17,6 +17,9 @@ trait Playable[S <: Playable[S]]:
   /** Returns [[true]] if the [[Playable]] is in its final state */
   def isOver: Boolean
 
+  /** Returns the list of currently available [[Action]]s. */
+  def actions: List[Action]
+
   /** Executes a sequence of [[Action]]s in order
     * @param actions
     *   the [[Action]]s to execute

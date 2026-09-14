@@ -4,8 +4,6 @@ package model.playable.turn
 import model.deck.card.Card
 import model.board.{Board, Player}
 import Action.*
-import model.deck.sugar.CardDSL.*
-import Effects.effect
 import model.playable.Playable
 
 /** Turn class that allows to play a turn from start to finish via the [[act]] method.
@@ -24,26 +22,8 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
     extends Playable[Turn]:
   private val observableCards = 2
 
-  private def drawnFromField(index: Int) =
-    val (drawn, newBoard) = board.drawPlayerCard(player, index)
-    copy(hand.appended(drawn), newBoard)
-
-  private def withActions(newActions: List[Action]): Turn =
-    val filteredActions =
-      if cactus then for action <- newActions if action != Cactus yield action
-      else newActions
-    copy(actions = filteredActions)
-
-  private def discardHand(): Turn = copy(Nil, board.discard(hand.head))
-
-  private def drawFromPlayer(index: Int, from: Player): Turn =
-    val (drawn, newBoard) = board.drawPlayerCard(from, index)
-    copy(hand.appended(drawn), newBoard)
-
-  private def placeHandInField(fieldOwner: Player, index: Int) =
-    copy(hand.tail, board.placeCardInField(hand.head, fieldOwner, Some(index)))
-
   /** Executes the given [[Action]] and returns the next phase of the turn
+    *
     * @param action
     *   the [[Action]] to execute
     * @return
@@ -51,46 +31,7 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
     */
   override def act(action: Action): Turn =
     require(actions.contains(action))
-    action match
-      case Observe =>
-        List
-          .fill(observableCards)(0)
-          .foldLeft(this)((turn, index) => turn.drawnFromField(index))
-          .withActions(action.next)
-      case Confirm =>
-        val newBoard = hand.foldRight(board)((card, b) => b.placeCardInField(card, player, Some(0)))
-        Turn(Nil, newBoard, player, action.next, cactus)
-      case Draw =>
-        val (drawn, newBoard) = board.draw().getOrElse(throw IllegalStateException("Deck is empty during draw action"))
-        Turn(drawn :: hand, newBoard, player, action.next, cactus)
-      case DrawKing =>
-        val (kingFromDiscard, newBoard) = board.kingTopDiscardStack()
-        Turn(kingFromDiscard :: Nil, newBoard, player, action.next, cactus)
-      case Activate               => hand.head.effect(this)
-      case ObserveOpponent(index) => discardHand().drawFromPlayer(index, player.other).withActions(action.next)
-      case ObservePlayer(index)   => discardHand().drawFromPlayer(index, player).withActions(action.next)
-      case GiveBack(index)        => placeHandInField(player.other, index).withActions(action.next)
-      case ReturnToField(index)   => placeHandInField(player, index).withActions(action.next)
-      case ChooseReplace(index)   => copy(Nil, board.replace(player, index, hand.head), player).withActions(action.next)
-      case ChooseDiscard(index)   => drawFromPlayer(index, player).withActions(action.next)
-      case Discard(index)         =>
-        val topOfDiscardStackValue = board.getTopDiscardStack.value
-        hand.head.value match
-          case `topOfDiscardStackValue` => Turn(Nil, board.discard(hand.head), player, action.next, cactus)
-          case _                        =>
-            val restoredBoard = board.placeCardInField(hand.head, player, Some(index))
-            val (drawn, boardAfterDraw) =
-              restoredBoard.draw().getOrElse(throw IllegalStateException("Deck is empty during draw action"))
-            Turn(Nil, boardAfterDraw.placeCardInField(drawn, player), player, action.next, cactus)
-      case Swap(playerIndex, opponentIndex) =>
-        discardHand()
-          .drawFromPlayer(opponentIndex, player.other)
-          .drawFromPlayer(playerIndex, player)
-          .placeHandInField(player, playerIndex)
-          .placeHandInField(player.other, opponentIndex)
-          .withActions(action.next)
-      case Cactus  => Turn(hand, board, player, action.next, true)
-      case EndTurn => Turn(hand, board, player, action.next, cactus)
+    action.nextTurn(this)
 
   /** @return
     *   [[true]] if the [[Turn]] is over.
@@ -102,6 +43,132 @@ case class Turn(hand: List[Card], board: Board, player: Player, actions: List[Ac
 /** Factory methods for the [[Turn]] class
   */
 object Turns:
+
+  extension (turn: Turn)
+    /** Draws a card from the current player's field to the hand.
+      * @param index
+      *   the index of the card to draw.
+      * @return
+      *   a new [[Turn]]
+      */
+    def drawnFromField(index: Int): Turn =
+      val (drawn, newBoard) = turn.board.drawPlayerCard(turn.player, index)
+      turn.copy(turn.hand.appended(drawn), newBoard)
+
+    /** Filters the given list of actions and removes the [[Cactus]] action if it was already called previously.
+      * @param newActions
+      *   the actions to filter
+      * @return
+      *   a new [[Turn]] with filtered actions
+      */
+    def filterActions(newActions: List[Action]): Turn =
+      val filteredActions =
+        if turn.cactus then for action <- newActions if action != Cactus yield action
+        else newActions
+      turn.copy(actions = filteredActions)
+
+    /** Discards the first card in the hand to the discard pile without applying any penalty.
+      * @return
+      *   the new [[Turn]]
+      */
+    def discardWithoutPenalty: Turn = turn.copy(Nil, turn.board.discard(turn.hand.head))
+
+    /** Draws a card from the given player's field and places it in the hand.
+      * @param index
+      *   the index of the card
+      * @param from
+      *   the [[Player]] to draw the card from
+      * @return
+      *   the new [[Turn]]
+      */
+    def drawFromPlayer(index: Int, from: Player): Turn =
+      val (drawn, newBoard) = turn.board.drawPlayerCard(from, index)
+      turn.copy(turn.hand.appended(drawn), newBoard)
+
+    /** Places the last card in the hand into the given player's field.
+      * @param fieldOwner
+      *   the [[Player]] that will receive the card.
+      * @param index
+      *   the index where the card will be placed within the [[Field]]
+      * @return
+      *   the new [[Turn]]
+      */
+    def placeHandInField(fieldOwner: Player, index: Int): Turn =
+      turn.copy(turn.hand.tail, turn.board.placeCardInField(turn.hand.head, fieldOwner, Some(index)))
+
+    /** Draws a card from the deck to the hand.
+      * @return
+      *   the new [[Turn]]
+      */
+    def drawFromDeck: Turn =
+      val (drawn, newBoard) =
+        turn.board.draw().getOrElse(throw IllegalStateException("Deck is empty during draw action"))
+      turn.copy(drawn :: Nil, newBoard)
+
+    /** Draws the king from the top of the discard pile to the hand.
+      * @return
+      *   the new [[Turn]]
+      */
+    def drawFromPile: Turn =
+      val (kingFromDiscard, newBoard) = turn.board.kingTopDiscardStack()
+      turn.copy(kingFromDiscard :: Nil, newBoard)
+
+    /** Places the hand into the current player's field and discards the replaced card.
+      * @param index
+      *   the index of the card to be replaced.
+      * @return
+      *   the new [[Turn]]
+      */
+    def replaceHandIntoField(index: Int): Turn =
+      val newBoard = turn.board.replace(turn.player, index, turn.hand.head)
+      turn.copy(Nil, newBoard)
+
+    /** Attempts to discard the hand, if the value of the card matches the value of the top of the discard stack the
+      * card will be discarded without penalty. Otherwise, the card will return to the player's field and a new card
+      * will be added to said field.
+      * @param index
+      *   the index the card in hand will be returned to in case of penalty.
+      * @return
+      *   the new [[Turn]]
+      */
+    def discardHand(index: Int): Turn =
+      val topOfDiscardStackValue = turn.board.getTopDiscardStack.value
+      turn.hand.head.value match
+        case `topOfDiscardStackValue` => discardWithoutPenalty
+        case _                        =>
+          val restoredBoard = turn.board.placeCardInField(turn.hand.head, turn.player, Some(index))
+          val (drawn, boardAfterDraw) =
+            restoredBoard.draw().getOrElse(throw IllegalStateException("Deck is empty during draw action"))
+          turn.copy(Nil, boardAfterDraw.placeCardInField(drawn, turn.player), turn.player)
+
+    /** Swaps a card in the current player's field to the other player's field.
+      * @param playerIndex
+      *   the index of the card belonging to the current [[Player]]
+      * @param opponentIndex
+      *   the index of the card belonging to the other [[Player]]
+      * @return
+      *   the new [[Turn]]
+      */
+    def swapWithOpponent(playerIndex: Int, opponentIndex: Int): Turn =
+      turn.discardWithoutPenalty
+        .drawFromPlayer(opponentIndex, turn.player.other)
+        .drawFromPlayer(playerIndex, turn.player)
+        .placeHandInField(turn.player, playerIndex)
+        .placeHandInField(turn.player.other, opponentIndex)
+
+    /** Calls cactus.
+      * @return
+      *   the new [[Turn]]
+      */
+    def callCactus: Turn = turn.copy(cactus = true)
+
+    /** Returns the cards from the hand to the current player's field.
+      * @return
+      *   the new [[Turn]]
+      */
+    def returnObservedCards: Turn =
+      val newBoard = turn.hand.foldRight(turn.board)((card, b) => b.placeCardInField(card, turn.player, Some(0)))
+      turn.copy(Nil, newBoard)
 
   object FirstTurn:
     /** Creates a [[Turn]] that allows the [[Player]] to observe the first 2 cards on their field.
