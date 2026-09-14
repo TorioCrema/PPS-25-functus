@@ -2,7 +2,7 @@ package org.pps.functus
 package view
 
 import utils.{MenuItem, SelectableMenuItem, ShowCaseOption, TargetScoreOption, Utils}
-import utils.Utils.{SEPARATOR_CHAR, separator, terminalWidth, viewBuilder}
+import utils.Utils.{SEPARATOR_CHAR, terminalWidth, viewBuilder}
 
 class CLIMenu:
 
@@ -28,8 +28,7 @@ class CLIMenu:
 
   /** Renders the target score selection menu for match mode.
     *
-    * Clears the terminal screen and draws the header before printing the list of [[TargetScoreOption]]
-    * options.
+    * Clears the terminal screen and draws the header before printing the list of [[TargetScoreOption]] options.
     *
     * @param selectedScoreIndex
     *   the index of the target score option currently highlighted
@@ -56,7 +55,7 @@ class CLIMenu:
   def renderRules(): Unit =
     Utils.clearScreen()
     Utils.drawHeader
-
+    val separator: String = SEPARATOR_CHAR * terminalWidth
     val transitionBlock = StringBuilder()
     transitionBlock.append(s"$separator\n\n")
     transitionBlock.append(Utils.centerText(s"$RULES_TITLE\n"))

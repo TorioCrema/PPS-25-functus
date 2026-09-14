@@ -5,8 +5,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import utils.{MenuItem, SelectableMenuItem, ShowCaseOption, TargetScoreOption, Utils}
 
-import org.scalatest.BeforeAndAfterEach
-
 import java.io.{OutputStream, PrintStream}
 
 class CLIMenuTest extends AnyFlatSpec with Matchers with SilentTest:
