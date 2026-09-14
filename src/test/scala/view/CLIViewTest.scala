@@ -7,8 +7,6 @@ import model.board.Player.*
 import view.CLIView
 import utils.{GameState, InputMode, Utils, ViewAction}
 
-import org.scalatest.BeforeAndAfterEach
-
 class CLIViewTest extends AnyFlatSpec with Matchers with SilentTest:
   
   // Sample helper to construct a default base GameState

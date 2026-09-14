@@ -98,11 +98,10 @@ class GameController[P <: Playable[P]](
         selectedMacroAction = Some(chosenAction)
 
         chosenAction match
-          case Action.ObservePlayer(_) | Action.ChooseReplace(_) |
-              Action.ChooseDiscard(_) =>
+          case Action.ObservePlayer(_) | Action.ChooseReplace(_) | Action.ChooseDiscard(_) =>
             state = syncState(InputMode.SelectCardOnBoard)
 
-          case Action.ObserveOpponent(_) | Action.GiveBack(_) =>
+          case Action.ObserveOpponent(_) =>
             state = syncState(InputMode.SelectAdversaryCardOnBoard)
 
           case Action.Swap(_, _) =>
@@ -278,7 +277,6 @@ class GameController[P <: Playable[P]](
       isVsBot = isVsBot
     )
 
-  
   def getWinner: Option[Player] =
     val scores = game.playerScore
     val p1Score = scores(Player1)
@@ -302,7 +300,7 @@ class GameController[P <: Playable[P]](
   def getGame: Game = game
 
   def getPlayable: P = playable
-  
+
   /** Executes actions on behalf of the bot until its turn ends */
   private def botTurn(): Unit =
     if !game.isOver then
@@ -310,5 +308,5 @@ class GameController[P <: Playable[P]](
       executeAction(chosenAction)
 
   private def isMandatoryOrRoutine(action: Action): Boolean = action match
-    case Action.Draw | Action.EndTurn | Action.Confirm  | Action.Activate | Action.ChooseDiscard => true
-    case _ => false
+    case Action.Draw | Action.EndTurn | Action.Confirm | Action.Activate | Action.ChooseDiscard => true
+    case _                                                                                      => false
