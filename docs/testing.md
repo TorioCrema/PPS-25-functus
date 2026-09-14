@@ -18,9 +18,11 @@ Per assicurare che le implementazioni siano testate sono state utilizzate le seg
 
 ## Risultati di coverage
 
-Durante lo sviluppo si è cercato di ottenere la massima percentuale di coverage per il solo
-package `model`, mentre le sezioni di `controller` e `view` sono state testate attraverso classi
-di test solo in modo parziale.
+Durante lo sviluppo sono stati implementati test i sorgenti di tutti i moduli ponendo maggiore
+attenzione ai risultati di coverage per il package `model`, questi risultati sono osservabili
+in questo [coverage report](org.pps.functus.model.html).
+
+![model coverage](img/model_coverage.jpeg)
 
 ---
 
@@ -33,4 +35,4 @@ di test solo in modo parziale.
 4. [Design di dettaglio](design-di-dettaglio.md)
 5. [Implementazione](implementazione.md)
 6. [Testing](testing.md)
-7. [Retrospettiva](retrospettiva.md)
+7. [**Retrospettiva (prossimo)**](retrospettiva.md)
