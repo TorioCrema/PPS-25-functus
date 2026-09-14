@@ -1,0 +1,329 @@
+# Implementazione - Simone Zama
+
+## Panoramica dei contributi
+
+Il mio contributo al progetto è focalizzato nelle seguenti aree:
+
+- **Actions**: implementazione delle azioni che i giocatori possono eseguire durante il proprio turno.
+- **Turn**: implementazione del turno di un giocatore.
+- **Effects**: implementazione degli effetti delle carte.
+- **Match**: implementazione di un match.
+- **Opponent**: implementazione dell'avversario virtuale.
+- **Showcase**: implementazione della generazione di turni dediti a mostrare le meccaniche di gioco
+- **DSL**: implementazione di un DSL per la creazione delle carte e dei campi dei giocatori
+- **Testing**: scrittura dei test per tutti i sistemi implementati
+
+## Actions
+
+Una `Action` rappresenta una possibile azione che un giocatore puo' eseguire durante il proprio turno.
+Nel contesto del turno, esse rappresentano transizioni di stato, infatti è possibile considerare un turno
+come una macchina a stati finiti le cui transizioni sono le azioni disponibili in ogni stato.
+Ogni `Action` possiede i seguenti metodi:
+- `nextActions(using Option[Turn])`: restituisce le azioni disponibili dopo l'azione corrente.
+- `nextTurn(currentTurn: Turn)`: esegue l'azione sul turno fornito come argomento e restituisce il turno aggiornato
+
+Il tipo `Action` è implementato attraverso una `enum`.  Alcune azioni, come `ChooseDiscard`, o `Swap`,
+possiedono dei campi utilizzati per indicare le carte in esse coinvolte.
+
+Aspetti rilevanti di Scala all'interno di questa implementazione sono:
+
+- Pattern matching per l'implementazione dei metodi `nextActions` e `execute`:
+```scala 3
+private def execute(currentTurn: Turn): Turn =
+    this match
+      case Observe                => currentTurn.drawnFromField(0).drawnFromField(0)
+      case Confirm                => currentTurn.returnObservedCards
+      case Draw                   => currentTurn.drawFromDeck
+      case DrawKing               => currentTurn.drawFromPile
+      ...
+```
+- Contextual programming per fornire il contesto opzionale del turno corrente al metodo `nextActions`:
+```scala 3
+def nextActions(using Option[Turn]): List[Action] = this match
+    case Observe          => List(Confirm)
+    case Confirm | Cactus => List(EndTurn)
+    case Draw | DrawKing  => List(Activate)
+    case Activate         =>
+      require(summon[Option[Turn]].nonEmpty)
+      val currentTurn = summon[Option[Turn]].get
+      currentTurn.hand.head.effect(currentTurn)
+    ...
+```
+
+## Turn
+
+Come detto in precedenza, un turno è interpretabile come una macchina a stati finiti.
+I suoi stati possibili sono formati dal prodotto cartesiano di: giocatore, board, mano del giocatore, azioni
+disponibili e un valore che indica se durante il turno è stato chiamato Cactus.
+Da questa osservazione deriva l'implementazione tramite `case class` di nome `Turn` con campi di tipi corrispondenti
+agli elementi sopraelencati. Questa classe estende `Playable[Turn]`.
+Esistono tre "tipi" di turno possibili, a seconda della fase della partita in cui essi vengono giocati, questi sono: il
+primo turno di ogni giocatore, l'ultimo turno della partita, e i turni semplici ottenuti per esclusione. Questi "tipi" si
+differenziano per le azioni disponibili alla loro creazione e, nel caso dell'ultimo turno, dall'assenza dell'azione `Cactus`.
+Il companion object `Turns` contiene i factory methods per ogni tipologia di turno, e i metodi utilizzati per alterare
+lo stato corrente del turno.
+
+Le funzionalità principali di `Turn` sono:
+- `act(action: Action): Turn` esegue l'azione passata come argomento sullo stato corrente del turno attraverso il
+    metodo `nextTurn` dell'azione e restituisce il nuovo stato.
+    Nel caso in cui l'azione passata come argomento non appartenga alle azioni disponibili nell'attuale stato
+    del turno, viene lanciata una `IllegalArgumentException`.
+    
+- `isOver: Boolean` restituisce `true` qualora il turno sia completato, ovvero quando non sono disponibili azioni.
+
+Elementi rilevanti di Scala all'interno di questa implementazione sono:
+- Companion object con factory method per creare il turno.
+  Sono presenti tre factory, una per ogni tipologia di turno da creare:
+  ```scala 3
+  object Turns:
+    object FirstTurn:
+      def apply(...): Turn = ...
+    object SimpleTurn:
+      def apply(...): Turn = ...
+    object LastTurn:
+      def apply(...): Turn = ...
+  ```
+- Companion object con extension methods per la manipolazione della `case class` del turno:
+  ```scala 3
+  object Turns:
+
+  extension (turn: Turn)
+    def drawnFromField(index: Int): Turn =
+      val (drawn, newBoard) = turn.board.drawPlayerCard(turn.player, index)
+      turn.copy(turn.hand.appended(drawn), newBoard)
+    
+    def filterActions(newActions: List[Action]): Turn =
+      val filteredActions =
+        if turn.cactus then for action <- newActions if action != Cactus yield action
+        else newActions
+    
+    ...
+  ```
+  
+## Effects
+
+Quando pescate, le carte sei, sette, e fante permettono di effettuare azioni aggiuntive rispetto
+al resto delle carte nel mazzo. La generazione di queste azioni è ottenuta tramite extension method `effect`
+di `Card` implementato nell'object `Effects`. Questo metodo individua il tipo di effetto tramite pattern matching
+sulla carta attivata e genera le azioni corrispondenti all'effetto in base alle informazioni contenute
+nello stato del turno corrente passato come argomento:
+```scala 3
+...
+activated.value match
+  case `six`   => actionsFromFieldLength(getFieldLength(turn.player.other))(ObserveOpponent(_)) 
+  case `seven` => actionsFromFieldLength(getFieldLength(turn.player))(ObservePlayer(_))
+  case `jack`  =>
+    val swapActions =
+      for
+        playerIndex <- 0 until getFieldLength(turn.player)
+        opponentIndex <- 0 until getFieldLength(turn.player.other)
+      yield Swap(playerIndex, opponentIndex)
+    replaceActions.appendedAll(swapActions)
+  case _ => replaceActions
+...
+```
+
+Elementi rilevanti di Scala in questa implementazione sono:
+
+- Implementazione del metodo `effect` tramite extension method:
+  ```scala 3
+  object Effects:
+  extension (card: Card)
+    def effect(on: Turn): List[Action] = ...
+  ```
+- Pattern matching per l'individuazione del effetto desiderato
+- For comprehension per la generazione delle azioni `Swap`
+
+## Match
+
+Un `Match` rappresenta un insieme di partite (`Game`) consecutive il cui punteggio finale viene accumulato
+fino al superamento del punteggio limite. È implementato dalla `case class` `Match`, le cui possibili istanze
+sono date dal prodotto cartesiano del punteggio massimo, il `Game` in corso, e gli attuali punteggi cumulativi dei
+giocatori. La classe estende il trait `Playable[Match]`, fornendo i metodi `act` e `isOver`:
+
+- `act(action: Action): Match` delega l'esecuzione dell'azione a `Game`, e nel caso in cui esso sia terminato
+    aggiorna i punteggi dei giocatori.
+- `isOver: Boolean`: restituisce `true` qualora il `Match` sia completato, ovvero quando almeno uno dei punteggi
+    cumulativi dei giocatori supera il punteggio limite impostato alla creazione del `Match`.
+
+La classe fornisce inoltre il metodo `nextGame` per ottenere l'istanza di `Match` da cui iniziare il prossimo `Game`:
+```scala 3
+def nextGame: Match =
+  if !game.isOver then throw new IllegalStateException("Cannot start new game while current game has not ended.")
+  copy(game = Game(newBoard from default))
+```
+
+Elementi rilevanti di Scala in questa implementazione sono:
+
+- Utilizzo di `export` per dare accesso alle informazioni relative al `Game` in corso all'interno del `Match`:
+    ```scala 3
+    export game.{act as _, isOver as isGameOver, *}
+    ```
+  il metodo `act` di `Game` viene nascosto dato che il suo utilizzo è dettato dalla delegazione all'interno del metodo
+  `act` di `Match`, e il metodo `isOver` è rinominato in `isGameOver`.
+- Companion object con factory method per creare il `Match`:
+    ```scala 3
+    object Match:
+      def apply(maxScore: Int, board: Board = newBoard from default): Match =
+        Match(maxScore, Game(board), Map((Player1, 0), (Player2, 0)))
+    ```
+
+## Opponent
+
+L'implementazione dell'avversario virtuale è contenuta nella classe `Opponent`. Le sue funzionalità principali sono
+i metodi `play` e `react`, che contengono rispettivamente le implementazioni del ruolo attivo e passivo che `Opponent`
+ricopre durante il corso di un `Game`.
+
+- Tramite il metodo `play(turn: Turn): (Turn, Action)` l'`Opponent` osserva le azioni disponibili e, a seconda della sua 
+  attuale conoscenza delle carte in campo, sceglie quella piu' vantaggiosa. Una volta determinata l'azione, la conoscenza
+  dell'`Opponent` viene aggiornata secondo le conseguenze che essa ha sul campo attuale:
+  ```scala 3
+  def play(turn: Turn): (Turn, Action) = getChosenAction(turn) match
+    case Observe                           => ...
+    case ChooseDiscard(index)              => ...
+    case ObserveOpponent(index)            => drawAndUpdateKnownCards(turn, ObserveOpponent(index))
+    case ObservePlayer(index)              => drawAndUpdateKnownCards(turn, ObservePlayer(index))
+    case Swap(playerIndex, adversaryIndex) => ...
+    case ChooseReplace(index)              => ...
+    case chosenAction                      => (turn.act(chosenAction), chosenAction)
+  ```
+- Il metodo `react(action: Action, turn: Turn): Unit` permette a `Opponent` di aggiornare la propria conoscenza delle
+  carte sul campo in base all'azione eseguita dall'utente:
+  ```scala 3
+  def react(action: Action, turn: Turn): Unit = action match
+    case ChooseDiscard(index)
+        if knows(adversaryCards)(index)
+          && turn.board.getTopDiscardStack.value == getKnownAdversaryCard(index).get.value =>
+      forgetAndUpdate(index)
+    case ChooseReplace(index) if knows(adversaryCards)(index) => adversaryCards = adversaryCards.removed(index)
+    case Swap(adversaryIndex, ownIndex)                       => swapReaction(adversaryIndex, ownIndex)
+    case _                                                    => ()
+  ```
+
+Elementi rilevanti di Scala in questa implementazione sono:
+
+- Pattern matching per la gestione della reazione all'azione `Swap`:
+  ```scala 3
+  private def swapReaction(adversaryIndex: Int, ownIndex: Int): Unit =
+    (knows(adversaryCards)(adversaryIndex), knows(knownCards)(ownIndex)) match
+      case (true, true)  => ...
+      case (true, false) => ...
+      case (false, true) => ...
+      case (_, _) => ()
+  ```
+- Utilizzo di tipi funzionali per definire i predicati con cui filtrare le azioni favorevoli, ad esempio:
+  ```scala 3
+  private def getChosenAction(turn: Turn): Action =
+    val actions = turn.actions
+      .filter(isDiscardable(_, turn))
+      .appendedAll(turn.actions.filter(unknownObservePlayer))
+    ...
+  
+  private def unknownObservePlayer: Action => Boolean = {
+    case ObservePlayer(index) if !knows(knownCards)(index) => true
+    case _                                                 => false
+  }
+  ```
+  
+## Showcase
+
+Gli `Showcase` permettono di generare entità `Turn` le cui `Board` sono popolate in modo tale da poter utilizzare
+immediatamente una specifica meccanica di gioco. Essi sono:
+- `SixShowcase`: dimostrazione dell'effetto speciale delle carte con valore sei, ovvero la possibilità di osservare una carta sul campo dell'avversario
+- `SevenShowcase`: dimostrazione dell'effetto speciale delle carte con valore sette, ovvero la possibilità di osservare una carta sul proprio campo
+- `JackShowcase`: dimostrazione dell'effetto speciale delle carte con valore otto (fante), ovvero la possibilta' di
+scambiare una carta sul proprio campo con una carta sul campo dell'avversario
+- `KingDrawShowcase`: dimostrazione della possibilità di pescare un re dalla cima della pila degli scarti a inizio turno
+- `SuccessfulDiscard`: dimostrazione dell'uso della meccanica di scarto in caso di successo
+- `FailedDiscardShowcase`: dimostrazione dell'uso della meccanica di scarto in caso di insuccesso
+
+L'implementazione è realizzata tramite i trait `Showcase` e `ShowcaseBoard`.
+`ShowcaseBoard` fornisce la `Board` utilizzata da `Showcase` per generare il turno tramite il metodo `apply`:
+```scala 3
+trait ShowcaseBoard:
+  def apply(): Board
+
+trait SixEffect extends ShowcaseBoard:
+  override def apply(): Board = boardForSixEffect
+```
+Le istanze di `Showcase` vengono create tramite mix-in con istanze di `ShowcaseBoard`:
+```scala 3
+trait Showcase:
+  board: ShowCaseBoard =>
+  def turn: Turn = SimpleTurn(board(), Player1)
+  
+object SixShowcase extends AbstractShowcase with SixEffect
+```
+
+Elementi rilevanti di Scala in questa implementazione sono:
+
+- Utilizzo della notazione self-type nel trait `Showcase` e relative implementazioni tramite mix-in
+
+## DSL
+
+Per agevolare la creazione delle entità `Card` e `Field`, soprattutto all'interno di classi
+di test, sono stati realizzati di object `CardDSL` e `FieldDSL`.
+
+`CardDSL` contiene le costanti utilizzate per indicare il valore delle carte in linguaggio
+naturale, e un extension method dei valori per creare una carta indicandone il valore e il seme:
+```scala 3
+object CardDSL:
+  val king = 0
+  val ace = 1
+  val two = 2
+  ...
+  extension (value: Int)
+    infix def of(suit: Suit): Card = CardImpl(value, Int)
+```
+Questa implementazione permette di creare una carta con la notazione `<valore> of <seme>`:
+```scala 3
+import CardDSL.*
+val card: Card = ace of Swords
+```
+
+`FieldDSL` permette di creare le entità `Field` concatenando le carte in esse contenute con
+l'operatore `and`, questa funzionalità è implementata attraverso il trait `FieldBuilderLike[T]`,
+che fornisce il metodo `and` per concatenare un oggetto di tipo `T` a una carta:
+```scala 3
+sealed trait FieldBuilderLike[T]:
+  infix def and(cardToAdd: Card): Field
+  
+object FieldDSL:
+  private class FieldBuilderFromCard(card: Card) extends FieldBuilderLike[Card]:
+    override infix def and(cardToAdd: Card): Field = FieldImpl(Vector(card, cardToAdd))
+
+  private class FieldBuilderFromField(field: Field) extends FieldBuilderLike[Field]:
+    override infix def and(cardToAdd: Card): Field = field.addCard(cardToAdd)
+```
+
+Un elemento rilevante di Scala in questa implementazione è la conversione implicita
+da `Card` alla classe `FieldBuilderFromCard`, o da `Field` a `FieldBuilderFromField`
+è ottenuta tramite le istruzioni `given` per le implementazioni di `Conversion`
+con i rispettivi tipi:
+```scala 3
+object FieldDSL:
+  given Conversion[Card, FieldBuilderLike[Card]] = FieldBuilderFromCard(_)
+  given Conversion[Field, FieldBuilderLike[Field]] = FieldBuilderFromField(_)
+```
+
+## Testing
+
+I test sono stati realizzati interamente tramite l'approccio TDD, cercando di raggiungere il valore piu' alto possibile
+di copertura del codice.
+
+---
+
+1. [Processo di sviluppo](../processo.md)
+    1. [Sprint 1](../process/sprint01.md)
+    2. [Sprint 2](../process/sprint02.md)
+    3. [Sprint 3](../process/sprint03.md)
+    4. [Sprint 4](../process/sprint04.md)
+2. [Requisiti](../requisiti.md)
+3. [Architettura](../architettura.md)
+4. [Design di dettaglio](../design-di-dettaglio.md)
+5. [Implementazione](../implementazione.md)
+    1. [Alex Casadei](../implementation/casadei.md)
+    2. [Luca Ferar](../implementation/ferar.md)
+    3. [Simone Zama](../implementation/zama.md)
+6. [**Testing (prossimo)**](../testing.md)
+7. [Retrospettiva](../retrospettiva.md)
