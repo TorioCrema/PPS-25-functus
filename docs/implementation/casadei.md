@@ -224,3 +224,24 @@ private def padCenter(s: String, len: Int): String =
   val left = total / 2
   (" " * left) + s + (" " * (total - left))
 ```
+## Testing
+
+I test sono stati realizzati interamente tramite l'approccio TDD, cercando di raggiungere il valore piu' alto possibile
+di copertura del codice.
+
+---
+
+1. [Processo di sviluppo](../processo.md)
+   1. [Sprint 1](../process/sprint01.md)
+   2. [Sprint 2](../process/sprint02.md)
+   3. [Sprint 3](../process/sprint03.md)
+   4. [Sprint 4](../process/sprint04.md)
+2. [Requisiti](../requisiti.md)
+3. [Architettura](../architettura.md)
+4. [Design di dettaglio](design-di-dettaglio.md)
+5. [Implementazione](../implementazione.md)
+   1. [Alex Casadei **(prossimo)**](../implementation/ferar.md)
+   2. [Luca Ferar](../implementation/ferar.md)
+   3. [Simone Zama](../implementation/zama.md)
+6. [Testing](../testing.md)
+7. [Retrospettiva](../retrospettiva.md)
