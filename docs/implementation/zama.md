@@ -28,7 +28,7 @@ possiedono dei campi utilizzati per indicare le carte in esse coinvolte.
 Aspetti rilevanti di Scala all'interno di questa implementazione sono:
 
 - Pattern matching per l'implementazione dei metodi `nextActions` e `execute`:
-```scala 3
+```scala
 private def execute(currentTurn: Turn): Turn =
     this match
       case Observe                => currentTurn.drawnFromField(0).drawnFromField(0)
@@ -38,7 +38,7 @@ private def execute(currentTurn: Turn): Turn =
       ...
 ```
 - Contextual programming per fornire il contesto opzionale del turno corrente al metodo `nextActions`:
-```scala 3
+```scala
 def nextActions(using Option[Turn]): List[Action] = this match
     case Observe          => List(Confirm)
     case Confirm | Cactus => List(EndTurn)
@@ -74,7 +74,7 @@ Le funzionalità principali di `Turn` sono:
 Elementi rilevanti di Scala all'interno di questa implementazione sono:
 - Companion object con factory method per creare il turno.
   Sono presenti tre factory, una per ogni tipologia di turno da creare:
-  ```scala 3
+  ```scala
   object Turns:
     object FirstTurn:
       def apply(...): Turn = ...
@@ -84,7 +84,7 @@ Elementi rilevanti di Scala all'interno di questa implementazione sono:
       def apply(...): Turn = ...
   ```
 - Companion object con extension methods per la manipolazione della `case class` del turno:
-  ```scala 3
+  ```scala
   object Turns:
 
   extension (turn: Turn)
@@ -107,7 +107,7 @@ al resto delle carte nel mazzo. La generazione di queste azioni è ottenuta tram
 di `Card` implementato nell'object `Effects`. Questo metodo individua il tipo di effetto tramite pattern matching
 sulla carta attivata e genera le azioni corrispondenti all'effetto in base alle informazioni contenute
 nello stato del turno corrente passato come argomento:
-```scala 3
+```scala
 ...
 activated.value match
   case `six`   => actionsFromFieldLength(getFieldLength(turn.player.other))(ObserveOpponent(_)) 
@@ -126,7 +126,7 @@ activated.value match
 Elementi rilevanti di Scala in questa implementazione sono:
 
 - Implementazione del metodo `effect` tramite extension method:
-  ```scala 3
+  ```scala
   object Effects:
   extension (card: Card)
     def effect(on: Turn): List[Action] = ...
@@ -147,7 +147,7 @@ giocatori. La classe estende il trait `Playable[Match]`, fornendo i metodi `act`
     cumulativi dei giocatori supera il punteggio limite impostato alla creazione del `Match`.
 
 La classe fornisce inoltre il metodo `nextGame` per ottenere l'istanza di `Match` da cui iniziare il prossimo `Game`:
-```scala 3
+```scala
 def nextGame: Match =
   if !game.isOver then throw new IllegalStateException("Cannot start new game while current game has not ended.")
   copy(game = Game(newBoard from default))
@@ -156,13 +156,13 @@ def nextGame: Match =
 Elementi rilevanti di Scala in questa implementazione sono:
 
 - Utilizzo di `export` per dare accesso alle informazioni relative al `Game` in corso all'interno del `Match`:
-    ```scala 3
+    ```scala
     export game.{act as _, isOver as isGameOver, *}
     ```
   il metodo `act` di `Game` viene nascosto dato che il suo utilizzo è dettato dalla delegazione all'interno del metodo
   `act` di `Match`, e il metodo `isOver` è rinominato in `isGameOver`.
 - Companion object con factory method per creare il `Match`:
-    ```scala 3
+    ```scala
     object Match:
       def apply(maxScore: Int, board: Board = newBoard from default): Match =
         Match(maxScore, Game(board), Map((Player1, 0), (Player2, 0)))
@@ -177,7 +177,7 @@ ricopre durante il corso di un `Game`.
 - Tramite il metodo `play(turn: Turn): (Turn, Action)` l'`Opponent` osserva le azioni disponibili e, a seconda della sua 
   attuale conoscenza delle carte in campo, sceglie quella piu' vantaggiosa. Una volta determinata l'azione, la conoscenza
   dell'`Opponent` viene aggiornata secondo le conseguenze che essa ha sul campo attuale:
-  ```scala 3
+  ```scala
   def play(turn: Turn): (Turn, Action) = getChosenAction(turn) match
     case Observe                           => ...
     case ChooseDiscard(index)              => ...
@@ -189,7 +189,7 @@ ricopre durante il corso di un `Game`.
   ```
 - Il metodo `react(action: Action, turn: Turn): Unit` permette a `Opponent` di aggiornare la propria conoscenza delle
   carte sul campo in base all'azione eseguita dall'utente:
-  ```scala 3
+  ```scala
   def react(action: Action, turn: Turn): Unit = action match
     case ChooseDiscard(index)
         if knows(adversaryCards)(index)
@@ -203,7 +203,7 @@ ricopre durante il corso di un `Game`.
 Elementi rilevanti di Scala in questa implementazione sono:
 
 - Pattern matching per la gestione della reazione all'azione `Swap`:
-  ```scala 3
+  ```scala
   private def swapReaction(adversaryIndex: Int, ownIndex: Int): Unit =
     (knows(adversaryCards)(adversaryIndex), knows(knownCards)(ownIndex)) match
       case (true, true)  => ...
@@ -212,7 +212,7 @@ Elementi rilevanti di Scala in questa implementazione sono:
       case (_, _) => ()
   ```
 - Utilizzo di tipi funzionali per definire i predicati con cui filtrare le azioni favorevoli, ad esempio:
-  ```scala 3
+  ```scala
   private def getChosenAction(turn: Turn): Action =
     val actions = turn.actions
       .filter(isDiscardable(_, turn))
@@ -239,7 +239,7 @@ scambiare una carta sul proprio campo con una carta sul campo dell'avversario
 
 L'implementazione è realizzata tramite i trait `Showcase` e `ShowcaseBoard`.
 `ShowcaseBoard` fornisce la `Board` utilizzata da `Showcase` per generare il turno tramite il metodo `apply`:
-```scala 3
+```scala
 trait ShowcaseBoard:
   def apply(): Board
 
@@ -247,7 +247,7 @@ trait SixEffect extends ShowcaseBoard:
   override def apply(): Board = boardForSixEffect
 ```
 Le istanze di `Showcase` vengono create tramite mix-in con istanze di `ShowcaseBoard`:
-```scala 3
+```scala
 trait Showcase:
   board: ShowCaseBoard =>
   def turn: Turn = SimpleTurn(board(), Player1)
@@ -266,7 +266,7 @@ di test, sono stati realizzati di object `CardDSL` e `FieldDSL`.
 
 `CardDSL` contiene le costanti utilizzate per indicare il valore delle carte in linguaggio
 naturale, e un extension method dei valori per creare una carta indicandone il valore e il seme:
-```scala 3
+```scala
 object CardDSL:
   val king = 0
   val ace = 1
@@ -276,7 +276,7 @@ object CardDSL:
     infix def of(suit: Suit): Card = CardImpl(value, Int)
 ```
 Questa implementazione permette di creare una carta con la notazione `<valore> of <seme>`:
-```scala 3
+```scala
 import CardDSL.*
 val card: Card = ace of Swords
 ```
@@ -284,7 +284,7 @@ val card: Card = ace of Swords
 `FieldDSL` permette di creare le entità `Field` concatenando le carte in esse contenute con
 l'operatore `and`, questa funzionalità è implementata attraverso il trait `FieldBuilderLike[T]`,
 che fornisce il metodo `and` per concatenare un oggetto di tipo `T` a una carta:
-```scala 3
+```scala
 sealed trait FieldBuilderLike[T]:
   infix def and(cardToAdd: Card): Field
   
@@ -300,7 +300,7 @@ Un elemento rilevante di Scala in questa implementazione è la conversione impli
 da `Card` alla classe `FieldBuilderFromCard`, o da `Field` a `FieldBuilderFromField`
 è ottenuta tramite le istruzioni `given` per le implementazioni di `Conversion`
 con i rispettivi tipi:
-```scala 3
+```scala
 object FieldDSL:
   given Conversion[Card, FieldBuilderLike[Card]] = FieldBuilderFromCard(_)
   given Conversion[Field, FieldBuilderLike[Field]] = FieldBuilderFromField(_)
