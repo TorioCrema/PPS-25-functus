@@ -246,7 +246,7 @@ BoardDSL mette a disposizione tre entry point principali:
 * `board from default` per ottenere un BoardBuilder configurabile.
 * `lockedBoard from default` per ottenere un BoardBuilder configurabile in modalità bloccata.
 
-L’entry point default board crea direttamente una board con un campo di quattro carte
+L’entry point default board crea direttamente una board con un campo composto da quattro carte
 per ciascun giocatore a partire dal deck di default con 40 carte italiane e pila degli scarti vuota:
 
 ``` scala 3
