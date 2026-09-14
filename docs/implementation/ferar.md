@@ -23,7 +23,7 @@ L'elemento di Scala più rilevante utilizzato:
 
 - Enum per rappresentare i possibili semi della carta:
 
-```scala 3
+```scala
 enum Suit:
   case Pentacles, Cups, Swords, Wands
 ```
@@ -45,7 +45,7 @@ Gli elementi di Scala più rilevanti utilizzati sono:
 
 - Utilizzo di tail recursion per l'implementazione del metodo `shuffle`:
 
-```scala 3
+```scala
   def shuffle(): Deck =
     @tailrec
     def shuffleOn(cards: Vector[Card], shuffledCards: Vector[Card]): Vector[Card] = cards match
@@ -59,7 +59,7 @@ Gli elementi di Scala più rilevanti utilizzati sono:
 
 - Utilizzo di pattern matching all'interno del metodo `shuffleOn`:
 
-```scala 3
+```scala
   def shuffleOn(cards: Vector[Card], shuffledCards: Vector[Card]): Vector[Card] = cards match
     case Vector() => shuffledCards
     case _        =>
@@ -68,7 +68,7 @@ Gli elementi di Scala più rilevanti utilizzati sono:
 
 - Utilizzo di `Option` per gestire il caso in cui si tenti di estrarre una carta da un mazzo vuoto. L’implementazione sfrutta `headOption` e `map`:
 
-```scala 3
+```scala
   def draw(): Option[(Card, Deck)] = cards.headOption.map(card => (card, DeckImpl(cards.tail)))
 ```
 
@@ -76,7 +76,7 @@ Gli elementi di Scala più rilevanti utilizzati sono:
 combinazione tra i quattro semi e i valori da asso a re, ottenendo così un mazzo composto da 40 carte. 
 (La costruzione delle carte sfrutta la sintassi fornita dalla `CardDSL`): 
 
-```scala 3
+```scala
   object DeckFactory:
       def apply(): Deck =
         val cards = for
@@ -113,7 +113,7 @@ L'elemento di Scala più rilevante:
 - Immutabilità e copy: le operazioni che modificano il campo non alterano l’istanza corrente, ma producono una nuova 
 istanza di `FieldImpl` tramite `copy`. Questo permette di mantenere invariato lo stato precedente:
 
-```scala 3
+```scala
   def addCard(card: Card): Field = copy(cards :+ card)
 ```
 
@@ -129,7 +129,7 @@ alla carta in cima alla pila.
 L’enum `Player` rappresenta i due giocatori della partita, `Player1` e `Player2`, e fornisce il metodo `other`,
 che permette di ottenere il giocatore avversario.
 
-```scala 3
+```scala
   enum Player:
     case Player1, Player2
 
@@ -164,7 +164,7 @@ Aspetti rilevanti di Scala all'interno di questa implementazione sono:
 - Utilizzo di `Map` per associare ogni `Player` al proprio `Field`, permettendo di recuperare e aggiornare il campo
 di un giocatore attraverso la relativa chiave:
 
-```scala 3
+```scala
   val players: Map[Player, Field]
   players(player)
   players.updated(player, updatedField)
@@ -172,7 +172,7 @@ di un giocatore attraverso la relativa chiave:
 
 - Utilizzo di `Option` per rappresentare il risultato della pesca:
 
-```scala 3
+```scala
   def draw(): Option[(Card, BoardImpl)] =
     val checked = checkDeck()
     checked.deck.draw().map((card, remainingDeck) => (card, checked.copy(deck = remainingDeck)))
@@ -181,7 +181,7 @@ di un giocatore attraverso la relativa chiave:
 - Utilizzo di pattern matching nel metodo `placeCardInField` per distinguere il caso in cui venga fornito 
 un indice da quello in cui non venga fornito:
 
-```scala 3
+```scala
   def placeCardInField(card: Card, player: Player, index: Option[Int]): Board =
     index match
       case Some(i) if i < players(player).length && i >= 0 =>
@@ -207,7 +207,7 @@ un `CardBuilder` in un `Deck`.
 
 Ecco un esempio di un `Deck` con due carte creato con la DSL:
 
-```scala 3
+```scala
 val deck = deck from (ace of Cups | two of Swords)
 ```
 
@@ -216,7 +216,7 @@ Gli elementi di Scala più rilevanti utilizzati sono:
 - Extension method: viene definito un metodo di estensione `|` per `Card`, 
 che permette di utilizzare una carta come punto di partenza per la costruzione di un `CardBuilder`:
 
-```scala 3
+```scala
   extension (card: Card)
     infix def |(other: Card): CardBuilder = CardBuilder(Vector(card, other))
 ```
@@ -224,7 +224,7 @@ che permette di utilizzare una carta come punto di partenza per la costruzione d
 - Case class CardBuilder: rappresenta una struttura intermedia contenente le carte che verranno utilizzate 
 per costruire il mazzo. L’operatore `|` permette di aggiungere ulteriori carte alla sequenza:
 
-```scala 3
+```scala
   case class CardBuilder(cards: Vector[Card]):
       infix def |(other: Card): CardBuilder = CardBuilder(cards :+ other)
 ```
@@ -232,7 +232,7 @@ per costruire il mazzo. L’operatore `|` permette di aggiungere ulteriori carte
 - Given Conversion: permette di convertire implicitamente un `CardBuilder` in un `Deck`, rendendo possibile utilizzare 
 direttamente una catena di carte nei contesti in cui è richiesto un mazzo:
 
-```scala 3
+```scala
   given Conversion[CardBuilder, Deck] = b => DeckImpl(b.cards)
 ```
 
@@ -249,7 +249,7 @@ BoardDSL mette a disposizione tre entry point principali:
 L’entry point default board crea direttamente una board con un campo composto da quattro carte
 per ciascun giocatore a partire dal deck di default con 40 carte italiane e pila degli scarti vuota:
 
-``` scala 3
+``` scala
   import BoardDSL.*
   val board: Board = default board
 ```
@@ -258,7 +258,7 @@ Per ottenere invece una configurazione personalizzabile si utilizza `board from 
 che restituisce un `BoardBuilder`. Le personalizzazioni possono essere aggiunte attraverso
 il metodo `withCustom`:
 
-```scala 3
+```scala
   import BoardDSL.*
   import CardDSL.*
   import FieldDSL.*
@@ -273,7 +273,7 @@ Le personalizzazioni possibili sono rappresentate dal trait Customisation e dall
 relative implementazioni `PlayerOneCards`, `PlayerTwoCards`, `CustomDeck` e
 `CustomDiscard`:
 
-```scala 3
+```scala
   sealed trait Customisation
   case class PlayerOneCards(field: Field) extends Customisation
   case class PlayerTwoCards(field: Field) extends Customisation
@@ -290,7 +290,7 @@ La configurazione viene accumulata all’interno di `BoardBuilder` attraverso il
 `withCustom`, che non modifica il builder esistente ma ne restituisce uno nuovo contenente
 la personalizzazione aggiunta:
 
-```scala 3
+```scala
   private def removeCards(deck: Deck, toRemove: List[Card]): Deck =
     val remaining = toRemove.foldLeft(deck.cards.toList) { (cards, target) =>
       val id = cards.indexWhere(c => c.value == target.value && c.suit == target.suit)
@@ -305,7 +305,7 @@ richiamare esplicitamente build.
 Questa DSL, può essere combinata con CardDSL, DeckDSL e FieldDSL per costruire
 una configurazione completa del Board:
 
-```scala 3
+```scala
   val board =
     (board from default)
       .withCustom(playerOne(ace of Cups and two of Swords))
@@ -321,7 +321,7 @@ ha chiamato cactus.
 
 La fase della partita è rappresentata dall’`enum` `GamePhase`, che distingue quattro possibili stati:
 
-```scala 3
+```scala
   enum GamePhase:
     case FirstTurns
     case Playing
@@ -340,7 +340,7 @@ presenti nel rispettivo campo.
 L’object `Game` fornisce inoltre il metodo `apply(board: Board): Game`, che permette di creare una nuova partita a partire 
 da un `Board`. La partita viene inizializzata nella fase `FirstTurns`, assegnando il primo turno a `Player1`:
 
-```scala 3
+```scala
   object Game:
     def apply(board: Board): Game =
       val firstTurn = FirstTurn(board, Player1)
@@ -351,7 +351,7 @@ Gli aspetti di scala principali sono:
 - Pattern matching nel metodo `advancePhase` per gestire le diverse fasi della partita e il giocatore che ha appena 
 concluso il turno:
 
-```scala 3
+```scala
   private def advancePhase(finishedTurn: Turn): Game =
     phase match
       case GamePhase.FirstTurns =>
@@ -365,14 +365,14 @@ concluso il turno:
 - Utilizzo di Map e higher-order functions nel metodo `playerScore` che utilizza `map` per associare ogni giocatore 
 al proprio punteggio e `toMap` per ottenere la struttura finale:
 
-```scala 3
+```scala
   def playerScore: Map[Player, Int] =
     Player.values.map(p => p -> currentTurn.board.getField(p).cardsList.map(_.value).sum).toMap
 ```
 - Utilizzo di export, vengono esposti direttamente alcuni membri del `Turn` corrente, permettendo a `Game` di riutilizzarli 
 senza dover accedere esplicitamente a `currentTurn`:
 
-```scala 3
+```scala
   case class Game(
     phase: GamePhase,
     currentTurn: Turn,
@@ -398,7 +398,7 @@ Per questi Showcase è stata realizzata la sola dichiarazione e configurazione t
 La loro effettiva integrazione e utilizzo nel gioco è stata invece lasciata a un altro membro del gruppo.
 
 Esempio di `showcase` utilizzando concretamente tutte le DSL:
-```scala 3
+```scala
   private val deckForSixEffect = deck from
     (six of Swords) | (three of Cups) | (king of Cups) | (king of Swords)
   
