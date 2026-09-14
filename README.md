@@ -42,9 +42,19 @@ Qualore un giocatore ottiene alla fine di una partita un punteggio totale uguale
 
 1. [Processo di sviluppo](docs/processo.md)
 2. [Requisiti](docs/requisiti.md)
+3. [Architettura](docs/architettura.md)
+4. [Design di dettaglio](docs/design-di-dettaglio.md)
+5. [Implementazione](docs/implementazione.md)
+   1. [Alex Casadei](docs/implementation/casadei.md)
+   2. [Luca Ferar](docs/implementation/ferar.md)
+   3. [Simone Zama](docs/implementation/zama.md)
+6. [Testing](docs/testing.md)
+7. [Retrospettiva](docs/retrospettiva.md)
 
 ## Sprints
 
 1. [Sprint 1](docs/process/sprint01.md)
 2. [Sprint 2](docs/process/sprint02.md)
 3. [Sprint 3](docs/process/sprint03.md)
+4. [Sprint 4](docs/process/sprint04.md)
+
